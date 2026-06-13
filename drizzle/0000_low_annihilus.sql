@@ -1,4 +1,5 @@
 CREATE TYPE "public"."source" AS ENUM('voice', 'audio', 'video', 'manual');--> statement-breakpoint
+CREATE TYPE "public"."usage_event_kind" AS ENUM('capture', 'card_render', 'report');--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "contacts" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" bigint NOT NULL,
@@ -8,8 +9,8 @@ CREATE TABLE IF NOT EXISTS "contacts" (
 	"emails" text[] DEFAULT '{}' NOT NULL,
 	"links" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"notes_summary" text,
-	"last_touched_at" timestamp DEFAULT now() NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"last_touched_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "interactions" (
@@ -17,15 +18,15 @@ CREATE TABLE IF NOT EXISTS "interactions" (
 	"contact_id" uuid NOT NULL,
 	"source" "source" NOT NULL,
 	"structured_data" jsonb NOT NULL,
-	"occurred_at" timestamp DEFAULT now() NOT NULL
+	"occurred_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "usage_events" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" bigint,
-	"kind" text NOT NULL,
+	"kind" "usage_event_kind" NOT NULL,
 	"cost_usd" numeric(10, 4),
-	"occurred_at" timestamp DEFAULT now() NOT NULL
+	"occurred_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "users" (
@@ -37,8 +38,8 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"self_intro" text,
 	"socials" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"timezone" text DEFAULT 'UTC' NOT NULL,
-	"consent_acknowledged_at" timestamp,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"consent_acknowledged_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 DO $$ BEGIN
@@ -55,6 +56,7 @@ END $$;
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "contacts_user_id_idx" ON "contacts" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "contacts_user_name_idx" ON "contacts" USING btree ("user_id","name");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "contacts_user_id_last_touched_idx" ON "contacts" USING btree ("user_id","last_touched_at");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "interactions_contact_id_idx" ON "interactions" USING btree ("contact_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "usage_events_occurred_at_idx" ON "usage_events" USING btree ("occurred_at");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "usage_events_user_occurred_at_idx" ON "usage_events" USING btree ("user_id","occurred_at");

@@ -1,5 +1,5 @@
 {
-  "id": "7be9b50f-2b41-4622-8e43-ccdaaf12e0f6",
+  "id": "1f939801-03aa-418d-81b4-170153dc3d0d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -61,14 +61,14 @@
         },
         "last_touched_at": {
           "name": "last_touched_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -101,6 +101,27 @@
             },
             {
               "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "contacts_user_id_last_touched_idx": {
+          "name": "contacts_user_id_last_touched_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "last_touched_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -165,7 +186,7 @@
         },
         "occurred_at": {
           "name": "occurred_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -228,7 +249,8 @@
         },
         "kind": {
           "name": "kind",
-          "type": "text",
+          "type": "usage_event_kind",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -240,7 +262,7 @@
         },
         "occurred_at": {
           "name": "occurred_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -347,13 +369,13 @@
         },
         "consent_acknowledged_at": {
           "name": "consent_acknowledged_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -377,6 +399,15 @@
         "audio",
         "video",
         "manual"
+      ]
+    },
+    "public.usage_event_kind": {
+      "name": "usage_event_kind",
+      "schema": "public",
+      "values": [
+        "capture",
+        "card_render",
+        "report"
       ]
     }
   },
