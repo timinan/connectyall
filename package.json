@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1",
@@ -28,12 +29,13 @@
     "zod": "^3"
   },
   "devDependencies": {
+    "@rolldown/binding-darwin-arm64": "^1.1.1",
     "@tailwindcss/postcss": "^4",
-    "dotenv": "^16",
     "@types/node": "^22.19.21",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4",
+    "dotenv": "^16",
     "drizzle-kit": "^0.28",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",

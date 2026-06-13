@@ -1,0 +1,25 @@
+import { describe, it, expect } from 'vitest';
+import { loadEnv } from './env';
+
+describe('loadEnv', () => {
+  it('parses required fields', () => {
+    const env = loadEnv(process.env);
+    expect(env.DATABASE_URL).toMatch(/^postgres/);
+    expect(env.TELEGRAM_BOT_TOKEN).toBe('test-bot-token');
+    expect(env.MAX_CAPTURES_PER_DAY).toBe(50);
+  });
+
+  it('defaults LLM_PROVIDER and LLM_MODEL', () => {
+    const env = loadEnv({
+      ...process.env,
+      LLM_PROVIDER: undefined,
+      LLM_MODEL: undefined,
+    });
+    expect(env.LLM_PROVIDER).toBe('anthropic');
+    expect(env.LLM_MODEL).toBe('claude-haiku-4-5');
+  });
+
+  it('throws on missing DATABASE_URL', () => {
+    expect(() => loadEnv({ ...process.env, DATABASE_URL: undefined })).toThrow(/DATABASE_URL/);
+  });
+});
