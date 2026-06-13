@@ -7,21 +7,40 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^1",
+    "@ai-sdk/google": "^1",
+    "@ai-sdk/openai": "^1",
+    "@aws-sdk/client-s3": "^3",
+    "@neondatabase/serverless": "^0.10",
+    "@resvg/resvg-js": "^2",
+    "ai": "^4",
+    "dotenv": "^16",
+    "drizzle-orm": "^0.36",
+    "inngest": "^3",
     "next": "16.2.9",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "satori": "^0.11",
+    "telegraf": "^4",
+    "zod": "^3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.19.21",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4",
+    "drizzle-kit": "^0.28",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "inngest-cli": "^1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4",
+    "typescript": "^5",
+    "vitest": "^4"
   }
 }
