@@ -28,8 +28,10 @@
     "telegraf": "^4",
     "zod": "^3"
   },
+  "optionalDependencies": {
+    "@rolldown/binding-darwin-arm64": "^1.1.1"
+  },
   "devDependencies": {
-    "@rolldown/binding-darwin-arm64": "^1.1.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22.19.21",
     "@types/react": "^19",

@@ -22,4 +22,16 @@ describe('loadEnv', () => {
   it('throws on missing DATABASE_URL', () => {
     expect(() => loadEnv({ ...process.env, DATABASE_URL: undefined })).toThrow(/DATABASE_URL/);
   });
+
+  it('throws on invalid LLM_PROVIDER', () => {
+    expect(() =>
+      loadEnv({ ...process.env, LLM_PROVIDER: 'gemini' })
+    ).toThrow(/LLM_PROVIDER/);
+  });
+
+  it('throws when LLM_PROVIDER is anthropic but ANTHROPIC_API_KEY is missing', () => {
+    expect(() =>
+      loadEnv({ ...process.env, ANTHROPIC_API_KEY: undefined })
+    ).toThrow(/ANTHROPIC_API_KEY/);
+  });
 });
