@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '../lib/db/client';
 import { users, type Socials, type User, type NewUser } from '../lib/db/schema';
 import { uploadPhoto } from '../lib/r2/client';
@@ -9,7 +9,10 @@ export async function getProfile(telegramUserId: number): Promise<User | null> {
   return rows[0] ?? null;
 }
 
-export async function upsertProfile(input: NewUser): Promise<User> {
+export type UpsertProfileInput = Pick<NewUser, 'telegramUserId' | 'displayName'> &
+  Partial<Pick<NewUser, 'telegramUsername' | 'tagline' | 'selfIntro'>>;
+
+export async function upsertProfile(input: UpsertProfileInput): Promise<User> {
   const [row] = await db()
     .insert(users)
     .values(input)
@@ -31,11 +34,15 @@ export async function setSocial(
   kind: keyof Socials,
   value: string
 ): Promise<void> {
-  const profile = await getProfile(telegramUserId);
-  const socials = { ...(profile?.socials ?? {}), [kind]: value };
-  await db().update(users).set({ socials }).where(eq(users.telegramUserId, telegramUserId));
+  await db()
+    .update(users)
+    .set({ socials: sql`${users.socials} || ${JSON.stringify({ [kind]: value })}::jsonb` })
+    .where(eq(users.telegramUserId, telegramUserId));
 }
 
+// Assumes the user row already exists (created during /start onboarding). If called for a
+// non-existent user the R2 upload succeeds but the URL is not persisted — acceptable for v1
+// because the bot's onboarding flow always calls upsertProfile before any photo step.
 export async function setPhotoFromTelegram(
   telegramUserId: number,
   telegramFileId: string

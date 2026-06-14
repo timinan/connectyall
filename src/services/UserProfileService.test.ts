@@ -7,7 +7,9 @@ const limitMock = vi.fn().mockResolvedValue([{ telegramUserId: 1, displayName: '
 const whereMock = vi.fn().mockReturnValue({ limit: limitMock });
 const fromMock = vi.fn().mockReturnValue({ where: whereMock });
 const selectMock = vi.fn().mockReturnValue({ from: fromMock });
-const updateMock = vi.fn().mockReturnValue({ set: () => ({ where: () => Promise.resolve() }) });
+const updateWhereMock = vi.fn().mockResolvedValue(undefined);
+const updateSetMock = vi.fn().mockReturnValue({ where: updateWhereMock });
+const updateMock = vi.fn().mockReturnValue({ set: updateSetMock });
 
 vi.mock('../lib/db/client', () => ({
   db: () => ({ insert: insertMock, select: selectMock, update: updateMock }),
@@ -17,7 +19,7 @@ vi.mock('../lib/r2/client', () => ({
   uploadPhoto: vi.fn().mockResolvedValue('https://pub-test.r2.dev/profiles/1.jpg'),
 }));
 
-import { getProfile, upsertProfile, setPhotoFromTelegram } from './UserProfileService';
+import { getProfile, upsertProfile, setPhotoFromTelegram, setSocial } from './UserProfileService';
 
 describe('UserProfileService', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -37,6 +39,16 @@ describe('UserProfileService', () => {
     const user = await upsertProfile({ telegramUserId: 1, displayName: 'Tim' });
     expect(user.displayName).toBe('Tim');
     expect(insertMock).toHaveBeenCalled();
+  });
+
+  it('setSocial calls update with atomic jsonb merge sql', async () => {
+    await setSocial(1, 'x', 'timnan');
+    expect(updateMock).toHaveBeenCalled();
+    expect(updateSetMock).toHaveBeenCalled();
+    // The set call receives a socials key containing a Drizzle sql template object (not a plain string)
+    const setArg = updateSetMock.mock.calls[0][0];
+    expect(setArg).toHaveProperty('socials');
+    expect(typeof setArg.socials).toBe('object');
   });
 
   it('setPhotoFromTelegram downloads, uploads to R2, persists URL', async () => {
