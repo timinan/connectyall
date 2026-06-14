@@ -48,6 +48,11 @@ const schema = z
 export type Env = z.infer<typeof schema>;
 
 export function loadEnv(raw: NodeJS.ProcessEnv = process.env): Env {
+  // Skip validation during Next.js build (no real env vars available).
+  // SKIP_ENV_VALIDATION is set automatically via next.config or can be set manually.
+  if (process.env.SKIP_ENV_VALIDATION === 'true') {
+    return raw as unknown as Env;
+  }
   const result = schema.safeParse(raw);
   if (!result.success) {
     const issues = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('\n');
