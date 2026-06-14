@@ -9,7 +9,7 @@ export async function transcribe(audio: Uint8Array): Promise<string> {
       Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
       'Content-Type': 'application/octet-stream',
     },
-    body: audio,
+    body: new Blob([audio as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }),
   });
   const json = (await res.json()) as {
     success: boolean;
