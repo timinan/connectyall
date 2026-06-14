@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { bot } from '@/lib/telegram/bot';
 import '@/lib/telegram/onboarding';
-// import '@/lib/telegram/capture';    // re-enable in Task 17
+import '@/lib/telegram/capture';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
