@@ -17,6 +17,13 @@ export function bot(): Telegraf<BotContext> {
   if (cached) return cached;
   const b = new Telegraf<BotContext>(env().TELEGRAM_BOT_TOKEN);
   b.use(session({ defaultSession: () => ({}) }));
+  b.catch((err, ctx) => {
+    console.error('[bot:error]', {
+      updateType: ctx?.updateType,
+      from: ctx?.from?.id,
+      error: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : err,
+    });
+  });
   cached = b;
   return cached;
 }
