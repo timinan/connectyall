@@ -106,5 +106,10 @@ export async function processCapture(input: CaptureInput): Promise<void> {
     });
 
     await sendPhoto({ chatId: input.chatId }, png, caption);
+
+    const forwardHint = c.links.telegram
+      ? `↗️ Forward to @${c.links.telegram}`
+      : `↗️ Forward to ${c.name} (no Telegram handle captured — add one to their card in your CRM)`;
+    await sendMessage({ chatId: input.chatId }, forwardHint);
   }
 }

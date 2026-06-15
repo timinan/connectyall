@@ -33,9 +33,39 @@ Rules:
 - Each person mentioned becomes one entry in "contacts".
 - "context" is one sentence about where/how they met. "recap" is 1-2 sentences about what was discussed.
 - "user_commitments" = what the speaker promised. "their_commitments" = what the other person promised.
-- For "links": if a Telegram handle is mentioned ("she's @sarahcc on Telegram"), put it under links.telegram. Same for x / linkedin. Strip "@" and URLs to just handles.
 - "was_live_recording" is true if the audio clearly contains the contact's own voice in the recording (a live conversation), false if it's just the user speaking notes after the fact.
-- If you cannot identify a person, return an empty contacts array.`;
+- If you cannot identify a person, return an empty contacts array.
+
+LINKS EXTRACTION (be aggressive about this — these are the most valuable field):
+
+The "links" object captures the CONTACT'S social handles (not the speaker's). Look hard for any handle, username, or URL mentioned for each person. Strip "@" prefixes and URL prefixes — store ONLY the bare handle.
+
+Telegram (links.telegram):
+- "her Telegram is @sarahchen" → "sarahchen"
+- "he's @bobsmith on Telegram" → "bobsmith"
+- "Telegram handle is alice_wu" → "alice_wu"
+- "find him at t.me/mike99" → "mike99"
+- "her TG is @julia" → "julia"
+- "his telegram id is michelle" → "michelle"
+- "ID michelle on Telegram" → "michelle"
+- ANY mention of a Telegram handle, username, ID, TG, or t.me link → extract it
+
+X / Twitter (links.x):
+- "x.com/sarahc" → "sarahc"
+- "@sarahchen on Twitter" → "sarahchen"
+- "her X handle is sarahc" → "sarahc"
+
+LinkedIn (links.linkedin):
+- "linkedin.com/in/sarah-chen" → "sarah-chen"
+- "her LinkedIn is sarah chen" → "sarah-chen"
+
+Website (links.website):
+- "her site is sarahchen.com" → "sarahchen.com"
+- Bare domains stay as-is
+
+Email goes in "emails" array. Phone numbers go in "context" as plain text.
+
+If a handle is mentioned, you MUST include it. Do not omit because the spelling is uncertain — best-effort transcription of the handle is required.`;
 
 export async function extract(input: {
   transcript: string;
