@@ -105,11 +105,23 @@ export async function processCapture(input: CaptureInput): Promise<void> {
       recap: c.recap,
     });
 
-    await sendPhoto({ chatId: input.chatId }, png, caption);
+    const handle = c.links.telegram?.replace(/^@/, '');
+    const replyMarkup = handle
+      ? { inline_keyboard: [[{ text: `📨 Open chat with @${handle}`, url: `https://t.me/${handle}` }]] }
+      : undefined;
 
-    const forwardHint = c.links.telegram
-      ? `↗️ Forward to @${c.links.telegram}`
-      : `↗️ Forward to ${c.name} (no Telegram handle captured — add one to their card in your CRM)`;
-    await sendMessage({ chatId: input.chatId }, forwardHint);
+    await sendPhoto({ chatId: input.chatId }, png, caption, { replyMarkup });
+
+    const hint = handle
+      ? `↗️ Forward this card to <a href="https://t.me/${handle}">@${handle}</a>`
+      : `↗️ Forward this card to ${escapeHtml(c.name)} (no Telegram handle captured)`;
+    await sendMessage({ chatId: input.chatId }, hint, {
+      parseMode: 'HTML',
+      disableWebPagePreview: true,
+    });
   }
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
