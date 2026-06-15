@@ -8,6 +8,7 @@ import { getProfile } from './UserProfileService';
 import { createContact, addInteraction, findByNameAndCompany } from './ContactService';
 import { renderCard, buildCaption } from './CardService';
 import { sendMessage, sendPhoto } from '../lib/telegram/send';
+import { uploadPhoto } from '../lib/r2/client';
 
 type CaptureInput = {
   userId: number;
@@ -80,7 +81,10 @@ export async function processCapture(input: CaptureInput): Promise<void> {
 
   for (const c of extraction.contacts) {
     const contact = await ensureContact(input.userId, c);
-    await addInteraction(contact.id, input.kind, { ...c, was_live_recording: extraction.was_live_recording });
+    const interactionId = await addInteraction(contact.id, input.kind, {
+      ...c,
+      was_live_recording: extraction.was_live_recording,
+    });
 
     const png = await renderCard({
       profile: {
@@ -105,23 +109,26 @@ export async function processCapture(input: CaptureInput): Promise<void> {
       recap: c.recap,
     });
 
+    await uploadPhoto({
+      key: `cards/${interactionId}.png`,
+      bytes: new Uint8Array(png),
+      contentType: 'image/png',
+    });
+
     const handle = c.links.telegram?.replace(/^@/, '');
+    const sendButton = {
+      text: handle ? `📨 Send to @${handle}` : '📨 Send to someone',
+      switch_inline_query_chosen_chat: { query: interactionId, allow_user_chats: true },
+    };
     const replyMarkup = handle
-      ? { inline_keyboard: [[{ text: `📨 Open chat with @${handle}`, url: `https://t.me/${handle}` }]] }
-      : undefined;
+      ? {
+          inline_keyboard: [
+            [sendButton],
+            [{ text: `Open chat with @${handle}`, url: `https://t.me/${handle}` }],
+          ],
+        }
+      : { inline_keyboard: [[sendButton]] };
 
     await sendPhoto({ chatId: input.chatId }, png, caption, { replyMarkup });
-
-    const hint = handle
-      ? `↗️ Forward this card to <a href="https://t.me/${handle}">@${handle}</a>`
-      : `↗️ Forward this card to ${escapeHtml(c.name)} (no Telegram handle captured)`;
-    await sendMessage({ chatId: input.chatId }, hint, {
-      parseMode: 'HTML',
-      disableWebPagePreview: true,
-    });
   }
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

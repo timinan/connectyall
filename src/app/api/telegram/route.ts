@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { bot } from '@/lib/telegram/bot';
 import '@/lib/telegram/onboarding';
 import '@/lib/telegram/capture';
+import '@/lib/telegram/inline';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

@@ -14,6 +14,7 @@ const {
   buildCaptionMock,
   sendPhotoMock,
   sendMessageMock,
+  uploadPhotoMock,
 } = vi.hoisted(() => {
   const countMock = vi.fn().mockResolvedValue([{ count: 0 }]);
   const insertValuesMock = vi.fn().mockResolvedValue(undefined);
@@ -28,12 +29,13 @@ const {
   const buildCaptionMock = vi.fn().mockReturnValue('caption');
   const sendPhotoMock = vi.fn().mockResolvedValue(undefined);
   const sendMessageMock = vi.fn().mockResolvedValue(undefined);
+  const uploadPhotoMock = vi.fn().mockResolvedValue('https://pub-test.r2.dev/cards/test.png');
   return {
     countMock, insertValuesMock, insertMock,
     transcribeMock, extractMock, getProfileMock,
     createContactMock, addInteractionMock, findByNameAndCompanyMock,
     renderCardMock, buildCaptionMock,
-    sendPhotoMock, sendMessageMock,
+    sendPhotoMock, sendMessageMock, uploadPhotoMock,
   };
 });
 
@@ -68,6 +70,8 @@ vi.mock('@/lib/telegram/send', () => ({
   sendMessage: sendMessageMock,
 }));
 
+vi.mock('../lib/r2/client', () => ({ uploadPhoto: uploadPhotoMock }));
+
 import { processCapture } from './CaptureService';
 
 describe('processCapture', () => {
@@ -89,10 +93,12 @@ describe('processCapture', () => {
     });
     findByNameAndCompanyMock.mockResolvedValue(null);
     createContactMock.mockResolvedValue({ id: 'uuid-1', name: 'Sarah' });
+    addInteractionMock.mockResolvedValue('interaction-uuid-1');
     renderCardMock.mockResolvedValue(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
     buildCaptionMock.mockReturnValue('caption');
     sendPhotoMock.mockResolvedValue(undefined);
     sendMessageMock.mockResolvedValue(undefined);
+    uploadPhotoMock.mockResolvedValue('https://pub-test.r2.dev/cards/interaction-uuid-1.png');
     insertMock.mockReturnValue({ values: insertValuesMock });
     insertValuesMock.mockResolvedValue(undefined);
   });
