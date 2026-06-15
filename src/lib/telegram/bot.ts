@@ -7,8 +7,17 @@ export type OnboardingState = {
   partial?: { displayName?: string; tagline?: string };
 };
 
+export type FixHandleState = {
+  contactId: string;
+  contactName: string;
+  interactionId: string;
+};
+
 export interface BotContext extends Context {
-  session: { onboarding?: OnboardingState };
+  session: {
+    onboarding?: OnboardingState;
+    fixingHandle?: FixHandleState;
+  };
 }
 
 let cached: Telegraf<BotContext> | undefined;

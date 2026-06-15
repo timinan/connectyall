@@ -130,18 +130,23 @@ export async function processCapture(input: CaptureInput): Promise<void> {
       text: handle ? `📨 Send to @${handle}` : '📨 Send to someone',
       switch_inline_query_chosen_chat: { query: interactionId, allow_user_chats: true },
     };
+    const fixButton = {
+      text: handle ? `✏️ Wrong handle? Fix @${handle}` : `✏️ Add Telegram handle for ${c.name}`,
+      callback_data: `fix:${interactionId}`,
+    };
     const replyMarkup = handle
       ? {
           inline_keyboard: [
             [sendButton],
             [{ text: `Open chat with @${handle}`, url: `https://t.me/${handle}` }],
+            [fixButton],
           ],
         }
-      : { inline_keyboard: [[sendButton]] };
+      : { inline_keyboard: [[sendButton], [fixButton]] };
 
     await sendMessage(
       { chatId: input.chatId },
-      handle ? `Forward this card to @${handle} 👇` : 'Forward this card 👇',
+      handle ? `Forward this card to @${handle} 👇` : `Forward this card to ${c.name} 👇`,
       { replyMarkup }
     );
   }

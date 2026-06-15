@@ -65,6 +65,17 @@ export async function getInteractionWithContact(
   };
 }
 
+export async function setContactLink(
+  contactId: string,
+  kind: 'telegram' | 'x' | 'linkedin' | 'website',
+  value: string
+): Promise<void> {
+  await db()
+    .update(contacts)
+    .set({ links: sql`${contacts.links} || ${JSON.stringify({ [kind]: value })}::jsonb` })
+    .where(eq(contacts.id, contactId));
+}
+
 export async function findByNameAndCompany(
   userId: number,
   name: string,

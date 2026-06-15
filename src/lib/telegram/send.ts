@@ -2,6 +2,7 @@ import { env } from '../env';
 
 type InlineKeyboardButton =
   | { text: string; url: string }
+  | { text: string; callback_data: string }
   | {
       text: string;
       switch_inline_query_chosen_chat: {
