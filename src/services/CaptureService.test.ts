@@ -96,7 +96,7 @@ describe('processCapture', () => {
     addInteractionMock.mockResolvedValue('interaction-uuid-1');
     renderCardMock.mockResolvedValue(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
     buildCaptionMock.mockReturnValue('caption');
-    sendPhotoMock.mockResolvedValue(undefined);
+    sendPhotoMock.mockResolvedValue({ photoFileId: 'mock-file-id' });
     sendMessageMock.mockResolvedValue(undefined);
     uploadPhotoMock.mockResolvedValue('https://pub-test.r2.dev/cards/interaction-uuid-1.png');
     insertMock.mockReturnValue({ values: insertValuesMock });

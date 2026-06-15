@@ -81,10 +81,6 @@ export async function processCapture(input: CaptureInput): Promise<void> {
 
   for (const c of extraction.contacts) {
     const contact = await ensureContact(input.userId, c);
-    const interactionId = await addInteraction(contact.id, input.kind, {
-      ...c,
-      was_live_recording: extraction.was_live_recording,
-    });
 
     const png = await renderCard({
       profile: {
@@ -109,13 +105,27 @@ export async function processCapture(input: CaptureInput): Promise<void> {
       recap: c.recap,
     });
 
+    // First send the photo so we can capture Telegram's file_id, then persist the
+    // interaction with the file_id + handle so the inline handler can reuse it.
+    // The send button is wired with a placeholder query at first; we re-send below
+    // once we have the interaction id.
+    const handle = c.links.telegram?.replace(/^@/, '');
+    const { photoFileId } = await sendPhoto({ chatId: input.chatId }, png, caption);
+
+    const interactionId = await addInteraction(contact.id, input.kind, {
+      ...c,
+      was_live_recording: extraction.was_live_recording,
+      photo_file_id: photoFileId,
+    });
+
     await uploadPhoto({
       key: `cards/${interactionId}.png`,
       bytes: new Uint8Array(png),
       contentType: 'image/png',
     });
 
-    const handle = c.links.telegram?.replace(/^@/, '');
+    // Now follow-up with a message that carries the "Send to" button bound to the
+    // interaction id we just created.
     const sendButton = {
       text: handle ? `📨 Send to @${handle}` : '📨 Send to someone',
       switch_inline_query_chosen_chat: { query: interactionId, allow_user_chats: true },
@@ -129,6 +139,10 @@ export async function processCapture(input: CaptureInput): Promise<void> {
         }
       : { inline_keyboard: [[sendButton]] };
 
-    await sendPhoto({ chatId: input.chatId }, png, caption, { replyMarkup });
+    await sendMessage(
+      { chatId: input.chatId },
+      handle ? `Forward this card to @${handle} 👇` : 'Forward this card 👇',
+      { replyMarkup }
+    );
   }
 }

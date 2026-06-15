@@ -39,15 +39,23 @@ export async function sendPhoto(
   photo: Buffer,
   caption: string,
   opts: { replyMarkup?: ReplyMarkup } = {}
-): Promise<void> {
+): Promise<{ photoFileId: string | null }> {
   const { TELEGRAM_BOT_TOKEN } = env();
   const form = new FormData();
   form.append('chat_id', String(target.chatId));
   form.append('caption', caption);
   form.append('photo', new Blob([photo as Uint8Array<ArrayBuffer>], { type: 'image/png' }), 'card.png');
   if (opts.replyMarkup) form.append('reply_markup', JSON.stringify(opts.replyMarkup));
-  await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+  const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
     method: 'POST',
     body: form,
   });
+  const json = (await res.json().catch(() => null)) as
+    | { ok: boolean; result?: { photo?: Array<{ file_id: string; width?: number; height?: number }> } }
+    | null;
+  const sizes = json?.result?.photo ?? [];
+  const largest = sizes.length
+    ? sizes.reduce((a, b) => ((b.width ?? 0) > (a.width ?? 0) ? b : a))
+    : null;
+  return { photoFileId: largest?.file_id ?? null };
 }
