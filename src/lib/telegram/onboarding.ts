@@ -12,7 +12,9 @@ function socialsMenu(socials: Socials) {
   ]);
 }
 
-bot().start(async (ctx) => {
+bot().start(async (ctx, next) => {
+  const payload = (ctx.message?.text ?? '').replace(/^\/start\s*/, '').trim();
+  if (payload.startsWith('link_')) return next(); // let connect.ts handle this
   const tgUser = ctx.from!;
   ctx.session.onboarding = { step: 'awaiting_name', partial: { displayName: tgUser.first_name } };
 

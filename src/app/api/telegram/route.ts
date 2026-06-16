@@ -4,6 +4,7 @@ import '@/lib/telegram/onboarding';
 import '@/lib/telegram/capture';
 import '@/lib/telegram/inline';
 import '@/lib/telegram/fix';
+import '@/lib/telegram/connect';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
