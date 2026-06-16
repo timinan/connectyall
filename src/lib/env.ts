@@ -49,13 +49,27 @@ const schema = z
 
 export type Env = z.infer<typeof schema>;
 
+// On a Vercel preview deployment, BETTER_AUTH_URL must equal the preview's own
+// hostname — otherwise magic-link emails generated here will redirect back to
+// production (where the user isn't authenticated for this code) and testing
+// becomes impossible. Override the env-provided value automatically.
+// In production: VERCEL_ENV='production' and we want the static BETTER_AUTH_URL.
+// In local dev: no VERCEL_ENV — falls back to whatever's in .env.local.
+function deriveBetterAuthUrl(raw: NodeJS.ProcessEnv): string | undefined {
+  if (raw.VERCEL_ENV === 'preview' && raw.VERCEL_URL) {
+    return `https://${raw.VERCEL_URL}`;
+  }
+  return raw.BETTER_AUTH_URL;
+}
+
 export function loadEnv(raw: NodeJS.ProcessEnv = process.env): Env {
   // Skip validation during Next.js build (no real env vars available).
   // SKIP_ENV_VALIDATION is set automatically via next.config or can be set manually.
   if (process.env.SKIP_ENV_VALIDATION === 'true') {
     return raw as unknown as Env;
   }
-  const result = schema.safeParse(raw);
+  const normalized = { ...raw, BETTER_AUTH_URL: deriveBetterAuthUrl(raw) };
+  const result = schema.safeParse(normalized);
   if (!result.success) {
     const issues = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('\n');
     throw new Error(`Env validation failed:\n${issues}`);
