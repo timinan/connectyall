@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { magicLink } from 'better-auth/plugins';
+import { randomUUID } from 'node:crypto';
 import { db } from '../db/client';
 import * as schema from '../db/schema';
 import { env } from '../env';
@@ -14,6 +15,11 @@ export function auth() {
   cached = betterAuth({
     baseURL: env().BETTER_AUTH_URL,
     secret: env().BETTER_AUTH_SECRET,
+    advanced: {
+      database: {
+        generateId: () => randomUUID(),
+      },
+    },
     database: drizzleAdapter(db(), {
       provider: 'pg',
       schema: {
