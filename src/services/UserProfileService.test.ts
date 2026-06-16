@@ -19,7 +19,7 @@ vi.mock('../lib/r2/client', () => ({
   uploadPhoto: vi.fn().mockResolvedValue('https://pub-test.r2.dev/profiles/1.jpg'),
 }));
 
-import { getProfile, upsertProfile, setPhotoFromTelegram, setSocial } from './UserProfileService';
+import { getProfile, upsertProfile, setPhotoFromTelegram, setSocial, getById, getByEmail } from './UserProfileService';
 
 describe('UserProfileService', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -42,7 +42,7 @@ describe('UserProfileService', () => {
   });
 
   it('setSocial calls update with atomic jsonb merge sql', async () => {
-    await setSocial(1, 'x', 'timnan');
+    await setSocial('user-uuid-1', 'x', 'timnan');
     expect(updateMock).toHaveBeenCalled();
     expect(updateSetMock).toHaveBeenCalled();
     // The set call receives a socials key containing a Drizzle sql template object (not a plain string)
@@ -56,8 +56,26 @@ describe('UserProfileService', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, result: { file_path: 'photos/file.jpg' } })))
       .mockResolvedValueOnce(new Response(new Uint8Array([1, 2, 3]).buffer));
 
-    const url = await setPhotoFromTelegram(1, 'AgAC...');
+    const url = await setPhotoFromTelegram('user-uuid-1', 'AgAC...');
     expect(url).toBe('https://pub-test.r2.dev/profiles/1.jpg');
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('getById returns the user when found', async () => {
+    limitMock.mockResolvedValueOnce([{ id: 'uuid-1', displayName: 'Tim' }]);
+    const user = await getById('uuid-1');
+    expect(user?.displayName).toBe('Tim');
+  });
+
+  it('getById returns null when empty', async () => {
+    limitMock.mockResolvedValueOnce([]);
+    const user = await getById('nonexistent');
+    expect(user).toBeNull();
+  });
+
+  it('getByEmail returns the user when found', async () => {
+    limitMock.mockResolvedValueOnce([{ id: 'uuid-1', email: 'tim@example.com' }]);
+    const user = await getByEmail('tim@example.com');
+    expect(user?.id).toBe('uuid-1');
   });
 });
