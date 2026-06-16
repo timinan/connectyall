@@ -8,6 +8,6 @@ export default async function AppHomePage() {
   const session = await getServerSession();
   if (!session) redirect('/app/sign-in');
   const profile = await getById(session.user.id);
-  if (!profile || !profile.displayName) redirect('/app/profile');
+  if (!profile || !profile.onboardedAt) redirect('/app/profile');
   redirect('/app/record');
 }

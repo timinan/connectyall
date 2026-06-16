@@ -19,12 +19,15 @@ export async function POST(req: Request) {
   const file = form.get('audio');
   if (!(file instanceof File)) return NextResponse.json({ error: 'audio file required' }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: 'audio too large (>20MB)' }, { status: 400 });
-  if (!ALLOWED_MIME.includes(file.type)) return NextResponse.json({ error: `unsupported mime: ${file.type}` }, { status: 400 });
 
-  const ext = file.type.split('/').pop() ?? 'webm';
+  // file.type may include a codec like 'audio/webm;codecs=opus' — match on base mime only
+  const baseMime = file.type.split(';')[0].trim();
+  if (!ALLOWED_MIME.includes(baseMime)) return NextResponse.json({ error: `unsupported mime: ${file.type}` }, { status: 400 });
+
+  const ext = baseMime.split('/').pop() ?? 'webm';
   const key = `captures/${randomUUID()}.${ext}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
-  await uploadBytes({ key, bytes, contentType: file.type });
+  await uploadBytes({ key, bytes, contentType: baseMime });
 
   const interactionId = await mintStub('voice');
 

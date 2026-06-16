@@ -43,6 +43,13 @@
       "when": 1781636800000,
       "tag": "0005_restore_display_name_default",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781636900000,
+      "tag": "0006_onboarded_at",
+      "breakpoints": true
     }
   ]
 }
