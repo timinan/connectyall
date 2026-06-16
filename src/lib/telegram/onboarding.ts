@@ -1,6 +1,6 @@
 import { Markup } from 'telegraf';
 import { bot } from './bot';
-import { upsertProfile, setSocial, setPhotoFromTelegram, getProfile } from '@/services/UserProfileService';
+import { getByTelegramUserId, upsertProfile, setSocial, setPhotoFromTelegram, getProfile } from '@/services/UserProfileService';
 import type { Socials } from '@/lib/db/schema';
 
 function socialsMenu(socials: Socials) {
@@ -62,7 +62,9 @@ bot().on('text', async (ctx, next) => {
 
   if (state.step === 'awaiting_socials' && state.partial?.tagline === 'pending_social') {
     const kind = state.partial.displayName as keyof Socials; // reused field
-    await setSocial(ctx.from!.id, kind, text);
+    const profileForSocial = await getByTelegramUserId(ctx.from!.id);
+    if (!profileForSocial) return;
+    await setSocial(profileForSocial.id, kind, text);
     state.partial = {};
     const profile = await getProfile(ctx.from!.id);
     await ctx.reply('Saved. Add more or tap Done.', socialsMenu(profile?.socials ?? {}));
@@ -73,9 +75,11 @@ bot().on('text', async (ctx, next) => {
 bot().on('photo', async (ctx) => {
   const state = ctx.session.onboarding;
   if (state?.step !== 'awaiting_photo') return;
+  const profileForPhoto = await getByTelegramUserId(ctx.from!.id);
+  if (!profileForPhoto) return;
   const photos = ctx.message.photo;
   const largest = photos[photos.length - 1];
-  await setPhotoFromTelegram(ctx.from!.id, largest.file_id);
+  await setPhotoFromTelegram(profileForPhoto.id, largest.file_id);
   state.step = 'awaiting_tagline';
   await ctx.reply('Photo saved. One-line tagline. What do you do?', Markup.removeKeyboard());
 });
