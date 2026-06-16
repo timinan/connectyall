@@ -5,6 +5,7 @@ import { getServerSession } from '@/lib/auth/session';
 import { upsertProfile, setSocial, setPhotoFromBytes, getById } from '@/services/UserProfileService';
 import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
+import { linkedinHandle, xHandle, telegramHandle } from '@/lib/social-urls';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,7 +47,10 @@ export async function PUT(req: Request) {
 
   const social = SocialSchema.safeParse(body);
   if (social.success) {
-    await setSocial(session.user.id, social.data.social, social.data.value);
+    let value = social.data.value;
+    if (social.data.social === 'linkedin') value = linkedinHandle(value);
+    else if (social.data.social === 'x') value = xHandle(value);
+    await setSocial(session.user.id, social.data.social, value);
     return NextResponse.json({ ok: true });
   }
 
