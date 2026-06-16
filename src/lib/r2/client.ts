@@ -33,3 +33,5 @@ export async function uploadPhoto(input: {
   );
   return `${e.R2_PUBLIC_URL_BASE}/${input.key}`;
 }
+
+export const uploadBytes = uploadPhoto;
