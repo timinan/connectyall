@@ -1,5 +1,5 @@
 import {
-  pgTable, bigint, text, jsonb, timestamp, uuid, numeric, index, pgEnum,
+  pgTable, bigint, text, jsonb, timestamp, uuid, numeric, index, pgEnum, uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
 export const sourceEnum = pgEnum('source', ['voice', 'audio', 'video', 'manual']);
@@ -9,7 +9,10 @@ export type Socials = { x?: string; linkedin?: string; email?: string; website?:
 export type ContactLinks = { telegram?: string; x?: string; linkedin?: string; website?: string };
 
 export const users = pgTable('users', {
-  telegramUserId: bigint('telegram_user_id', { mode: 'number' }).primaryKey(),
+  id: uuid('id').defaultRandom().primaryKey(),
+  email: text('email'),
+  emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
+  telegramUserId: bigint('telegram_user_id', { mode: 'number' }),
   telegramUsername: text('telegram_username'),
   displayName: text('display_name').notNull(),
   tagline: text('tagline'),
@@ -19,15 +22,18 @@ export const users = pgTable('users', {
   timezone: text('timezone').default('UTC').notNull(),
   consentAcknowledgedAt: timestamp('consent_acknowledged_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => ({
+  emailIdx: uniqueIndex('users_email_unique').on(t.email),
+  telegramIdx: uniqueIndex('users_telegram_user_id_unique').on(t.telegramUserId),
+}));
 
 export const contacts = pgTable(
   'contacts',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    userId: bigint('user_id', { mode: 'number' })
+    userId: uuid('user_id')
       .notNull()
-      .references(() => users.telegramUserId, { onDelete: 'cascade' }),
+      .references(() => users.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     role: text('role'),
     company: text('company'),
@@ -44,15 +50,16 @@ export const contacts = pgTable(
   })
 );
 
+export const interactionStatusEnum = pgEnum('interaction_status', ['processing', 'ready', 'failed']);
+
 export const interactions = pgTable(
   'interactions',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    contactId: uuid('contact_id')
-      .notNull()
-      .references(() => contacts.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id').references(() => contacts.id, { onDelete: 'cascade' }),
     source: sourceEnum('source').notNull(),
     structuredData: jsonb('structured_data').notNull(),
+    status: interactionStatusEnum('status').default('ready').notNull(),
     occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({
