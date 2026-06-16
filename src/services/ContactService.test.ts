@@ -28,7 +28,7 @@ describe('ContactService', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('createContact returns the inserted row', async () => {
-    const contact = await createContact({ userId: 1, name: 'Sarah', role: 'PM', company: 'Acme', emails: [], links: {} });
+    const contact = await createContact({ userId: 'user-uuid-1', name: 'Sarah', role: 'PM', company: 'Acme', emails: [], links: {} });
     expect(contact.name).toBe('Sarah');
     expect(insertMock).toHaveBeenCalled();
   });
@@ -41,13 +41,13 @@ describe('ContactService', () => {
 
   it('findByNameAndCompany returns first match (case-insensitive)', async () => {
     selectLimit.mockResolvedValueOnce([{ id: 'uuid-1', name: 'Sarah Chen', company: 'Acme' }]);
-    const found = await findByNameAndCompany(1, 'sarah chen', 'acme');
+    const found = await findByNameAndCompany('user-uuid-1', 'sarah chen', 'acme');
     expect(found?.id).toBe('uuid-1');
   });
 
   it('findByNameAndCompany returns null when none', async () => {
     selectLimit.mockResolvedValueOnce([]);
-    const found = await findByNameAndCompany(1, 'unknown', null);
+    const found = await findByNameAndCompany('user-uuid-1', 'unknown', null);
     expect(found).toBeNull();
   });
 });

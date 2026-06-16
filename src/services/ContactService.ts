@@ -49,10 +49,10 @@ export async function getInteractionWithContact(
   const r = rows[0];
   if (!r) return null;
   return {
-    interaction: { id: r.interactionId, contactId: r.interactionContactId, structuredData: r.interactionStructured },
+    interaction: { id: r.interactionId, contactId: r.interactionContactId!, structuredData: r.interactionStructured },
     contact: {
       id: r.contactId,
-      userId: r.contactUserId,
+      userId: r.contactUserId!,
       name: r.contactName,
       role: r.contactRole,
       company: r.contactCompany,
@@ -77,7 +77,7 @@ export async function setContactLink(
 }
 
 export async function findByNameAndCompany(
-  userId: number,
+  userId: string,
   name: string,
   company: string | null
 ): Promise<Contact | null> {
@@ -93,7 +93,7 @@ export async function findByNameAndCompany(
   return rows[0] ?? null;
 }
 
-export async function listContacts(userId: number, opts: { limit: number; offset: number }): Promise<Contact[]> {
+export async function listContacts(userId: string, opts: { limit: number; offset: number }): Promise<Contact[]> {
   return db().select().from(contacts)
     .where(eq(contacts.userId, userId))
     .orderBy(sql`${contacts.lastTouchedAt} DESC`)
