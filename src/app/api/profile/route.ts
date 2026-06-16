@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { eq } from 'drizzle-orm';
 import { getServerSession } from '@/lib/auth/session';
 import { upsertProfile, setSocial, setPhotoFromBytes, getById } from '@/services/UserProfileService';
+import { db } from '@/lib/db/client';
+import { users } from '@/lib/db/schema';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,5 +55,7 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('; ') }, { status: 400 });
   }
   const user = await upsertProfile({ id: session.user.id, ...parsed.data });
+  // Mark the user as onboarded the first time they save their basics
+  await db().update(users).set({ onboardedAt: new Date() }).where(eq(users.id, session.user.id));
   return NextResponse.json({ user });
 }

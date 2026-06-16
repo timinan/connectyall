@@ -24,6 +24,7 @@ export const users = pgTable('users', {
   socials: jsonb('socials').$type<Socials>().default({}).notNull(),
   timezone: text('timezone').default('UTC').notNull(),
   consentAcknowledgedAt: timestamp('consent_acknowledged_at', { withTimezone: true }),
+  onboardedAt: timestamp('onboarded_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
   emailIdx: uniqueIndex('users_email_unique').on(t.email),
