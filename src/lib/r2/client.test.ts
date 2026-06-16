@@ -20,7 +20,7 @@ vi.mock('../env', () => ({
   }),
 }));
 
-import { uploadPhoto } from './client';
+import { uploadPhoto, uploadBytes } from './client';
 
 describe('uploadPhoto', () => {
   it('uploads bytes to R2 and returns the public URL', async () => {
@@ -35,5 +35,13 @@ describe('uploadPhoto', () => {
       })
     );
     expect(sendMock).toHaveBeenCalled();
+  });
+});
+
+describe('uploadBytes', () => {
+  it('uploadBytes is an alias for uploadPhoto', async () => {
+    const bytes = new Uint8Array([1, 2, 3]);
+    const url = await uploadBytes({ key: 'captures/test.webm', bytes, contentType: 'audio/webm' });
+    expect(url).toBe('https://pub-test.r2.dev/captures/test.webm');
   });
 });
