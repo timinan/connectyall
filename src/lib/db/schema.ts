@@ -72,7 +72,8 @@ export const usageEvents = pgTable(
   {
     id: uuid('id').defaultRandom().primaryKey(),
     // Nullable, no FK: system-emitted events have no user, and we preserve usage history if a user account is deleted.
-    userId: bigint('user_id', { mode: 'number' }),
+    // uuid since Task 11 — migrate usage_events.user_id column to uuid in DB if needed.
+    userId: uuid('user_id'),
     kind: usageEventKindEnum('kind').notNull(),
     costUsd: numeric('cost_usd', { precision: 10, scale: 4 }),
     occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),

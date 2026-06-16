@@ -4,21 +4,26 @@ import { usageEvents } from '../lib/db/schema';
 import { env } from '../lib/env';
 import { transcribe } from './TranscriptionService';
 import { extract, type ExtractedContact } from './ExtractionService';
-import { getProfile } from './UserProfileService';
+import { getById } from './UserProfileService';
 import { createContact, addInteraction, findByNameAndCompany } from './ContactService';
+import { markReady, markFailed } from './InteractionService';
 import { renderCard, buildCaption } from './CardService';
 import { sendMessage, sendPhoto } from '../lib/telegram/send';
-import { uploadPhoto } from '../lib/r2/client';
+import { uploadBytes } from '../lib/r2/client';
 
 type CaptureInput = {
-  userId: number;
-  chatId: number;
-  fileId: string;
-  mimeType: string;
-  kind: 'voice' | 'audio' | 'video';
+  userId: string;        // users.id uuid
+  source: 'telegram-voice' | 'telegram-audio' | 'telegram-video' | 'web';
+  audio:
+    | { kind: 'telegram-file'; fileId: string; mimeType: string }
+    | { kind: 'r2-key'; key: string; mimeType: string };
+  preMintedInteractionId?: string;
+  replyTo:
+    | { surface: 'telegram'; chatId: number }
+    | { surface: 'web' };
 };
 
-async function capturesInLast24h(userId: number): Promise<number> {
+async function capturesInLast24h(userId: string): Promise<number> {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const rows = await db()
     .select({ count: sql<number>`count(*)::int` })
@@ -36,7 +41,14 @@ async function downloadTelegramFile(fileId: string): Promise<Uint8Array> {
   return new Uint8Array(await fileRes.arrayBuffer());
 }
 
-async function ensureContact(userId: number, c: ExtractedContact) {
+async function downloadFromR2(key: string): Promise<Uint8Array> {
+  const url = `${env().R2_PUBLIC_URL_BASE}/${key}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`R2 fetch failed: ${res.status}`);
+  return new Uint8Array(await res.arrayBuffer());
+}
+
+async function ensureContact(userId: string, c: ExtractedContact) {
   const existing = await findByNameAndCompany(userId, c.name, c.company);
   if (existing) return existing;
   return createContact({
@@ -52,32 +64,57 @@ async function ensureContact(userId: number, c: ExtractedContact) {
 export async function processCapture(input: CaptureInput): Promise<void> {
   const count = await capturesInLast24h(input.userId);
   if (count >= env().MAX_CAPTURES_PER_DAY) {
-    await sendMessage({ chatId: input.chatId }, `Daily limit hit (${env().MAX_CAPTURES_PER_DAY} captures). Try again tomorrow.`);
+    if (input.replyTo.surface === 'telegram') {
+      await sendMessage({ chatId: input.replyTo.chatId }, `Daily limit hit (${env().MAX_CAPTURES_PER_DAY} captures). Try again tomorrow.`);
+    } else if (input.preMintedInteractionId) {
+      await markFailed(input.preMintedInteractionId);
+    }
     return;
   }
 
-  const profile = await getProfile(input.userId);
+  const profile = await getById(input.userId);
   if (!profile) {
-    await sendMessage({ chatId: input.chatId }, "Your profile isn't set up yet. Run /start first.");
+    if (input.replyTo.surface === 'telegram') {
+      await sendMessage({ chatId: input.replyTo.chatId }, "Your profile isn't set up yet.");
+    } else if (input.preMintedInteractionId) {
+      await markFailed(input.preMintedInteractionId);
+    }
     return;
   }
 
   await db().insert(usageEvents).values({ userId: input.userId, kind: 'capture' });
 
-  const audio = await downloadTelegramFile(input.fileId);
+  const audio = input.audio.kind === 'telegram-file'
+    ? await downloadTelegramFile(input.audio.fileId)
+    : await downloadFromR2(input.audio.key);
+
   const transcript = await transcribe(audio);
 
   if (!transcript.trim()) {
-    await sendMessage({ chatId: input.chatId }, "Couldn't make out clear contact info. Try again or type it manually?");
+    if (input.replyTo.surface === 'telegram') {
+      await sendMessage({ chatId: input.replyTo.chatId }, "Couldn't make out clear contact info.");
+    } else if (input.preMintedInteractionId) {
+      await markFailed(input.preMintedInteractionId);
+    }
     return;
   }
 
   const extraction = await extract({ transcript, selfIntro: profile.selfIntro });
 
   if (extraction.contacts.length === 0) {
-    await sendMessage({ chatId: input.chatId }, "Got the notes but couldn't pin down a name. What should I call them?");
+    if (input.replyTo.surface === 'telegram') {
+      await sendMessage({ chatId: input.replyTo.chatId }, "Got the notes but couldn't pin down a name.");
+    } else if (input.preMintedInteractionId) {
+      await markFailed(input.preMintedInteractionId);
+    }
     return;
   }
+
+  const sourceKind: 'voice' | 'audio' | 'video' | 'manual' =
+    input.source === 'telegram-voice' ? 'voice'
+    : input.source === 'telegram-audio' ? 'audio'
+    : input.source === 'telegram-video' ? 'video'
+    : 'voice';
 
   for (const c of extraction.contacts) {
     const contact = await ensureContact(input.userId, c);
@@ -105,49 +142,61 @@ export async function processCapture(input: CaptureInput): Promise<void> {
       recap: c.recap,
     });
 
-    // First send the photo so we can capture Telegram's file_id, then persist the
-    // interaction with the file_id + handle so the inline handler can reuse it.
-    // The send button is wired with a placeholder query at first; we re-send below
-    // once we have the interaction id.
-    const handle = c.links.telegram?.replace(/^@/, '');
-    const { photoFileId } = await sendPhoto({ chatId: input.chatId }, png, caption);
+    let interactionId: string;
+    let photoFileId: string | null = null;
 
-    const interactionId = await addInteraction(contact.id, input.kind, {
-      ...c,
-      was_live_recording: extraction.was_live_recording,
-      photo_file_id: photoFileId,
-    });
+    if (input.replyTo.surface === 'telegram') {
+      const sent = await sendPhoto({ chatId: input.replyTo.chatId }, png, caption);
+      photoFileId = sent.photoFileId;
+      interactionId = await addInteraction(contact.id, sourceKind, {
+        ...c,
+        was_live_recording: extraction.was_live_recording,
+        photo_file_id: photoFileId,
+      });
+    } else {
+      interactionId = input.preMintedInteractionId ?? await addInteraction(contact.id, sourceKind, {
+        ...c,
+        was_live_recording: extraction.was_live_recording,
+        photo_file_id: null,
+      });
+      await markReady(interactionId, contact.id, {
+        ...c,
+        was_live_recording: extraction.was_live_recording,
+        photo_file_id: null,
+      });
+    }
 
-    await uploadPhoto({
+    await uploadBytes({
       key: `cards/${interactionId}.png`,
       bytes: new Uint8Array(png),
       contentType: 'image/png',
     });
 
-    // Now follow-up with a message that carries the "Send to" button bound to the
-    // interaction id we just created.
-    const sendButton = {
-      text: handle ? `📨 Send to @${handle}` : '📨 Send to someone',
-      switch_inline_query_chosen_chat: { query: interactionId, allow_user_chats: true },
-    };
-    const fixButton = {
-      text: handle ? `✏️ Wrong handle? Fix @${handle}` : `✏️ Add Telegram handle for ${c.name}`,
-      callback_data: `fix:${interactionId}`,
-    };
-    const replyMarkup = handle
-      ? {
-          inline_keyboard: [
-            [sendButton],
-            [{ text: `Open chat with @${handle}`, url: `https://t.me/${handle}` }],
-            [fixButton],
-          ],
-        }
-      : { inline_keyboard: [[sendButton], [fixButton]] };
+    if (input.replyTo.surface === 'telegram') {
+      const handle = c.links.telegram?.replace(/^@/, '');
+      const sendButton = {
+        text: handle ? `📨 Send to @${handle}` : '📨 Send to someone',
+        switch_inline_query_chosen_chat: { query: interactionId, allow_user_chats: true },
+      };
+      const fixButton = {
+        text: handle ? `✏️ Wrong handle? Fix @${handle}` : `✏️ Add Telegram handle for ${c.name}`,
+        callback_data: `fix:${interactionId}`,
+      };
+      const replyMarkup = handle
+        ? {
+            inline_keyboard: [
+              [sendButton],
+              [{ text: `Open chat with @${handle}`, url: `https://t.me/${handle}` }],
+              [fixButton],
+            ],
+          }
+        : { inline_keyboard: [[sendButton], [fixButton]] };
 
-    await sendMessage(
-      { chatId: input.chatId },
-      handle ? `Forward this card to @${handle} 👇` : `Forward this card to ${c.name} 👇`,
-      { replyMarkup }
-    );
+      await sendMessage(
+        { chatId: input.replyTo.chatId },
+        handle ? `Forward this card to @${handle} 👇` : `Forward this card to ${c.name} 👇`,
+        { replyMarkup }
+      );
+    }
   }
 }
