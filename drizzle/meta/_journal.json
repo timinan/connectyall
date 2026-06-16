@@ -29,6 +29,13 @@
       "when": 1781636600000,
       "tag": "0003_better_auth_user_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781636700000,
+      "tag": "0004_relax_telegram_user_id",
+      "breakpoints": true
     }
   ]
 }
