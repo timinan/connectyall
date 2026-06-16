@@ -9,9 +9,25 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const found = await getInteractionWithContact(id);
   if (!found) return { title: 'Connectyall' };
+  const sender = await getById(found.contact.userId);
+  const title = `Card from ${sender?.displayName ?? 'Connectyall'}`;
+  const description = (found.interaction.structuredData as { recap?: string } | null)?.recap ?? '';
+  const cardUrl = `${env().R2_PUBLIC_URL_BASE}/cards/${found.interaction.id}.png`;
   return {
-    title: `Card from ${(await getById(found.contact.userId))?.displayName ?? 'Connectyall'}`,
-    description: (found.interaction.structuredData as { recap?: string } | null)?.recap ?? '',
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: cardUrl, width: 1080, height: 1920, alt: title }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [cardUrl],
+    },
   };
 }
 

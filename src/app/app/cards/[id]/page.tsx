@@ -16,6 +16,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
   const [data, setData] = useState<CardData>({ status: 'processing' });
   const [editingHandle, setEditingHandle] = useState(false);
   const [newHandle, setNewHandle] = useState('');
+  const [shareFile, setShareFile] = useState<File | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,18 +37,37 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
     return () => { cancelled = true; };
   }, [id]);
 
-  async function share() {
-    if (!data.cardUrl || !data.caption || !data.shareUrl) return;
-    try {
-      const res = await fetch(data.cardUrl);
-      const blob = await res.blob();
-      const file = new File([blob], 'card.png', { type: 'image/png' });
-      const payload: ShareData = { title: `Card for ${data.contact?.name ?? ''}`, text: data.caption, url: data.shareUrl };
-      if (navigator.canShare?.({ files: [file] })) payload.files = [file];
-      await navigator.share(payload);
-    } catch {
-      // user cancelled or unsupported — fall through
+  // Pre-fetch the card PNG once the card is ready, so navigator.share can be called
+  // synchronously inside the click handler (iOS Safari requires the user gesture to
+  // still be active when share() is called — any await beforehand kills the gesture).
+  useEffect(() => {
+    if (data.status !== 'ready' || !data.cardUrl) return;
+    let cancelled = false;
+    fetch(data.cardUrl)
+      .then((r) => r.blob())
+      .then((blob) => {
+        if (cancelled) return;
+        setShareFile(new File([blob], 'card.png', { type: 'image/png' }));
+      })
+      .catch(() => { /* fall back to text+url-only share */ });
+    return () => { cancelled = true; };
+  }, [data.status, data.cardUrl]);
+
+  function share() {
+    if (!data.caption || !data.shareUrl) return;
+    const payload: ShareData = {
+      title: `Card for ${data.contact?.name ?? ''}`,
+      text: data.caption,
+      url: data.shareUrl,
+    };
+    if (shareFile && navigator.canShare?.({ files: [shareFile] })) {
+      payload.files = [shareFile];
     }
+    if (!navigator.share) {
+      alert('This browser does not support the Web Share API. Long-press the card image to forward it.');
+      return;
+    }
+    navigator.share(payload).catch(() => { /* user cancelled */ });
   }
 
   async function saveHandle() {
