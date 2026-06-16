@@ -30,14 +30,15 @@ export function auth() {
       },
     }),
     user: {
+      fields: {
+        name: 'displayName',
+      },
       additionalFields: {
         telegramUserId: { type: 'number', required: false },
         telegramUsername: { type: 'string', required: false },
-        displayName: { type: 'string', required: false },
         tagline: { type: 'string', required: false },
         photoR2Url: { type: 'string', required: false },
         selfIntro: { type: 'string', required: false },
-        socials: { type: 'string', required: false },
       },
     },
     plugins: [

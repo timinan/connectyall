@@ -1,5 +1,5 @@
 import {
-  pgTable, bigint, text, jsonb, timestamp, uuid, numeric, index, pgEnum, uniqueIndex,
+  pgTable, bigint, text, jsonb, timestamp, uuid, numeric, index, pgEnum, uniqueIndex, boolean,
 } from 'drizzle-orm/pg-core';
 
 export const sourceEnum = pgEnum('source', ['voice', 'audio', 'video', 'manual']);
@@ -11,7 +11,10 @@ export type ContactLinks = { telegram?: string; x?: string; linkedin?: string; w
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   email: text('email'),
+  emailVerified: boolean('email_verified').default(false).notNull(),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
+  image: text('image'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   telegramUserId: bigint('telegram_user_id', { mode: 'number' }),
   telegramUsername: text('telegram_username'),
   displayName: text('display_name').notNull(),
