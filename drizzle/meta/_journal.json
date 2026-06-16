@@ -36,6 +36,13 @@
       "when": 1781636700000,
       "tag": "0004_relax_telegram_user_id",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781636800000,
+      "tag": "0005_restore_display_name_default",
+      "breakpoints": true
     }
   ]
 }

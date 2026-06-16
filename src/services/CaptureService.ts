@@ -116,14 +116,12 @@ export async function processCapture(input: CaptureInput): Promise<void> {
     : input.source === 'telegram-video' ? 'video'
     : 'voice';
 
-  const senderName = profile.displayName ?? profile.email?.split('@')[0] ?? 'Connectyall user';
-
   for (const c of extraction.contacts) {
     const contact = await ensureContact(input.userId, c);
 
     const png = await renderCard({
       profile: {
-        displayName: senderName,
+        displayName: profile.displayName,
         tagline: profile.tagline,
         telegramUsername: profile.telegramUsername,
         photoR2Url: profile.photoR2Url,
@@ -135,7 +133,7 @@ export async function processCapture(input: CaptureInput): Promise<void> {
 
     const caption = buildCaption({
       profile: {
-        displayName: senderName,
+        displayName: profile.displayName,
         tagline: profile.tagline,
         telegramUsername: profile.telegramUsername,
         socials: profile.socials,
