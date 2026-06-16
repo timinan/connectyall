@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getInteractionWithContact } from '@/services/ContactService';
 import { getById } from '@/services/UserProfileService';
 import { env } from '@/lib/env';
+import { linkedinUrl, xUrl, telegramUrl, websiteUrl } from '@/lib/social-urls';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,17 +44,11 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
   const cardUrl = `${env().R2_PUBLIC_URL_BASE}/cards/${interaction.id}.png`;
 
   const links: Array<{ label: string; href: string }> = [];
-  if (profile.telegramUsername) links.push({ label: '📱 Telegram', href: `https://t.me/${profile.telegramUsername}` });
-  if (profile.socials.x) links.push({ label: '🐦 X', href: `https://x.com/${profile.socials.x}` });
-  if (profile.socials.linkedin) {
-    const handle = profile.socials.linkedin.replace(/^in\//, '');
-    links.push({ label: '💼 LinkedIn', href: `https://linkedin.com/in/${handle}` });
-  }
+  if (profile.telegramUsername) links.push({ label: '📱 Telegram', href: telegramUrl(profile.telegramUsername) });
+  if (profile.socials.x) links.push({ label: '🐦 X', href: xUrl(profile.socials.x) });
+  if (profile.socials.linkedin) links.push({ label: '💼 LinkedIn', href: linkedinUrl(profile.socials.linkedin) });
   if (profile.socials.email) links.push({ label: '📧 Email', href: `mailto:${profile.socials.email}` });
-  if (profile.socials.website) {
-    const url = /^https?:\/\//i.test(profile.socials.website) ? profile.socials.website : `https://${profile.socials.website}`;
-    links.push({ label: '🌐 Website', href: url });
-  }
+  if (profile.socials.website) links.push({ label: '🌐 Website', href: websiteUrl(profile.socials.website) });
 
   return (
     <main className="min-h-screen bg-neutral-950 text-white p-6 flex flex-col items-center">

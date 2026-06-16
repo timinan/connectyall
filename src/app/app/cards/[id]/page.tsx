@@ -1,6 +1,18 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
+import {
+  linkedinUrl, linkedinHandle, xUrl, xHandle, telegramUrl, telegramHandle,
+} from '@/lib/social-urls';
+
+const socialUrl = {
+  linkedin: linkedinUrl,
+  linkedinHandle,
+  x: xUrl,
+  xHandle,
+  telegram: telegramUrl,
+  telegramHandle,
+};
 
 type CardData = {
   status: 'processing' | 'ready' | 'failed';
@@ -143,12 +155,12 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           <p className="text-xs uppercase tracking-wide text-neutral-500">Send directly to {data.contact?.name?.split(' ')[0] ?? 'them'}</p>
           {data.contact?.telegram && (
             <a
-              href={`https://t.me/${data.contact.telegram}`}
+              href={socialUrl.telegram(data.contact.telegram)}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
             >
-              📱 Open Telegram with @{data.contact.telegram}
+              📱 Open Telegram with @{socialUrl.telegramHandle(data.contact.telegram)}
             </a>
           )}
           {data.contact?.email && (
@@ -161,22 +173,22 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           )}
           {data.contact?.x && (
             <a
-              href={`https://x.com/${data.contact.x}`}
+              href={socialUrl.x(data.contact.x)}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
             >
-              🐦 Open X profile of @{data.contact.x}
+              🐦 Open X profile of @{socialUrl.xHandle(data.contact.x)}
             </a>
           )}
           {data.contact?.linkedin && (
             <a
-              href={`https://linkedin.com/in/${data.contact.linkedin.replace(/^in\//, '')}`}
+              href={socialUrl.linkedin(data.contact.linkedin)}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
             >
-              💼 Open LinkedIn of {data.contact.linkedin.replace(/^in\//, '')}
+              💼 Open LinkedIn of {socialUrl.linkedinHandle(data.contact.linkedin)}
             </a>
           )}
           <p className="text-xs text-neutral-500 pt-1">After their chat opens, come back here and tap “📤 Share” → pick the same app to attach the card.</p>

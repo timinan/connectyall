@@ -3,6 +3,7 @@ import { Resvg } from '@resvg/resvg-js';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Socials } from '../lib/db/schema';
+import { linkedinUrl, xUrl, telegramUrl, websiteUrl } from '../lib/social-urls';
 
 const CAPTION_MAX = 1024;
 
@@ -15,11 +16,11 @@ export type CardProfile = {
 
 function socialsBlock(profile: CardProfile): string {
   const lines: string[] = [];
-  if (profile.telegramUsername) lines.push(`📱 t.me/${profile.telegramUsername}`);
-  if (profile.socials.x) lines.push(`🐦 x.com/${profile.socials.x}`);
-  if (profile.socials.linkedin) lines.push(`💼 ${profile.socials.linkedin}`);
+  if (profile.telegramUsername) lines.push(`📱 ${telegramUrl(profile.telegramUsername)}`);
+  if (profile.socials.x) lines.push(`🐦 ${xUrl(profile.socials.x)}`);
+  if (profile.socials.linkedin) lines.push(`💼 ${linkedinUrl(profile.socials.linkedin)}`);
   if (profile.socials.email) lines.push(`📧 ${profile.socials.email}`);
-  if (profile.socials.website) lines.push(`🌐 ${profile.socials.website}`);
+  if (profile.socials.website) lines.push(`🌐 ${websiteUrl(profile.socials.website)}`);
   return lines.join('\n');
 }
 
