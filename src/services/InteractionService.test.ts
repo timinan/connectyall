@@ -55,9 +55,9 @@ describe('InteractionService', () => {
     expect(insertMock).toHaveBeenCalled();
   });
 
-  it('markReady updates contactId, structuredData, status', async () => {
+  it('markReady updates interaction row and bumps contacts.lastTouchedAt', async () => {
     await markReady('int-1', 'contact-1', { recap: 'hi' });
-    expect(updateMock).toHaveBeenCalled();
+    expect(updateMock).toHaveBeenCalledTimes(2);
   });
 
   it('markFailed updates status to failed', async () => {

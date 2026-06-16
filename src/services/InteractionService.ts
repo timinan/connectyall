@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../lib/db/client';
-import { interactions, type NewInteraction } from '../lib/db/schema';
+import { interactions, contacts, type NewInteraction } from '../lib/db/schema';
 
 export async function mintStub(source: NewInteraction['source']): Promise<string> {
   const [row] = await db()
@@ -23,6 +23,10 @@ export async function markReady(
     .update(interactions)
     .set({ contactId, structuredData, status: 'ready' })
     .where(eq(interactions.id, interactionId));
+  await db()
+    .update(contacts)
+    .set({ lastTouchedAt: new Date() })
+    .where(eq(contacts.id, contactId));
 }
 
 export async function markFailed(interactionId: string): Promise<void> {

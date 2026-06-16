@@ -22,7 +22,7 @@ vi.mock('../lib/db/client', () => ({
   db: () => ({ insert: insertMock, update: updateMock, select: selectMock }),
 }));
 
-import { createContact, addInteraction, findByNameAndCompany } from './ContactService';
+import { createContact, findByNameAndCompany } from './ContactService';
 
 describe('ContactService', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -31,12 +31,6 @@ describe('ContactService', () => {
     const contact = await createContact({ userId: 'user-uuid-1', name: 'Sarah', role: 'PM', company: 'Acme', emails: [], links: {} });
     expect(contact.name).toBe('Sarah');
     expect(insertMock).toHaveBeenCalled();
-  });
-
-  it('addInteraction inserts an interaction row and bumps last_touched_at', async () => {
-    await addInteraction('uuid-1', 'voice', { recap: 'we talked' });
-    expect(insertMock).toHaveBeenCalled();
-    expect(updateMock).toHaveBeenCalled();
   });
 
   it('findByNameAndCompany returns first match (case-insensitive)', async () => {

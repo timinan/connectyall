@@ -5,7 +5,6 @@ describe('loadEnv', () => {
   it('parses required fields', () => {
     const env = loadEnv(process.env);
     expect(env.DATABASE_URL).toMatch(/^postgres/);
-    expect(env.TELEGRAM_BOT_TOKEN).toBe('test-bot-token');
     expect(env.MAX_CAPTURES_PER_DAY).toBe(50);
   });
 

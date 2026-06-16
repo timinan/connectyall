@@ -108,19 +108,6 @@ export default function ProfilePage() {
         >
           {saving ? 'Saving…' : 'Done — start recording'}
         </button>
-        <div className="pt-4 border-t border-neutral-800">
-          <button
-            type="button"
-            onClick={async () => {
-              const res = await fetch('/api/telegram-link', { method: 'POST' });
-              const { url } = await res.json();
-              window.location.href = url;
-            }}
-            className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
-          >
-            🔗 Connect Telegram (optional)
-          </button>
-        </div>
       </form>
     </div>
   );

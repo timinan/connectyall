@@ -2,7 +2,6 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '../lib/db/client';
 import { users, type Socials, type User, type NewUser } from '../lib/db/schema';
 import { uploadPhoto } from '../lib/r2/client';
-import { env } from '../lib/env';
 
 export async function getById(id: string): Promise<User | null> {
   const rows = await db().select().from(users).where(eq(users.id, id)).limit(1);
@@ -72,29 +71,6 @@ export async function setSocial(
     .update(users)
     .set({ socials: sql`${users.socials} || ${JSON.stringify({ [kind]: value })}::jsonb` })
     .where(eq(users.id, userId));
-}
-
-export async function setPhotoFromTelegram(
-  userId: string,
-  telegramFileId: string
-): Promise<string> {
-  const { TELEGRAM_BOT_TOKEN } = env();
-  const meta = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${telegramFileId}`)
-    .then((r) => r.json() as Promise<{ ok: boolean; result: { file_path: string } }>);
-  if (!meta.ok) throw new Error('Telegram getFile failed');
-
-  const fileRes = await fetch(`https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${meta.result.file_path}`);
-  const bytes = new Uint8Array(await fileRes.arrayBuffer());
-
-  const ext = meta.result.file_path.split('.').pop() ?? 'jpg';
-  const url = await uploadPhoto({
-    key: `profiles/${userId}.${ext}`,
-    bytes,
-    contentType: ext === 'png' ? 'image/png' : 'image/jpeg',
-  });
-
-  await db().update(users).set({ photoR2Url: url }).where(eq(users.id, userId));
-  return url;
 }
 
 export async function setPhotoFromBytes(

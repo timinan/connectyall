@@ -50,6 +50,13 @@
       "when": 1781636900000,
       "tag": "0006_onboarded_at",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781637000000,
+      "tag": "0007_drop_telegram_link_tokens",
+      "breakpoints": true
     }
   ]
 }

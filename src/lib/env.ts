@@ -3,8 +3,6 @@ import { z } from 'zod';
 const schema = z
   .object({
     DATABASE_URL: z.string().url(),
-    TELEGRAM_BOT_TOKEN: z.string().min(1),
-    TELEGRAM_BOT_USERNAME: z.string().min(1),
     LLM_PROVIDER: z.enum(['anthropic', 'google', 'openai']).default('anthropic'),
     LLM_MODEL: z.string().default('claude-haiku-4-5'),
     ANTHROPIC_API_KEY: z.string().optional(),
