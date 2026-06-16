@@ -32,3 +32,4 @@ coverage
 *.tsbuildinfo
 next-env.d.ts
 preview-card.png
+.superpowers
