@@ -43,8 +43,9 @@ export function buildCaption(input: {
   return build(recap.slice(0, allowedRecap).trimEnd() + '...');
 }
 
-const W = 1080;
-const H = 1920;
+// 512×512 — sized to read well as a chat-thread image without dominating.
+const SIZE = 512;
+const PHOTO = 480; // small margin around photo
 
 let fontsCache: { regular: Buffer; bold: Buffer } | null = null;
 function loadFonts() {
@@ -64,114 +65,57 @@ function pickBg(seed: string) {
   return PALETTE[h % PALETTE.length];
 }
 
-function socialRow(profile: CardProfile): string {
-  const items: string[] = [];
-  if (profile.telegramUsername) items.push(`t.me/${profile.telegramUsername}`);
-  if (profile.socials.x) items.push(`x.com/${profile.socials.x}`);
-  if (profile.socials.linkedin) items.push(profile.socials.linkedin);
-  if (profile.socials.email) items.push(profile.socials.email);
-  return items.slice(0, 4).join('  •  ');
-}
-
 export async function renderCard(input: {
   profile: CardProfile & { photoR2Url: string | null };
-  contactName: string;
-  recap: string;
 }): Promise<Buffer> {
   const fonts = loadFonts();
-  const bg = pickBg(input.contactName);
-  const initial = input.profile.displayName.charAt(0).toUpperCase();
+  const initial = (input.profile.displayName || '?').charAt(0).toUpperCase();
+  const fallbackBg = pickBg(input.profile.displayName || initial);
+
+  const photo = input.profile.photoR2Url
+    ? {
+        type: 'img',
+        props: {
+          src: input.profile.photoR2Url,
+          width: PHOTO,
+          height: PHOTO,
+          style: { borderRadius: PHOTO / 2, objectFit: 'cover' },
+        },
+      }
+    : {
+        type: 'div',
+        props: {
+          style: {
+            width: PHOTO, height: PHOTO, borderRadius: PHOTO / 2,
+            backgroundColor: fallbackBg, color: '#FFFFFF',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 220, fontWeight: 700, fontFamily: 'Inter',
+          },
+          children: initial,
+        },
+      };
 
   const tree = {
     type: 'div',
     props: {
       style: {
-        width: W, height: H, display: 'flex', flexDirection: 'column',
-        backgroundColor: bg, color: '#FFFFFF', padding: 80,
+        width: SIZE, height: SIZE,
+        backgroundColor: '#FFFFFF',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: 'Inter',
       },
-      children: [
-        {
-          type: 'div',
-          props: {
-            style: { fontSize: 56, fontWeight: 400, opacity: 0.85, marginBottom: 80 },
-            children: `For ${input.contactName}`,
-          },
-        },
-        {
-          type: 'div',
-          props: {
-            style: {
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32,
-              marginBottom: 80,
-            },
-            children: [
-              input.profile.photoR2Url
-                ? {
-                    type: 'img',
-                    props: {
-                      src: input.profile.photoR2Url,
-                      width: 280, height: 280,
-                      style: { borderRadius: 140, objectFit: 'cover' },
-                    },
-                  }
-                : {
-                    type: 'div',
-                    props: {
-                      style: {
-                        width: 280, height: 280, borderRadius: 140,
-                        backgroundColor: 'rgba(255,255,255,0.18)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 128, fontWeight: 700,
-                      },
-                      children: initial,
-                    },
-                  },
-              { type: 'div', props: { style: { fontSize: 96, fontWeight: 700 }, children: input.profile.displayName } },
-              input.profile.tagline
-                ? { type: 'div', props: { style: { fontSize: 36, opacity: 0.9, textAlign: 'center' }, children: input.profile.tagline } }
-                : null,
-            ].filter(Boolean),
-          },
-        },
-        {
-          type: 'div',
-          props: {
-            style: {
-              fontSize: 40, fontStyle: 'italic', lineHeight: 1.3,
-              marginBottom: 60, opacity: 0.95,
-            },
-            children: `"We talked about: ${input.recap}"`,
-          },
-        },
-        {
-          type: 'div',
-          props: {
-            style: { display: 'flex', flexWrap: 'wrap', fontSize: 28, opacity: 0.85, lineHeight: 1.5 },
-            children: socialRow(input.profile),
-          },
-        },
-        {
-          type: 'div',
-          props: {
-            style: {
-              marginTop: 'auto', textAlign: 'right', fontSize: 22, opacity: 0.55,
-            },
-            children: 'made with Connectyall',
-          },
-        },
-      ],
+      children: [photo],
     },
   };
 
   const svg = await satori(tree as any, {
-    width: W, height: H,
+    width: SIZE, height: SIZE,
     fonts: [
       { name: 'Inter', data: fonts.regular, weight: 400, style: 'normal' },
       { name: 'Inter', data: fonts.bold, weight: 700, style: 'normal' },
     ],
   });
 
-  const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: W } });
+  const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: SIZE } });
   return resvg.render().asPng();
 }

@@ -8,8 +8,6 @@ async function main() {
       telegramUsername: 'timnan', photoR2Url: null,
       socials: { x: 'timnan', linkedin: 'in/timnan', email: 'tim@example.com' },
     },
-    contactName: 'Sarah Chen',
-    recap: 'we talked about whether USDC replaces bank rails',
   });
   fs.writeFileSync('preview-card.png', png);
   console.log('Wrote preview-card.png');
