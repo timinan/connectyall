@@ -32,7 +32,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const profile = await getById(session.user.id);
   if (!profile) return NextResponse.json({ error: 'profile missing' }, { status: 500 });
 
-  const structured = interaction.structuredData as { recap?: string; links?: { telegram?: string } } | null;
+  const structured = interaction.structuredData as
+    | { recap?: string; links?: { telegram?: string; x?: string; linkedin?: string; website?: string }; emails?: string[] }
+    | null;
   const recap = structured?.recap ?? '';
   const caption = buildCaption({
     profile: {
@@ -48,8 +50,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   return NextResponse.json({
     status: 'ready',
     interaction: { id: interaction.id, recap },
-    contact: { id: contact.id, name: contact.name, telegram: structured?.links?.telegram ?? null },
-    cardUrl: `${env().R2_PUBLIC_URL_BASE}/cards/${interaction.id}.png`,
+    contact: {
+      id: contact.id,
+      name: contact.name,
+      telegram: structured?.links?.telegram ?? contact.links?.telegram ?? null,
+      x: structured?.links?.x ?? contact.links?.x ?? null,
+      linkedin: structured?.links?.linkedin ?? contact.links?.linkedin ?? null,
+      email: (structured?.emails && structured.emails[0]) ?? contact.emails?.[0] ?? null,
+    },
+    cardUrl: `/api/cards/${interaction.id}/image`, // same-origin proxy
+    cardUrlExternal: `${env().R2_PUBLIC_URL_BASE}/cards/${interaction.id}.png`,
     caption,
     shareUrl: `${env().BASE_URL}/c/${interaction.id}`,
   });
