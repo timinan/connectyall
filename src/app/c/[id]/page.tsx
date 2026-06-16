@@ -20,11 +20,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     openGraph: {
       title,
       description,
-      images: [{ url: cardUrl, width: 1080, height: 1920, alt: title }],
+      images: [{ url: cardUrl, width: 512, height: 512, alt: title }],
       type: 'website',
     },
     twitter: {
-      card: 'summary_large_image',
+      card: 'summary',
       title,
       description,
       images: [cardUrl],
@@ -53,7 +53,13 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
   return (
     <main className="min-h-screen bg-neutral-950 text-white p-6 flex flex-col items-center">
       <div className="max-w-md w-full space-y-6">
-        <img src={cardUrl} alt={`Card for ${contact.name}`} className="w-full rounded-2xl" />
+        <div className="flex justify-center pt-4">
+          <img
+            src={cardUrl}
+            alt={profile.displayName}
+            className="w-48 h-48 rounded-full object-cover bg-white"
+          />
+        </div>
         <div className="space-y-1 text-center">
           <p className="text-xs uppercase tracking-wide text-neutral-400">For {contact.name}</p>
           <h1 className="text-3xl font-bold">{profile.displayName}</h1>

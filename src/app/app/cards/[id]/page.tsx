@@ -124,7 +124,11 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <div className="p-6 max-w-md mx-auto space-y-4">
-      {data.cardUrl && <img src={data.cardUrl} alt="card" className="w-full rounded-2xl" />}
+      {data.cardUrl && (
+        <div className="flex justify-center pt-2">
+          <img src={data.cardUrl} alt="card" className="w-40 h-40 rounded-full object-cover bg-white" />
+        </div>
+      )}
       <div className="space-y-1">
         <p className="text-lg font-semibold">For {data.contact?.name}</p>
         <p className="italic text-neutral-300">&quot;{data.interaction?.recap}&quot;</p>

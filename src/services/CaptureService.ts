@@ -89,8 +89,6 @@ export async function processCapture(input: CaptureInput): Promise<void> {
       photoR2Url: profile.photoR2Url,
       socials: profile.socials,
     },
-    contactName: firstContact.name,
-    recap: firstContact.recap,
   });
   await markReady(input.interactionId, firstResult.id, {
     ...firstContact,
@@ -115,8 +113,6 @@ export async function processCapture(input: CaptureInput): Promise<void> {
         photoR2Url: profile.photoR2Url,
         socials: profile.socials,
       },
-      contactName: c.name,
-      recap: c.recap,
     });
     await markReady(extraId, contact.id, {
       ...c,
