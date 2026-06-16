@@ -6,7 +6,7 @@ const {
   insertMock,
   transcribeMock,
   extractMock,
-  getProfileMock,
+  getByIdMock,
   createContactMock,
   addInteractionMock,
   findByNameAndCompanyMock,
@@ -15,13 +15,15 @@ const {
   sendPhotoMock,
   sendMessageMock,
   uploadPhotoMock,
+  markReadyMock,
+  markFailedMock,
 } = vi.hoisted(() => {
   const countMock = vi.fn().mockResolvedValue([{ count: 0 }]);
   const insertValuesMock = vi.fn().mockResolvedValue(undefined);
   const insertMock = vi.fn().mockReturnValue({ values: insertValuesMock });
   const transcribeMock = vi.fn();
   const extractMock = vi.fn();
-  const getProfileMock = vi.fn();
+  const getByIdMock = vi.fn();
   const createContactMock = vi.fn();
   const addInteractionMock = vi.fn();
   const findByNameAndCompanyMock = vi.fn();
@@ -30,12 +32,15 @@ const {
   const sendPhotoMock = vi.fn().mockResolvedValue(undefined);
   const sendMessageMock = vi.fn().mockResolvedValue(undefined);
   const uploadPhotoMock = vi.fn().mockResolvedValue('https://pub-test.r2.dev/cards/test.png');
+  const markReadyMock = vi.fn().mockResolvedValue(undefined);
+  const markFailedMock = vi.fn().mockResolvedValue(undefined);
   return {
     countMock, insertValuesMock, insertMock,
-    transcribeMock, extractMock, getProfileMock,
+    transcribeMock, extractMock, getByIdMock,
     createContactMock, addInteractionMock, findByNameAndCompanyMock,
     renderCardMock, buildCaptionMock,
     sendPhotoMock, sendMessageMock, uploadPhotoMock,
+    markReadyMock, markFailedMock,
   };
 });
 
@@ -46,13 +51,15 @@ vi.mock('../lib/db/client', () => ({
   }),
 }));
 
-vi.mock('../lib/env', () => ({ env: () => ({ MAX_CAPTURES_PER_DAY: 3, TELEGRAM_BOT_TOKEN: 'tok' }) }));
+vi.mock('../lib/env', () => ({ env: () => ({ MAX_CAPTURES_PER_DAY: 3, TELEGRAM_BOT_TOKEN: 'tok', R2_PUBLIC_URL_BASE: 'https://pub-test.r2.dev' }) }));
 
 vi.mock('./TranscriptionService', () => ({ transcribe: transcribeMock }));
 
 vi.mock('./ExtractionService', () => ({ extract: extractMock }));
 
-vi.mock('./UserProfileService', () => ({ getProfile: getProfileMock }));
+vi.mock('./UserProfileService', () => ({ getById: getByIdMock }));
+
+vi.mock('./InteractionService', () => ({ markReady: markReadyMock, markFailed: markFailedMock }));
 
 vi.mock('./ContactService', () => ({
   createContact: createContactMock,
@@ -70,7 +77,7 @@ vi.mock('@/lib/telegram/send', () => ({
   sendMessage: sendMessageMock,
 }));
 
-vi.mock('../lib/r2/client', () => ({ uploadPhoto: uploadPhotoMock }));
+vi.mock('../lib/r2/client', () => ({ uploadPhoto: uploadPhotoMock, uploadBytes: uploadPhotoMock }));
 
 import { processCapture } from './CaptureService';
 
@@ -78,8 +85,8 @@ describe('processCapture', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     countMock.mockResolvedValue([{ count: 0 }]);
-    getProfileMock.mockResolvedValue({
-      telegramUserId: 1, displayName: 'Tim', tagline: 't',
+    getByIdMock.mockResolvedValue({
+      id: 'user-uuid-1', telegramUserId: 1, displayName: 'Tim', tagline: 't',
       telegramUsername: 'timnan', photoR2Url: null, selfIntro: 's',
       socials: {},
     });
@@ -108,7 +115,12 @@ describe('processCapture', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, result: { file_path: 'voice/foo.oga' } })))
       .mockResolvedValueOnce(new Response(new Uint8Array([1, 2, 3]).buffer));
 
-    await processCapture({ userId: 1, chatId: 1, fileId: 'F', mimeType: 'audio/ogg', kind: 'voice' });
+    await processCapture({
+      userId: 'user-uuid-1',
+      source: 'telegram-voice',
+      audio: { kind: 'telegram-file', fileId: 'F', mimeType: 'audio/ogg' },
+      replyTo: { surface: 'telegram', chatId: 1 },
+    });
 
     expect(transcribeMock).toHaveBeenCalled();
     expect(extractMock).toHaveBeenCalled();
@@ -120,7 +132,12 @@ describe('processCapture', () => {
 
   it('refuses when daily cap is reached', async () => {
     countMock.mockResolvedValueOnce([{ count: 3 }]); // cap=3, hits limit
-    await processCapture({ userId: 1, chatId: 1, fileId: 'F', mimeType: 'audio/ogg', kind: 'voice' });
+    await processCapture({
+      userId: 'user-uuid-1',
+      source: 'telegram-voice',
+      audio: { kind: 'telegram-file', fileId: 'F', mimeType: 'audio/ogg' },
+      replyTo: { surface: 'telegram', chatId: 1 },
+    });
     expect(transcribeMock).not.toHaveBeenCalled();
     expect(sendMessageMock).toHaveBeenCalledWith(expect.objectContaining({ chatId: 1 }), expect.stringContaining('Daily limit'));
   });
@@ -131,7 +148,12 @@ describe('processCapture', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, result: { file_path: 'voice/foo.oga' } })))
       .mockResolvedValueOnce(new Response(new Uint8Array([1]).buffer));
 
-    await processCapture({ userId: 1, chatId: 1, fileId: 'F', mimeType: 'audio/ogg', kind: 'voice' });
+    await processCapture({
+      userId: 'user-uuid-1',
+      source: 'telegram-voice',
+      audio: { kind: 'telegram-file', fileId: 'F', mimeType: 'audio/ogg' },
+      replyTo: { surface: 'telegram', chatId: 1 },
+    });
     expect(sendMessageMock).toHaveBeenCalledWith(expect.objectContaining({ chatId: 1 }), expect.stringContaining("couldn't pin down a name"));
     expect(sendPhotoMock).not.toHaveBeenCalled();
   });

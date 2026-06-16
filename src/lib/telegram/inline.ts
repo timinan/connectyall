@@ -1,7 +1,7 @@
 import { bot } from './bot';
 import { env } from '../env';
 import { getInteractionWithContact } from '@/services/ContactService';
-import { getProfile } from '@/services/UserProfileService';
+import { getById } from '@/services/UserProfileService';
 import { buildCaption } from '@/services/CardService';
 
 bot().on('inline_query', async (ctx) => {
@@ -22,7 +22,7 @@ bot().on('inline_query', async (ctx) => {
     }
 
     const { interaction, contact } = found;
-    const profile = await getProfile(contact.userId);
+    const profile = await getById(contact.userId);
     if (!profile) {
       console.log('[inline_query] profile not found', { userId: contact.userId });
       await ctx.answerInlineQuery([], { cache_time: 0 });
