@@ -5,8 +5,16 @@ import { use, useEffect, useState } from 'react';
 type CardData = {
   status: 'processing' | 'ready' | 'failed';
   interaction?: { id: string; recap: string };
-  contact?: { id: string; name: string; telegram: string | null };
-  cardUrl?: string;
+  contact?: {
+    id: string;
+    name: string;
+    telegram: string | null;
+    x: string | null;
+    linkedin: string | null;
+    email: string | null;
+  };
+  cardUrl?: string;          // same-origin proxy
+  cardUrlExternal?: string;  // direct R2 URL — useful for download attribute
   caption?: string;
   shareUrl?: string;
 };
@@ -128,14 +136,62 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           <button onClick={saveHandle} className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold">Save</button>
         </div>
       )}
-      <button onClick={share} className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold">📤 Share</button>
-      <button
-        onClick={() => navigator.clipboard.writeText(data.caption ?? '')}
-        className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
-      >
-        📋 Copy caption
-      </button>
-      <a href={data.cardUrl} download className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white">💾 Save image</a>
+      <button onClick={share} className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold">📤 Share (pick app)</button>
+
+      {(data.contact?.telegram || data.contact?.email || data.contact?.x || data.contact?.linkedin) && (
+        <div className="space-y-2 pt-2">
+          <p className="text-xs uppercase tracking-wide text-neutral-500">Send directly to {data.contact?.name?.split(' ')[0] ?? 'them'}</p>
+          {data.contact?.telegram && (
+            <a
+              href={`https://t.me/${data.contact.telegram}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
+            >
+              📱 Open Telegram with @{data.contact.telegram}
+            </a>
+          )}
+          {data.contact?.email && (
+            <a
+              href={`mailto:${data.contact.email}?subject=${encodeURIComponent(`Card from ${data.interaction?.recap ? '' : 'me'}`)}&body=${encodeURIComponent(data.caption ?? '')}%0A%0A${encodeURIComponent(data.shareUrl ?? '')}`}
+              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
+            >
+              ✉️ Email {data.contact.email}
+            </a>
+          )}
+          {data.contact?.x && (
+            <a
+              href={`https://x.com/${data.contact.x}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
+            >
+              🐦 Open X profile of @{data.contact.x}
+            </a>
+          )}
+          {data.contact?.linkedin && (
+            <a
+              href={`https://linkedin.com/in/${data.contact.linkedin.replace(/^in\//, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
+            >
+              💼 Open LinkedIn of {data.contact.linkedin.replace(/^in\//, '')}
+            </a>
+          )}
+          <p className="text-xs text-neutral-500 pt-1">After their chat opens, come back here and tap “📤 Share” → pick the same app to attach the card.</p>
+        </div>
+      )}
+
+      <div className="pt-2 space-y-2">
+        <button
+          onClick={() => navigator.clipboard.writeText(data.caption ?? '')}
+          className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
+        >
+          📋 Copy caption
+        </button>
+        <a href={data.cardUrlExternal ?? data.cardUrl} download className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white">💾 Save image</a>
+      </div>
     </div>
   );
 }
