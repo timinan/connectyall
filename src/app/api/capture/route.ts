@@ -35,10 +35,9 @@ export async function POST(req: Request) {
     name: 'capture/process',
     data: {
       userId: session.user.id,
-      source: 'web',
-      audio: { kind: 'r2-key', key, mimeType: file.type },
-      preMintedInteractionId: interactionId,
-      replyTo: { surface: 'web' },
+      audioR2Key: key,
+      mimeType: baseMime,
+      interactionId,
     },
   });
 

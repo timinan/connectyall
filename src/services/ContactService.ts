@@ -2,25 +2,12 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../lib/db/client';
 import {
   contacts, interactions,
-  type Contact, type NewContact, type NewInteraction,
+  type Contact, type NewContact,
 } from '../lib/db/schema';
 
 export async function createContact(input: NewContact): Promise<Contact> {
   const [row] = await db().insert(contacts).values(input).returning();
   return row;
-}
-
-export async function addInteraction(
-  contactId: string,
-  source: NewInteraction['source'],
-  structuredData: unknown
-): Promise<string> {
-  const [row] = await db()
-    .insert(interactions)
-    .values({ contactId, source, structuredData })
-    .returning({ id: interactions.id });
-  await db().update(contacts).set({ lastTouchedAt: new Date() }).where(eq(contacts.id, contactId));
-  return row.id;
 }
 
 export async function getInteractionWithContact(

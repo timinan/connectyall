@@ -19,7 +19,7 @@ vi.mock('../lib/r2/client', () => ({
   uploadPhoto: vi.fn().mockResolvedValue('https://pub-test.r2.dev/profiles/1.jpg'),
 }));
 
-import { getProfile, upsertProfile, setPhotoFromTelegram, setSocial, getById, getByEmail } from './UserProfileService';
+import { getProfile, upsertProfile, setSocial, getById, getByEmail } from './UserProfileService';
 
 describe('UserProfileService', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -49,16 +49,6 @@ describe('UserProfileService', () => {
     const setArg = updateSetMock.mock.calls[0][0];
     expect(setArg).toHaveProperty('socials');
     expect(typeof setArg.socials).toBe('object');
-  });
-
-  it('setPhotoFromTelegram downloads, uploads to R2, persists URL', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, result: { file_path: 'photos/file.jpg' } })))
-      .mockResolvedValueOnce(new Response(new Uint8Array([1, 2, 3]).buffer));
-
-    const url = await setPhotoFromTelegram('user-uuid-1', 'AgAC...');
-    expect(url).toBe('https://pub-test.r2.dev/profiles/1.jpg');
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
   it('getById returns the user when found', async () => {
