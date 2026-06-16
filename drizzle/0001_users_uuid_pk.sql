@@ -33,3 +33,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS "users_telegram_user_id_unique" ON "users"("te
 -- 6. Interactions changes — relax contact_id, add status enum
 ALTER TABLE "interactions" ALTER COLUMN "contact_id" DROP NOT NULL;
 ALTER TABLE "interactions" ADD COLUMN "status" "public"."interaction_status" DEFAULT 'ready' NOT NULL;
+
+-- 7. Rebuild usage_events.user_id from bigint (telegram_user_id) to uuid (users.id)
+ALTER TABLE "usage_events" ADD COLUMN "user_id_new" uuid;
+UPDATE "usage_events" SET "user_id_new" = (SELECT "id" FROM "users" WHERE "users"."telegram_user_id" = "usage_events"."user_id");
+ALTER TABLE "usage_events" DROP COLUMN "user_id";
+ALTER TABLE "usage_events" RENAME COLUMN "user_id_new" TO "user_id";
+
+-- Recreate the indexes that were on the old user_id column
+CREATE INDEX IF NOT EXISTS "usage_events_occurred_at_idx" ON "usage_events"("occurred_at");
+CREATE INDEX IF NOT EXISTS "usage_events_user_occurred_at_idx" ON "usage_events"("user_id","occurred_at");
