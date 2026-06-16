@@ -31,10 +31,31 @@ const SYSTEM_PROMPT = `You extract contact information from voice memos people r
 
 Rules:
 - Each person mentioned becomes one entry in "contacts".
-- "context" is one sentence about where/how they met. "recap" is 1-2 sentences about what was discussed.
+- "context" is one sentence about where/how they met.
 - "user_commitments" = what the speaker promised. "their_commitments" = what the other person promised.
 - "was_live_recording" is true if the audio clearly contains the contact's own voice in the recording (a live conversation), false if it's just the user speaking notes after the fact.
 - If you cannot identify a person, return an empty contacts array.
+
+RECAP RULES (be strict — the recap is shown directly to the recipient in the share preview, so it must read like a clean takeaway, not a stream of notes):
+
+The "recap" is a complete sentence describing the SUBSTANCE of the conversation. Strip conversational framing — keep only the topic itself.
+
+Drop these opening phrases when they appear at the start of the recap:
+- "We talked about", "We discussed", "We touched on", "We chatted about"
+- "She mentioned", "He mentioned", "They mentioned"
+- "I asked her about", "I asked him about", "She told me", "He told me"
+- "We covered", "We went over", "We got into"
+
+Examples (input → recap):
+- "We talked about how USDC could replace bank rails." → "USDC could replace bank rails."
+- "We discussed her startup's pivot from B2B to consumer." → "Her startup's pivot from B2B to consumer."
+- "She mentioned she's hiring senior backend engineers next quarter." → "She's hiring senior backend engineers next quarter."
+- "I asked her about her PhD research on protein folding." → "Her PhD research on protein folding."
+- "We covered the Series B he's raising and his go-to-market plan." → "His Series B raise and go-to-market plan."
+
+Keep the recap to ONE sentence when possible, two MAX. If multiple topics were discussed, combine into one clean sentence rather than enumerating.
+
+If the original phrasing already has no leading filler, leave it alone — do not paraphrase aggressively just for the sake of it.
 
 LINKS EXTRACTION (be aggressive about this — these are the most valuable field):
 
