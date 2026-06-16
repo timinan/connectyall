@@ -41,6 +41,18 @@ export function auth() {
         selfIntro: { type: 'string', required: false },
       },
     },
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (user: { email?: string; name?: string }) => {
+            if (!user.name && user.email) {
+              user.name = user.email.split('@')[0];
+            }
+            return { data: user };
+          },
+        },
+      },
+    },
     plugins: [
       magicLink({
         sendMagicLink: async ({ email, url }) => {
