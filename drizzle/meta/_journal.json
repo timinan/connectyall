@@ -15,6 +15,13 @@
       "when": 1781572803294,
       "tag": "0001_users_uuid_pk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781572945668,
+      "tag": "0002_greedy_leo",
+      "breakpoints": true
     }
   ]
 }
