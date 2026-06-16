@@ -17,7 +17,7 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   telegramUserId: bigint('telegram_user_id', { mode: 'number' }),
   telegramUsername: text('telegram_username'),
-  displayName: text('display_name').notNull(),
+  displayName: text('display_name'),
   tagline: text('tagline'),
   photoR2Url: text('photo_r2_url'),
   selfIntro: text('self_intro'),
