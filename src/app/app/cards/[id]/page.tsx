@@ -3,6 +3,7 @@
 import { use, useEffect, useRef, useState } from 'react';
 import {
   linkedinUrl, linkedinHandle, xUrl, xHandle, telegramUrl, telegramHandle,
+  whatsappUrl, wechatUrl, lineUrl,
 } from '@/lib/social-urls';
 
 const socialUrl = {
@@ -12,9 +13,12 @@ const socialUrl = {
   xHandle,
   telegram: telegramUrl,
   telegramHandle,
+  whatsapp: whatsappUrl,
+  wechat: wechatUrl,
+  line: lineUrl,
 };
 
-type PreferredChannel = 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website';
+type PreferredChannel = 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line';
 
 type CardData = {
   status: 'processing' | 'ready' | 'failed';
@@ -27,6 +31,9 @@ type CardData = {
     x: string | null;
     linkedin: string | null;
     website: string | null;
+    whatsapp: string | null;
+    wechat: string | null;
+    line: string | null;
     emails: string[];
     phones: string[];
     preferredChannel: PreferredChannel | null;
@@ -235,7 +242,7 @@ function EditableField({
 // ---------------------------------------------------------------------------
 // Add-field row
 // ---------------------------------------------------------------------------
-const ALL_CHANNELS: PreferredChannel[] = ['email', 'phone', 'telegram', 'x', 'linkedin', 'website'];
+const ALL_CHANNELS: PreferredChannel[] = ['email', 'phone', 'telegram', 'x', 'linkedin', 'website', 'whatsapp', 'wechat', 'line'];
 const CHANNEL_LABELS: Record<PreferredChannel, string> = {
   email: 'Email',
   phone: 'Phone',
@@ -243,6 +250,9 @@ const CHANNEL_LABELS: Record<PreferredChannel, string> = {
   x: 'X',
   linkedin: 'LinkedIn',
   website: 'Website',
+  whatsapp: 'WhatsApp',
+  wechat: 'WeChat',
+  line: 'Line',
 };
 
 type AddFieldProps = {
@@ -301,6 +311,9 @@ function AddField({ existing, onAdd }: AddFieldProps) {
               selectedChannel === 'telegram' ? 'handle (no @)'
               : selectedChannel === 'email' ? 'email@example.com'
               : selectedChannel === 'phone' ? '+1 555 1234'
+              : selectedChannel === 'whatsapp' ? 'phone digits (e.g. 14155551234)'
+              : selectedChannel === 'wechat' ? 'WeChat ID'
+              : selectedChannel === 'line' ? 'Line ID (no @)'
               : ''
             }
             className="flex-1 px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-white text-sm min-w-0"
@@ -457,16 +470,26 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
   if (contact?.x) existingSingleChannels.push('x');
   if (contact?.linkedin) existingSingleChannels.push('linkedin');
   if (contact?.website) existingSingleChannels.push('website');
+  if (contact?.whatsapp) existingSingleChannels.push('whatsapp');
+  if (contact?.wechat) existingSingleChannels.push('wechat');
+  if (contact?.line) existingSingleChannels.push('line');
 
   // Build send href for each channel
+  const captionText = data.caption ?? '';
+
   function emailSendHref(email: string) {
-    const body = `${data.caption ?? ''}\n\n${data.shareUrl ?? ''}`;
+    const body = `${captionText}\n\n${data.shareUrl ?? ''}`;
     return `mailto:${email}?subject=${encodeURIComponent('Following up')}&body=${encodeURIComponent(body)}`;
   }
 
   function phoneSendHref(phone: string) {
-    const body = `${data.caption ?? ''}\n\n${data.shareUrl ?? ''}`;
+    const body = `${captionText}\n\n${data.shareUrl ?? ''}`;
     return `sms:${phone.replace(/[^+0-9]/g, '')}?body=${encodeURIComponent(body)}`;
+  }
+
+  function whatsappSendHref(value: string) {
+    const base = socialUrl.whatsapp(value);
+    return captionText ? `${base}?text=${encodeURIComponent(captionText)}` : base;
   }
 
   return (
@@ -590,6 +613,48 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
             />
           )}
 
+          {/* WhatsApp */}
+          {contact.whatsapp && (
+            <EditableField
+              icon="💚"
+              value={contact.whatsapp}
+              placeholder="phone digits"
+              isPreferred={contact.preferredChannel === 'whatsapp'}
+              sendHref={whatsappSendHref(contact.whatsapp)}
+              onSave={(v) => putContactField({ kind: 'whatsapp', value: v.replace(/\D/g, '') })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'whatsapp' ? null : 'whatsapp' })}
+              onRemove={() => putContactField({ kind: 'whatsapp-clear' })}
+            />
+          )}
+
+          {/* WeChat */}
+          {contact.wechat && (
+            <EditableField
+              icon="🐉"
+              value={contact.wechat}
+              placeholder="WeChat ID"
+              isPreferred={contact.preferredChannel === 'wechat'}
+              sendHref={socialUrl.wechat(contact.wechat)}
+              onSave={(v) => putContactField({ kind: 'wechat', value: v })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'wechat' ? null : 'wechat' })}
+              onRemove={() => putContactField({ kind: 'wechat-clear' })}
+            />
+          )}
+
+          {/* Line */}
+          {contact.line && (
+            <EditableField
+              icon="📲"
+              value={contact.line}
+              placeholder="Line ID"
+              isPreferred={contact.preferredChannel === 'line'}
+              sendHref={socialUrl.line(contact.line)}
+              onSave={(v) => putContactField({ kind: 'line', value: v.replace(/^[~@]/, '') })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'line' ? null : 'line' })}
+              onRemove={() => putContactField({ kind: 'line-clear' })}
+            />
+          )}
+
           {/* Action chip row: Add field · Share · Save to contacts */}
           <div className="flex flex-wrap gap-2 pt-3 border-t border-neutral-800">
             <AddField
@@ -597,6 +662,8 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
               onAdd={(channel, value) => {
                 if (channel === 'email') return putContactField({ kind: 'email-add', value });
                 if (channel === 'phone') return putContactField({ kind: 'phone-add', value });
+                if (channel === 'whatsapp') return putContactField({ kind: 'whatsapp', value: value.replace(/\D/g, '') });
+                if (channel === 'line') return putContactField({ kind: 'line', value: value.replace(/^[~@]/, '') });
                 return putContactField({ kind: channel, value });
               }}
             />

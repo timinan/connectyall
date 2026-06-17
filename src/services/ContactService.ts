@@ -21,7 +21,13 @@ export type UpdatableField =
   | { kind: 'phone'; index: number; value: string }
   | { kind: 'phone-add'; value: string }
   | { kind: 'phone-remove'; index: number }
-  | { kind: 'preferred'; value: 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website' | null }
+  | { kind: 'whatsapp'; value: string }
+  | { kind: 'wechat'; value: string }
+  | { kind: 'line'; value: string }
+  | { kind: 'whatsapp-clear' }
+  | { kind: 'wechat-clear' }
+  | { kind: 'line-clear' }
+  | { kind: 'preferred'; value: 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line' | null }
   | { kind: 'notes'; value: string | null };
 
 export async function createContact(input: NewContact): Promise<Contact> {
@@ -84,6 +90,9 @@ export async function updateContactField(contactId: string, field: UpdatableFiel
     case 'x':
     case 'linkedin':
     case 'website':
+    case 'whatsapp':
+    case 'wechat':
+    case 'line':
       await db()
         .update(contacts)
         .set({ links: sql`${contacts.links} || ${JSON.stringify({ [field.kind]: field.value })}::jsonb` })
@@ -136,8 +145,11 @@ export async function updateContactField(contactId: string, field: UpdatableFiel
     case 'telegram-clear':
     case 'x-clear':
     case 'linkedin-clear':
-    case 'website-clear': {
-      const linkKey = field.kind.replace('-clear', ''); // 'telegram' | 'x' | 'linkedin' | 'website'
+    case 'website-clear':
+    case 'whatsapp-clear':
+    case 'wechat-clear':
+    case 'line-clear': {
+      const linkKey = field.kind.replace('-clear', ''); // 'telegram' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line'
       await db()
         .update(contacts)
         .set({ links: sql`${contacts.links} - ${linkKey}` })
@@ -155,7 +167,7 @@ export async function updateContactField(contactId: string, field: UpdatableFiel
 
 export async function setContactLink(
   contactId: string,
-  kind: 'telegram' | 'x' | 'linkedin' | 'website',
+  kind: 'telegram' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line',
   value: string
 ): Promise<void> {
   return updateContactField(contactId, { kind, value });

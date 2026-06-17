@@ -8,12 +8,15 @@ export const ContactSchema = z.object({
   company: z.string().nullable(),
   emails: z.array(z.string()),
   phones: z.array(z.string()),
-  preferred_channel: z.enum(['telegram', 'email', 'phone', 'x', 'linkedin', 'website']).nullable(),
+  preferred_channel: z.enum(['telegram', 'email', 'phone', 'x', 'linkedin', 'website', 'whatsapp', 'wechat', 'line']).nullable(),
   links: z.object({
     telegram: z.string().optional(),
     x: z.string().optional(),
     linkedin: z.string().optional(),
     website: z.string().optional(),
+    whatsapp: z.string().optional(),
+    wechat: z.string().optional(),
+    line: z.string().optional(),
   }),
   notes: z.string().nullable(),
   context: z.string(),
@@ -121,7 +124,26 @@ If only biographical info was given, recap should be the most generic available
 ("our meeting", or null). If only conversational topics were discussed, notes
 should be null.
 
-PREFERRED CHANNEL (preferred_channel field, one of: telegram | email | phone | x | linkedin | website | null):
+ADDITIONAL MESSAGING CHANNELS — WhatsApp, WeChat, Line:
+
+WhatsApp (links.whatsapp):
+- "her WhatsApp is +1 415 555 1234" → "14155551234"
+- "WhatsApp him at 555-1234" → "5551234"
+- "he uses WhatsApp" (no number) → DON'T set
+- Strip non-digits; preserve country code if mentioned
+- If she mentions her WhatsApp AND a regular phone number, they're often the same — set both
+
+WeChat (links.wechat):
+- "her WeChat ID is sarah_chen_88" → "sarah_chen_88"
+- "ping her on WeChat" (no ID) → DON'T set
+- WeChat IDs are usually alphanumeric with underscores
+
+Line (links.line):
+- "find him on Line at @timmy" → "timmy"
+- "his Line ID is timmy_jp" → "timmy_jp"
+- Strip leading ~ or @ if present
+
+PREFERRED CHANNEL (preferred_channel field, one of: telegram | email | phone | x | linkedin | website | whatsapp | wechat | line | null):
 
 Detect EXPLICIT preference signals first:
 - "email is best", "she said to email her", "best to reach via email" → "email"
@@ -129,10 +151,26 @@ Detect EXPLICIT preference signals first:
 - "DM her on twitter", "X is best" → "x"
 - "she's most active on linkedin" → "linkedin"
 - "telegram is the fastest", "ping her on tg" → "telegram"
+- "best to reach via WhatsApp", "she always replies on WhatsApp" → "whatsapp"
+- "WeChat is the only way to find her in China" → "wechat"
+- "he's most active on Line" → "line"
 
 If no explicit preference but ONLY ONE channel was mentioned, mark that as preferred (inferred).
 If multiple channels mentioned with no preference signal, return null.
 If no contact channels were mentioned at all, return null.`;
+
+// Normalize: some LLMs return the literal string "null" or "None" for missing fields
+const NULLISH = new Set(['null', 'none', 'n/a', 'undefined', '']);
+
+function normalizeContacts(contacts: ExtractedContact[]): ExtractedContact[] {
+  for (const c of contacts) {
+    if (c.role && NULLISH.has(c.role.toLowerCase())) c.role = null;
+    if (c.company && NULLISH.has(c.company.toLowerCase())) c.company = null;
+    if (c.notes && NULLISH.has(c.notes.toLowerCase())) c.notes = null;
+    if (c.recap && NULLISH.has(c.recap.toLowerCase())) c.recap = '';
+  }
+  return contacts;
+}
 
 export async function extract(input: {
   transcript: string;
@@ -145,5 +183,7 @@ export async function extract(input: {
     prompt: `${userContext}Transcript:\n${input.transcript}`,
     schema: ExtractionSchema,
   });
+  // Normalize string "null"/"none"/etc. to actual null for nullable fields
+  normalizeContacts(result.object.contacts);
   return result.object;
 }

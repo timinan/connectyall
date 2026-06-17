@@ -1,5 +1,5 @@
 import type { Socials } from './db/schema';
-import { linkedinUrl, xUrl, telegramUrl, websiteUrl } from './social-urls';
+import { linkedinUrl, xUrl, telegramUrl, websiteUrl, whatsappUrl, wechatUrl, lineUrl } from './social-urls';
 
 const CRLF = '\r\n';
 
@@ -24,6 +24,9 @@ export function buildVCard(input: {
   if (input.socials.x) lines.push(`URL;TYPE=Twitter:${xUrl(input.socials.x)}`);
   if (input.socials.linkedin) lines.push(`URL;TYPE=LinkedIn:${linkedinUrl(input.socials.linkedin)}`);
   if (input.telegramUsername) lines.push(`URL;TYPE=Telegram:${telegramUrl(input.telegramUsername)}`);
+  if (input.socials.whatsapp) lines.push(`URL;TYPE=WhatsApp:${whatsappUrl(input.socials.whatsapp)}`);
+  if (input.socials.wechat) lines.push(`URL;TYPE=WeChat:${wechatUrl(input.socials.wechat)}`);
+  if (input.socials.line) lines.push(`URL;TYPE=Line:${lineUrl(input.socials.line)}`);
   lines.push('END:VCARD');
   return lines.join(CRLF);
 }
@@ -36,6 +39,9 @@ export function buildContactVCard(input: {
   x: string | null;
   linkedin: string | null;
   website: string | null;
+  whatsapp?: string | null;
+  wechat?: string | null;
+  line?: string | null;
   company?: string | null;
   role?: string | null;
 }): string {
@@ -49,6 +55,9 @@ export function buildContactVCard(input: {
   if (input.x) lines.push(`URL;TYPE=Twitter:${xUrl(input.x)}`);
   if (input.linkedin) lines.push(`URL;TYPE=LinkedIn:${linkedinUrl(input.linkedin)}`);
   if (input.website) lines.push(`URL;TYPE=Website:${websiteUrl(input.website)}`);
+  if (input.whatsapp) lines.push(`URL;TYPE=WhatsApp:${whatsappUrl(input.whatsapp)}`);
+  if (input.wechat) lines.push(`URL;TYPE=WeChat:${wechatUrl(input.wechat)}`);
+  if (input.line) lines.push(`URL;TYPE=Line:${lineUrl(input.line)}`);
   lines.push('END:VCARD');
   return lines.join(CRLF);
 }

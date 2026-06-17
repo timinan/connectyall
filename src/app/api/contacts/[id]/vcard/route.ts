@@ -29,6 +29,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     x: contact.links?.x ?? null,
     linkedin: contact.links?.linkedin ?? null,
     website: contact.links?.website ?? null,
+    whatsapp: contact.links?.whatsapp ?? null,
+    wechat: contact.links?.wechat ?? null,
+    line: contact.links?.line ?? null,
     company: contact.company,
     role: contact.role,
   });

@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { getInteractionWithContact } from '@/services/ContactService';
 import { getById } from '@/services/UserProfileService';
 import { env } from '@/lib/env';
-import { linkedinUrl, xUrl, telegramUrl, websiteUrl } from '@/lib/social-urls';
+import { linkedinUrl, xUrl, telegramUrl, websiteUrl, whatsappUrl, wechatUrl, lineUrl } from '@/lib/social-urls';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +49,9 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
   if (profile.socials.linkedin) links.push({ label: '💼 LinkedIn', href: linkedinUrl(profile.socials.linkedin) });
   if (profile.socials.email) links.push({ label: '📧 Email', href: `mailto:${profile.socials.email}` });
   if (profile.socials.website) links.push({ label: '🌐 Website', href: websiteUrl(profile.socials.website) });
+  if (profile.socials.whatsapp) links.push({ label: '💚 WhatsApp', href: whatsappUrl(profile.socials.whatsapp) });
+  if (profile.socials.wechat) links.push({ label: '🐉 WeChat', href: wechatUrl(profile.socials.wechat) });
+  if (profile.socials.line) links.push({ label: '📲 Line', href: lineUrl(profile.socials.line) });
 
   return (
     <main className="min-h-screen bg-neutral-950 text-white p-6 flex flex-col items-center">
