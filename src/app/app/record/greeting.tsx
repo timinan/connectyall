@@ -23,14 +23,14 @@ function pickBg(seed: string) {
   return PALETTE[h % PALETTE.length];
 }
 
-function Avatar({ profile }: { profile: Profile | null | 'loading' }) {
+export function Avatar({ profile }: { profile: Profile | null | 'loading' }) {
   if (profile === 'loading') {
-    return <div className="w-24 h-24 rounded-full bg-neutral-800" />;
+    return <div className="w-32 h-32 rounded-full bg-neutral-800" />;
   }
   if (!profile) {
     return (
       <div
-        className="w-24 h-24 rounded-full flex items-center justify-center text-white text-4xl font-bold"
+        className="w-32 h-32 rounded-full flex items-center justify-center text-white text-4xl font-bold"
         style={{ backgroundColor: PALETTE[0] }}
       >
         ?
@@ -42,14 +42,14 @@ function Avatar({ profile }: { profile: Profile | null | 'loading' }) {
       <img
         src={profile.photoR2Url}
         alt={profile.displayName}
-        className="w-24 h-24 rounded-full object-cover"
+        className="w-32 h-32 rounded-full object-cover"
       />
     );
   }
   const initial = (profile.displayName.trim().charAt(0) || '?').toUpperCase();
   return (
     <div
-      className="w-24 h-24 rounded-full flex items-center justify-center text-white text-4xl font-bold"
+      className="w-32 h-32 rounded-full flex items-center justify-center text-white text-4xl font-bold"
       style={{ backgroundColor: pickBg(profile.displayName) }}
     >
       {initial}
@@ -89,8 +89,8 @@ export function Greeting() {
       )}
       <Link href="/app/profile" className="relative inline-block" aria-label="Edit profile">
         <Avatar profile={profile} />
-        <span className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-white text-neutral-950 flex items-center justify-center shadow ring-2 ring-neutral-950">
-          <LuPencil size={14} />
+        <span className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white text-neutral-950 flex items-center justify-center shadow ring-2 ring-neutral-950">
+          <LuPencil size={16} />
         </span>
       </Link>
     </div>
