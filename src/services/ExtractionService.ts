@@ -7,12 +7,18 @@ export const ContactSchema = z.object({
   role: z.string().nullable(),
   company: z.string().nullable(),
   emails: z.array(z.string()),
+  phones: z.array(z.string()),
+  preferred_channel: z.enum(['telegram', 'email', 'phone', 'x', 'linkedin', 'website', 'whatsapp', 'wechat', 'line']).nullable(),
   links: z.object({
     telegram: z.string().optional(),
     x: z.string().optional(),
     linkedin: z.string().optional(),
     website: z.string().optional(),
+    whatsapp: z.string().optional(),
+    wechat: z.string().optional(),
+    line: z.string().optional(),
   }),
+  notes: z.string().nullable(),
   context: z.string(),
   recap: z.string(),
   user_commitments: z.array(z.string()),
@@ -84,9 +90,87 @@ Website (links.website):
 - "her site is sarahchen.com" → "sarahchen.com"
 - Bare domains stay as-is
 
-Email goes in "emails" array. Phone numbers go in "context" as plain text.
+Email goes in "emails" array.
 
-If a handle is mentioned, you MUST include it. Do not omit because the spelling is uncertain — best-effort transcription of the handle is required.`;
+If a handle is mentioned, you MUST include it. Do not omit because the spelling is uncertain — best-effort transcription of the handle is required.
+
+PHONE EXTRACTION (phones is a top-level array):
+
+- "her number is 555-1234" → phones: ["555-1234"]
+- "she gave me her cell, +1 415 555 9999" → phones: ["+14155559999"]
+- "call him at 6 5 5 5 1 2 3 4" → phones: ["6555 1234"]
+- Normalize obvious patterns; preserve digits, "+", spaces, parens, dashes as-is otherwise
+
+NOTES vs RECAP — IMPORTANT distinction:
+
+"notes" = WHO THIS PERSON IS. Biographical / contextual facts that persist
+across meetings. STAYS PRIVATE — never shared with the contact. One short
+sentence. Examples:
+- "Product manager at Meta"
+- "Works at a nonprofit for Jesus"
+- "Recently moved from SF to Berlin"
+- "Friend of Sarah's from college"
+
+"recap" = WHAT YOU TALKED ABOUT in THIS conversation. Per-meeting. Goes
+INTO the share preview, so the contact will see this. One sentence,
+substance-only (no "we talked about" framing — see existing rules).
+
+Rules for distinguishing:
+- "She's a PM at Meta"          → notes: "PM at Meta"     | recap: null (or whatever else was discussed)
+- "We chatted about her PM role at Meta" → recap: "Her PM role at Meta"  | notes: null (unless something biographical was also said)
+- "He's working at a nonprofit and we discussed his fundraising plans" → notes: "Working at a nonprofit"  | recap: "His fundraising plans"
+
+If only biographical info was given, recap should be the most generic available
+("our meeting", or null). If only conversational topics were discussed, notes
+should be null.
+
+ADDITIONAL MESSAGING CHANNELS — WhatsApp, WeChat, Line:
+
+WhatsApp (links.whatsapp):
+- "her WhatsApp is +1 415 555 1234" → "14155551234"
+- "WhatsApp him at 555-1234" → "5551234"
+- "he uses WhatsApp" (no number) → DON'T set
+- Strip non-digits; preserve country code if mentioned
+- If she mentions her WhatsApp AND a regular phone number, they're often the same — set both
+
+WeChat (links.wechat):
+- "her WeChat ID is sarah_chen_88" → "sarah_chen_88"
+- "ping her on WeChat" (no ID) → DON'T set
+- WeChat IDs are usually alphanumeric with underscores
+
+Line (links.line):
+- "find him on Line at @timmy" → "timmy"
+- "his Line ID is timmy_jp" → "timmy_jp"
+- Strip leading ~ or @ if present
+
+PREFERRED CHANNEL (preferred_channel field, one of: telegram | email | phone | x | linkedin | website | whatsapp | wechat | line | null):
+
+Detect EXPLICIT preference signals first:
+- "email is best", "she said to email her", "best to reach via email" → "email"
+- "text her", "her cell is the best way", "give her a call" → "phone"
+- "DM her on twitter", "X is best" → "x"
+- "she's most active on linkedin" → "linkedin"
+- "telegram is the fastest", "ping her on tg" → "telegram"
+- "best to reach via WhatsApp", "she always replies on WhatsApp" → "whatsapp"
+- "WeChat is the only way to find her in China" → "wechat"
+- "he's most active on Line" → "line"
+
+If no explicit preference but ONLY ONE channel was mentioned, mark that as preferred (inferred).
+If multiple channels mentioned with no preference signal, return null.
+If no contact channels were mentioned at all, return null.`;
+
+// Normalize: some LLMs return the literal string "null" or "None" for missing fields
+const NULLISH = new Set(['null', 'none', 'n/a', 'undefined', '']);
+
+function normalizeContacts(contacts: ExtractedContact[]): ExtractedContact[] {
+  for (const c of contacts) {
+    if (c.role && NULLISH.has(c.role.toLowerCase())) c.role = null;
+    if (c.company && NULLISH.has(c.company.toLowerCase())) c.company = null;
+    if (c.notes && NULLISH.has(c.notes.toLowerCase())) c.notes = null;
+    if (c.recap && NULLISH.has(c.recap.toLowerCase())) c.recap = '';
+  }
+  return contacts;
+}
 
 export async function extract(input: {
   transcript: string;
@@ -99,5 +183,7 @@ export async function extract(input: {
     prompt: `${userContext}Transcript:\n${input.transcript}`,
     schema: ExtractionSchema,
   });
+  // Normalize string "null"/"none"/etc. to actual null for nullable fields
+  normalizeContacts(result.object.contacts);
   return result.object;
 }

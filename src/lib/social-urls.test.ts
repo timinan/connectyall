@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { linkedinHandle, linkedinUrl, xHandle, xUrl, telegramHandle, telegramUrl, websiteUrl } from './social-urls';
+import { linkedinHandle, linkedinUrl, xHandle, xUrl, telegramHandle, telegramUrl, websiteUrl, whatsappHandle, whatsappUrl, wechatHandle, wechatUrl, lineHandle, lineUrl } from './social-urls';
 
 describe('linkedinHandle', () => {
   it.each([
@@ -57,5 +57,53 @@ describe('websiteUrl', () => {
     expect(websiteUrl('tim.dev')).toBe('https://tim.dev');
     expect(websiteUrl('http://tim.dev')).toBe('http://tim.dev');
     expect(websiteUrl('https://tim.dev/')).toBe('https://tim.dev');
+  });
+});
+
+describe('whatsappHandle / whatsappUrl', () => {
+  it.each([
+    ['14155551234', '14155551234'],
+    ['+1 415 555 1234', '14155551234'],
+    ['(415) 555-1234', '4155551234'],
+    ['5551234', '5551234'],
+  ])('whatsappHandle %s → %s', (input, expected) => {
+    expect(whatsappHandle(input)).toBe(expected);
+  });
+  it('whatsappUrl produces wa.me URL', () => {
+    expect(whatsappUrl('+1 415 555 1234')).toBe('https://wa.me/14155551234');
+  });
+  it('whatsappUrl appends digits-only', () => {
+    expect(whatsappUrl('(555) 000-9999')).toBe('https://wa.me/5550009999');
+  });
+});
+
+describe('wechatHandle / wechatUrl', () => {
+  it.each([
+    ['sarah_chen_88', 'sarah_chen_88'],
+    ['@sarah_chen_88', 'sarah_chen_88'],
+    ['https://wx.qq.com/sarah_chen_88', 'sarah_chen_88'],
+    ['sarah88', 'sarah88'],
+  ])('wechatHandle %s → %s', (input, expected) => {
+    expect(wechatHandle(input)).toBe(expected);
+  });
+  it('wechatUrl produces weixin:// deep link', () => {
+    expect(wechatUrl('sarah_chen_88')).toBe('weixin://dl/chat?sarah_chen_88');
+  });
+});
+
+describe('lineHandle / lineUrl', () => {
+  it.each([
+    ['timmy', 'timmy'],
+    ['@timmy', 'timmy'],
+    ['~timmy', 'timmy'],
+    ['https://line.me/ti/p/~timmy', 'timmy'],
+    ['https://line.me/ti/p/timmy_jp', 'timmy_jp'],
+    ['timmy_jp', 'timmy_jp'],
+  ])('lineHandle %s → %s', (input, expected) => {
+    expect(lineHandle(input)).toBe(expected);
+  });
+  it('lineUrl produces line.me URL with ~ prefix', () => {
+    expect(lineUrl('timmy')).toBe('https://line.me/ti/p/~timmy');
+    expect(lineUrl('https://line.me/ti/p/~timmy')).toBe('https://line.me/ti/p/~timmy');
   });
 });

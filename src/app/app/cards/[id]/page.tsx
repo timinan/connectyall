@@ -1,9 +1,12 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
+import { LuSend, LuStar, LuPencil, LuX as LuXIcon } from 'react-icons/lu';
 import {
   linkedinUrl, linkedinHandle, xUrl, xHandle, telegramUrl, telegramHandle,
+  whatsappUrl, wechatUrl, lineUrl,
 } from '@/lib/social-urls';
+import { ChannelIcon, type ChannelKind } from './channel-icons';
 
 const socialUrl = {
   linkedin: linkedinUrl,
@@ -12,7 +15,12 @@ const socialUrl = {
   xHandle,
   telegram: telegramUrl,
   telegramHandle,
+  whatsapp: whatsappUrl,
+  wechat: wechatUrl,
+  line: lineUrl,
 };
+
+type PreferredChannel = 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line';
 
 type CardData = {
   status: 'processing' | 'ready' | 'failed';
@@ -20,23 +28,340 @@ type CardData = {
   contact?: {
     id: string;
     name: string;
+    notes: string | null;
     telegram: string | null;
     x: string | null;
     linkedin: string | null;
-    email: string | null;
+    website: string | null;
+    whatsapp: string | null;
+    wechat: string | null;
+    line: string | null;
+    emails: string[];
+    phones: string[];
+    preferredChannel: PreferredChannel | null;
   };
-  cardUrl?: string;          // same-origin proxy
-  cardUrlExternal?: string;  // direct R2 URL — useful for download attribute
+  cardUrl?: string;
+  cardUrlExternal?: string;
   caption?: string;
   shareUrl?: string;
 };
 
+// ---------------------------------------------------------------------------
+// Inline-editable heading (contact name)
+// ---------------------------------------------------------------------------
+type EditableHeadingProps = {
+  value: string;
+  onSave: (v: string) => Promise<void>;
+};
+
+function EditableHeading({ value, onSave }: EditableHeadingProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setDraft(value); }, [value]);
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+
+  async function commit() {
+    setEditing(false);
+    if (draft.trim() && draft !== value) await onSave(draft.trim());
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit();
+          if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+        }}
+        className="text-xl font-bold w-full px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-white"
+      />
+    );
+  }
+
+  return (
+    <button
+      className="text-xl font-bold text-left hover:text-neutral-300 transition-colors flex items-center gap-1.5"
+      onClick={() => { setDraft(value); setEditing(true); }}
+      title="Tap to edit name"
+    >
+      {value}
+      <LuPencil size={14} className="text-neutral-500" />
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline-editable textarea field (notes + recap)
+// ---------------------------------------------------------------------------
+type EditableTextAreaProps = {
+  value: string | null;
+  placeholder: string;
+  onSave: (v: string | null) => Promise<void>;
+};
+
+function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? '');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => { setDraft(value ?? ''); }, [value]);
+  useEffect(() => { if (editing) textareaRef.current?.focus(); }, [editing]);
+
+  async function commit() {
+    setEditing(false);
+    const trimmed = draft.trim();
+    const next = trimmed || null;
+    if (next !== value) await onSave(next);
+  }
+
+  const displayValue = value?.trim();
+
+  if (editing) {
+    return (
+      <textarea
+        ref={textareaRef}
+        value={draft}
+        rows={3}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') { setDraft(value ?? ''); setEditing(false); }
+        }}
+        className="w-full px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-neutral-300 text-sm resize-none"
+      />
+    );
+  }
+
+  return (
+    <button
+      className="text-sm text-left w-full flex items-start gap-1.5 hover:text-neutral-200 transition-colors"
+      onClick={() => { setDraft(value ?? ''); setEditing(true); }}
+      title="Tap to edit"
+    >
+      {displayValue ? (
+        <span className="text-neutral-300 flex-1">{displayValue}</span>
+      ) : (
+        <span className="text-neutral-600 flex-1 italic">{placeholder}</span>
+      )}
+      <LuPencil size={12} className="text-neutral-500 flex-shrink-0 mt-0.5" />
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline-editable field row — star left, send button, delete
+// ---------------------------------------------------------------------------
+type EditableFieldProps = {
+  kind: ChannelKind;
+  value: string;
+  placeholder?: string;
+  isPreferred: boolean;
+  sendHref?: string;
+  onSave: (v: string) => Promise<void>;
+  onTogglePreferred: () => Promise<void>;
+  onRemove?: () => Promise<void>;
+};
+
+function EditableField({
+  kind, value, placeholder, isPreferred, sendHref, onSave, onTogglePreferred, onRemove,
+}: EditableFieldProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+
+  async function commit() {
+    setEditing(false);
+    if (draft !== value) await onSave(draft);
+  }
+
+  return (
+    <div className="flex items-center gap-1 py-1">
+      {/* Star: preferred channel toggle — far left */}
+      <button
+        className="flex-shrink-0 w-7 h-7 flex items-center justify-center hover:opacity-80"
+        title={isPreferred ? 'Clear preferred channel' : 'Set as preferred channel'}
+        onClick={onTogglePreferred}
+      >
+        <LuStar
+          size={16}
+          fill={isPreferred ? '#FACC15' : 'none'}
+          color={isPreferred ? '#FACC15' : '#737373'}
+        />
+      </button>
+
+      <span className="w-6 flex items-center justify-center flex-shrink-0">
+        <ChannelIcon kind={kind} size={18} />
+      </span>
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit();
+            if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+          }}
+          className="flex-1 px-2 py-1 rounded bg-neutral-800 border border-neutral-700 text-white text-sm min-w-0"
+        />
+      ) : (
+        <button
+          className="flex-1 text-left text-sm text-neutral-200 truncate hover:text-white min-w-0 flex items-center gap-1"
+          onClick={() => { setDraft(value); setEditing(true); }}
+        >
+          {value || <span className="text-neutral-500">{placeholder}</span>}
+          <LuPencil size={12} className="text-neutral-500 flex-shrink-0" />
+        </button>
+      )}
+
+      {/* Send: labeled button */}
+      {sendHref && (
+        <a
+          href={sendHref}
+          target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
+          rel="noopener noreferrer"
+          className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-neutral-700 text-white text-xs font-medium hover:bg-neutral-600 transition-colors"
+          title="Send via this channel"
+        >
+          <LuSend size={14} />
+          <span>Send</span>
+        </a>
+      )}
+
+      {/* Delete */}
+      {onRemove && (
+        <button
+          className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-red-400"
+          onClick={onRemove}
+          title="Remove"
+        >
+          <LuXIcon size={14} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Add-field row
+// ---------------------------------------------------------------------------
+const ALL_CHANNELS: PreferredChannel[] = ['email', 'phone', 'telegram', 'x', 'linkedin', 'website', 'whatsapp', 'wechat', 'line'];
+const CHANNEL_LABELS: Record<PreferredChannel, string> = {
+  email: 'Email',
+  phone: 'Phone',
+  telegram: 'Telegram',
+  x: 'X',
+  linkedin: 'LinkedIn',
+  website: 'Website',
+  whatsapp: 'WhatsApp',
+  wechat: 'WeChat',
+  line: 'Line',
+};
+
+type AddFieldProps = {
+  existing: PreferredChannel[];
+  onAdd: (channel: PreferredChannel, value: string) => Promise<void>;
+};
+
+function AddField({ existing, onAdd }: AddFieldProps) {
+  const available = ALL_CHANNELS.filter(c => {
+    if (c === 'email' || c === 'phone') return true;
+    return !existing.includes(c);
+  });
+  const [expanded, setExpanded] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState<PreferredChannel | ''>('');
+  const [value, setValue] = useState('');
+
+  if (available.length === 0) return null;
+
+  async function handleAdd() {
+    if (!selectedChannel || !value.trim()) return;
+    await onAdd(selectedChannel, value.trim());
+    setSelectedChannel('');
+    setValue('');
+    setExpanded(false);
+  }
+
+  if (!expanded) {
+    return (
+      <button
+        onClick={() => setExpanded(true)}
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-700 bg-neutral-900 text-white text-xs whitespace-nowrap"
+      >
+        + Add field
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap w-full">
+      <select
+        value={selectedChannel}
+        onChange={(e) => setSelectedChannel(e.target.value as PreferredChannel | '')}
+        className="bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-sm text-neutral-300 flex-shrink-0"
+        autoFocus
+      >
+        <option value="">Pick field…</option>
+        {available.map(c => <option key={c} value={c}>{CHANNEL_LABELS[c]}</option>)}
+      </select>
+      {selectedChannel && (
+        <>
+          <span className="flex items-center justify-center flex-shrink-0">
+            <ChannelIcon kind={selectedChannel as ChannelKind} size={18} />
+          </span>
+          <input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
+            placeholder={
+              selectedChannel === 'telegram' ? 'handle (no @)'
+              : selectedChannel === 'email' ? 'email@example.com'
+              : selectedChannel === 'phone' ? '+1 555 1234'
+              : selectedChannel === 'whatsapp' ? 'phone digits (e.g. 14155551234)'
+              : selectedChannel === 'wechat' ? 'WeChat ID'
+              : selectedChannel === 'line' ? 'Line ID (no @)'
+              : ''
+            }
+            className="flex-1 px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-white text-sm min-w-0"
+          />
+          <button onClick={handleAdd} className="flex-shrink-0 text-sm px-3 py-1 rounded bg-white text-neutral-950 font-semibold">Add</button>
+        </>
+      )}
+      <button
+        onClick={() => { setExpanded(false); setSelectedChannel(''); setValue(''); }}
+        className="flex-shrink-0 text-neutral-500 hover:text-neutral-300"
+        title="Cancel"
+      >
+        <LuXIcon size={14} />
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main page
+// ---------------------------------------------------------------------------
 export default function CardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [data, setData] = useState<CardData>({ status: 'processing' });
-  const [editingHandle, setEditingHandle] = useState(false);
-  const [newHandle, setNewHandle] = useState('');
   const [shareFile, setShareFile] = useState<File | null>(null);
+
+  // Local optimistic state for name, notes, and recap
+  const [localName, setLocalName] = useState<string | null>(null);
+  const [localNotes, setLocalNotes] = useState<string | null | undefined>(undefined);
+  const [localRecap, setLocalRecap] = useState<string | null>(null);
+
+  async function refresh() {
+    const res = await fetch(`/api/cards/${id}`, { cache: 'no-store' });
+    if (res.ok) setData(await res.json());
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -57,9 +382,9 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
     return () => { cancelled = true; };
   }, [id]);
 
-  // Pre-fetch the card PNG once the card is ready, so navigator.share can be called
+  // Pre-fetch the card PNG once the card is ready so navigator.share can be called
   // synchronously inside the click handler (iOS Safari requires the user gesture to
-  // still be active when share() is called — any await beforehand kills the gesture).
+  // still be active when share() is called).
   useEffect(() => {
     if (data.status !== 'ready' || !data.cardUrl) return;
     let cancelled = false;
@@ -90,19 +415,44 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
     navigator.share(payload).catch(() => { /* user cancelled */ });
   }
 
-  async function saveHandle() {
+  async function putContactField(body: object) {
     if (!data.contact) return;
-    const res = await fetch(`/api/contacts/${data.contact.id}`, {
+    await fetch(`/api/contacts/${data.contact.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram: newHandle.replace(/^@/, '') }),
+      body: JSON.stringify(body),
     });
-    if (res.ok) {
-      const refreshed = await fetch(`/api/cards/${id}`, { cache: 'no-store' });
-      setData(await refreshed.json());
-      setEditingHandle(false);
-      setNewHandle('');
-    }
+    await refresh();
+  }
+
+  async function saveName(name: string) {
+    if (!data.contact) return;
+    setLocalName(name);
+    await fetch(`/api/contacts/${data.contact.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'name', value: name }),
+    });
+  }
+
+  async function saveNotes(notes: string | null) {
+    if (!data.contact) return;
+    setLocalNotes(notes);
+    await fetch(`/api/contacts/${data.contact.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'notes', value: notes }),
+    });
+  }
+
+  async function saveRecap(recap: string) {
+    if (!data.interaction) return;
+    setLocalRecap(recap);
+    await fetch(`/api/interactions/${data.interaction.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recap }),
+    });
   }
 
   if (data.status === 'processing') {
@@ -122,92 +472,230 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
     );
   }
 
+  const contact = data.contact;
+  const contactName = localName ?? contact?.name ?? '';
+  const notesValue = localNotes !== undefined ? localNotes : (contact?.notes ?? null);
+  const recapText = localRecap ?? data.interaction?.recap ?? '';
+
+  // Determine which single-value channels are already present (for AddField)
+  const existingSingleChannels: PreferredChannel[] = [];
+  if (contact?.telegram) existingSingleChannels.push('telegram');
+  if (contact?.x) existingSingleChannels.push('x');
+  if (contact?.linkedin) existingSingleChannels.push('linkedin');
+  if (contact?.website) existingSingleChannels.push('website');
+  if (contact?.whatsapp) existingSingleChannels.push('whatsapp');
+  if (contact?.wechat) existingSingleChannels.push('wechat');
+  if (contact?.line) existingSingleChannels.push('line');
+
+  // Build send href for each channel
+  const captionText = data.caption ?? '';
+
+  function emailSendHref(email: string) {
+    const body = `${captionText}\n\n${data.shareUrl ?? ''}`;
+    return `mailto:${email}?subject=${encodeURIComponent('Following up')}&body=${encodeURIComponent(body)}`;
+  }
+
+  function phoneSendHref(phone: string) {
+    const body = `${captionText}\n\n${data.shareUrl ?? ''}`;
+    return `sms:${phone.replace(/[^+0-9]/g, '')}?body=${encodeURIComponent(body)}`;
+  }
+
+  function whatsappSendHref(value: string) {
+    const base = socialUrl.whatsapp(value);
+    return captionText ? `${base}?text=${encodeURIComponent(captionText)}` : base;
+  }
+
   return (
     <div className="p-6 max-w-md mx-auto space-y-4">
-      {data.cardUrl && (
-        <div className="flex justify-center pt-2">
-          <img src={data.cardUrl} alt="card" className="w-40 h-40 rounded-full object-cover bg-white" />
-        </div>
-      )}
-      <div className="space-y-1">
-        <p className="text-lg font-semibold">For {data.contact?.name}</p>
-        <p className="italic text-neutral-300">&quot;{data.interaction?.recap}&quot;</p>
+      {/* Editable heading: contact name */}
+      <div>
+        <EditableHeading value={contactName} onSave={saveName} />
       </div>
-      <div className="flex items-center gap-2 text-sm text-neutral-400">
-        {data.contact?.telegram ? (
-          <span>@{data.contact.telegram}</span>
-        ) : (
-          <span>No Telegram handle captured</span>
-        )}
-        <button onClick={() => setEditingHandle(true)} className="underline">✏️ Fix</button>
-      </div>
-      {editingHandle && (
-        <div className="space-y-2">
-          <input
-            placeholder="@handle"
-            value={newHandle}
-            onChange={(e) => setNewHandle(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800"
+
+      {/* Notes + Recap sections */}
+      <div className="rounded-lg bg-neutral-950 border border-neutral-800 px-4 py-3 space-y-3">
+        {/* Private note (notes) */}
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">🔒 Private note</p>
+          <EditableTextArea
+            value={notesValue}
+            placeholder="Tap to add a private note about who they are…"
+            onSave={saveNotes}
           />
-          <button onClick={saveHandle} className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold">Save</button>
         </div>
-      )}
-      <button onClick={share} className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold">📤 Share (pick app)</button>
 
-      {(data.contact?.telegram || data.contact?.email || data.contact?.x || data.contact?.linkedin) && (
-        <div className="space-y-2 pt-2">
-          <p className="text-xs uppercase tracking-wide text-neutral-500">Send directly to {data.contact?.name?.split(' ')[0] ?? 'them'}</p>
-          {data.contact?.telegram && (
-            <a
-              href={socialUrl.telegram(data.contact.telegram)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
-            >
-              📱 Open Telegram with @{socialUrl.telegramHandle(data.contact.telegram)}
-            </a>
-          )}
-          {data.contact?.email && (
-            <a
-              href={`mailto:${data.contact.email}?subject=${encodeURIComponent(`Card from ${data.interaction?.recap ? '' : 'me'}`)}&body=${encodeURIComponent(data.caption ?? '')}%0A%0A${encodeURIComponent(data.shareUrl ?? '')}`}
-              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
-            >
-              ✉️ Email {data.contact.email}
-            </a>
-          )}
-          {data.contact?.x && (
-            <a
-              href={socialUrl.x(data.contact.x)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
-            >
-              🐦 Open X profile of @{socialUrl.xHandle(data.contact.x)}
-            </a>
-          )}
-          {data.contact?.linkedin && (
-            <a
-              href={socialUrl.linkedin(data.contact.linkedin)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
-            >
-              💼 Open LinkedIn of {socialUrl.linkedinHandle(data.contact.linkedin)}
-            </a>
-          )}
-          <p className="text-xs text-neutral-500 pt-1">After their chat opens, come back here and tap “📤 Share” → pick the same app to attach the card.</p>
+        <div className="border-t border-neutral-800" />
+
+        {/* What we talked about (recap) */}
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">What we talked about</p>
+          <EditableTextArea
+            value={recapText || null}
+            placeholder="Tap to edit the recap…"
+            onSave={(v) => saveRecap(v ?? '')}
+          />
         </div>
-      )}
-
-      <div className="pt-2 space-y-2">
-        <button
-          onClick={() => navigator.clipboard.writeText(data.caption ?? '')}
-          className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
-        >
-          📋 Copy caption
-        </button>
-        <a href={data.cardUrlExternal ?? data.cardUrl} download className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white">💾 Save image</a>
       </div>
+
+      {/* Inline-editable contact fields with per-row actions */}
+      {contact && (
+        <div className="rounded-lg bg-neutral-950 border border-neutral-800 px-4 py-3 space-y-1">
+          {/* Emails */}
+          {contact.emails.map((email, i) => (
+            <EditableField
+              key={`email-${i}`}
+              kind="email"
+              value={email}
+              placeholder="email@example.com"
+              isPreferred={contact.preferredChannel === 'email'}
+              sendHref={emailSendHref(email)}
+              onSave={(v) => putContactField({ kind: 'email', index: i, value: v })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'email' ? null : 'email' })}
+              onRemove={() => putContactField({ kind: 'email-remove', index: i })}
+            />
+          ))}
+
+          {/* Phones */}
+          {contact.phones.map((phone, i) => (
+            <EditableField
+              key={`phone-${i}`}
+              kind="phone"
+              value={phone}
+              placeholder="+1 555 1234"
+              isPreferred={contact.preferredChannel === 'phone'}
+              sendHref={phoneSendHref(phone)}
+              onSave={(v) => putContactField({ kind: 'phone', index: i, value: v })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'phone' ? null : 'phone' })}
+              onRemove={() => putContactField({ kind: 'phone-remove', index: i })}
+            />
+          ))}
+
+          {/* Telegram */}
+          {contact.telegram && (
+            <EditableField
+              kind="telegram"
+              value={contact.telegram}
+              placeholder="telegram handle"
+              isPreferred={contact.preferredChannel === 'telegram'}
+              sendHref={socialUrl.telegram(contact.telegram)}
+              onSave={(v) => putContactField({ kind: 'telegram', value: v.replace(/^@/, '') })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'telegram' ? null : 'telegram' })}
+              onRemove={() => putContactField({ kind: 'telegram-clear' })}
+            />
+          )}
+
+          {/* X */}
+          {contact.x && (
+            <EditableField
+              kind="x"
+              value={contact.x}
+              placeholder="x handle"
+              isPreferred={contact.preferredChannel === 'x'}
+              sendHref={socialUrl.x(contact.x)}
+              onSave={(v) => putContactField({ kind: 'x', value: v.replace(/^@/, '') })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'x' ? null : 'x' })}
+              onRemove={() => putContactField({ kind: 'x-clear' })}
+            />
+          )}
+
+          {/* LinkedIn */}
+          {contact.linkedin && (
+            <EditableField
+              kind="linkedin"
+              value={contact.linkedin}
+              placeholder="linkedin handle"
+              isPreferred={contact.preferredChannel === 'linkedin'}
+              sendHref={socialUrl.linkedin(contact.linkedin)}
+              onSave={(v) => putContactField({ kind: 'linkedin', value: v })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'linkedin' ? null : 'linkedin' })}
+              onRemove={() => putContactField({ kind: 'linkedin-clear' })}
+            />
+          )}
+
+          {/* Website */}
+          {contact.website && (
+            <EditableField
+              kind="website"
+              value={contact.website}
+              placeholder="website.com"
+              isPreferred={contact.preferredChannel === 'website'}
+              sendHref={contact.website.startsWith('http') ? contact.website : `https://${contact.website}`}
+              onSave={(v) => putContactField({ kind: 'website', value: v })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'website' ? null : 'website' })}
+              onRemove={() => putContactField({ kind: 'website-clear' })}
+            />
+          )}
+
+          {/* WhatsApp */}
+          {contact.whatsapp && (
+            <EditableField
+              kind="whatsapp"
+              value={contact.whatsapp}
+              placeholder="phone digits"
+              isPreferred={contact.preferredChannel === 'whatsapp'}
+              sendHref={whatsappSendHref(contact.whatsapp)}
+              onSave={(v) => putContactField({ kind: 'whatsapp', value: v.replace(/\D/g, '') })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'whatsapp' ? null : 'whatsapp' })}
+              onRemove={() => putContactField({ kind: 'whatsapp-clear' })}
+            />
+          )}
+
+          {/* WeChat */}
+          {contact.wechat && (
+            <EditableField
+              kind="wechat"
+              value={contact.wechat}
+              placeholder="WeChat ID"
+              isPreferred={contact.preferredChannel === 'wechat'}
+              sendHref={socialUrl.wechat(contact.wechat)}
+              onSave={(v) => putContactField({ kind: 'wechat', value: v })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'wechat' ? null : 'wechat' })}
+              onRemove={() => putContactField({ kind: 'wechat-clear' })}
+            />
+          )}
+
+          {/* Line */}
+          {contact.line && (
+            <EditableField
+              kind="line"
+              value={contact.line}
+              placeholder="Line ID"
+              isPreferred={contact.preferredChannel === 'line'}
+              sendHref={socialUrl.line(contact.line)}
+              onSave={(v) => putContactField({ kind: 'line', value: v.replace(/^[~@]/, '') })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'line' ? null : 'line' })}
+              onRemove={() => putContactField({ kind: 'line-clear' })}
+            />
+          )}
+
+          {/* Action chip row: Add field · Share · Save to contacts */}
+          <div className="flex flex-wrap gap-2 pt-3 border-t border-neutral-800">
+            <AddField
+              existing={existingSingleChannels}
+              onAdd={(channel, value) => {
+                if (channel === 'email') return putContactField({ kind: 'email-add', value });
+                if (channel === 'phone') return putContactField({ kind: 'phone-add', value });
+                if (channel === 'whatsapp') return putContactField({ kind: 'whatsapp', value: value.replace(/\D/g, '') });
+                if (channel === 'line') return putContactField({ kind: 'line', value: value.replace(/^[~@]/, '') });
+                return putContactField({ kind: channel, value });
+              }}
+            />
+            <button
+              onClick={share}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-700 bg-neutral-900 text-white text-xs whitespace-nowrap"
+            >
+              📤 Share
+            </button>
+            <a
+              href={`/api/contacts/${contact.id}/vcard`}
+              download
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-700 bg-neutral-900 text-white text-xs whitespace-nowrap"
+            >
+              {(() => { const first = contactName.trim().split(/\s+/)[0]; return first ? `💾 Save ${first} to contacts` : '💾 Save to contacts'; })()}
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

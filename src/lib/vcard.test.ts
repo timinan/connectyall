@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildVCard } from './vcard';
+import { buildVCard, buildContactVCard } from './vcard';
 
 describe('buildVCard', () => {
   it('emits a valid vCard 3.0 string', () => {
@@ -31,5 +31,55 @@ describe('buildVCard', () => {
     expect(v).not.toContain('EMAIL');
     expect(v).not.toContain('URL');
     expect(v).not.toContain('TITLE');
+  });
+});
+
+describe('N: field name splitting', () => {
+  it('splits two-part name into given + family', () => {
+    const v = buildVCard({
+      displayName: 'John Smith',
+      tagline: null,
+      socials: {},
+      telegramUsername: null,
+    });
+    expect(v).toContain('N:Smith;John;;;');
+  });
+
+  it('handles multi-word given name (Mei Ling Chen)', () => {
+    const v = buildContactVCard({
+      name: 'Mei Ling Chen',
+      emails: [],
+      phones: [],
+      telegram: null,
+      x: null,
+      linkedin: null,
+      website: null,
+    });
+    expect(v).toContain('N:Chen;Mei Ling;;;');
+  });
+
+  it('handles single-word name (mononym)', () => {
+    const v = buildContactVCard({
+      name: 'Cher',
+      emails: [],
+      phones: [],
+      telegram: null,
+      x: null,
+      linkedin: null,
+      website: null,
+    });
+    expect(v).toContain('N:;Cher;;;');
+  });
+
+  it('handles empty string without crashing', () => {
+    const v = buildVCard({
+      displayName: '',
+      tagline: null,
+      socials: {},
+      telegramUsername: null,
+    });
+    expect(v).toContain('BEGIN:VCARD');
+    expect(v).toContain('END:VCARD');
+    expect(v).toContain('N:;;;');
   });
 });

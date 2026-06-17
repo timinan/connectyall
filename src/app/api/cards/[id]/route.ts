@@ -6,6 +6,14 @@ import { getById } from '@/services/UserProfileService';
 import { buildCaption } from '@/services/CardService';
 import { env } from '@/lib/env';
 
+// Normalize string "null"/"none"/etc. to actual null at read time
+// (guards against bad saves from older LLM responses)
+const NULLISH = new Set(['null', 'none', 'n/a', 'undefined', '']);
+function nullify(v: string | null | undefined): string | null {
+  if (v == null) return null;
+  return NULLISH.has(v.toLowerCase()) ? null : v;
+}
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +41,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!profile) return NextResponse.json({ error: 'profile missing' }, { status: 500 });
 
   const structured = interaction.structuredData as
-    | { recap?: string; links?: { telegram?: string; x?: string; linkedin?: string; website?: string }; emails?: string[] }
+    | { recap?: string; links?: { telegram?: string; x?: string; linkedin?: string; website?: string; whatsapp?: string; wechat?: string; line?: string }; emails?: string[] }
     | null;
   const recap = structured?.recap ?? '';
   const caption = buildCaption({
@@ -53,14 +61,21 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     contact: {
       id: contact.id,
       name: contact.name,
-      telegram: structured?.links?.telegram ?? contact.links?.telegram ?? null,
-      x: structured?.links?.x ?? contact.links?.x ?? null,
-      linkedin: structured?.links?.linkedin ?? contact.links?.linkedin ?? null,
-      email: (structured?.emails && structured.emails[0]) ?? contact.emails?.[0] ?? null,
+      notes: nullify(contact.notes),
+      telegram: nullify(contact.links?.telegram),
+      x: nullify(contact.links?.x),
+      linkedin: nullify(contact.links?.linkedin),
+      website: nullify(contact.links?.website),
+      whatsapp: nullify(contact.links?.whatsapp),
+      wechat: nullify(contact.links?.wechat),
+      line: nullify(contact.links?.line),
+      emails: contact.emails ?? [],
+      phones: contact.phones ?? [],
+      preferredChannel: contact.preferredChannel ?? null,
     },
     cardUrl: `/api/cards/${interaction.id}/image`, // same-origin proxy
     cardUrlExternal: `${env().R2_PUBLIC_URL_BASE}/cards/${interaction.id}.png`,
-    caption,
+    caption: caption ?? '',
     shareUrl: `${env().BASE_URL}/c/${interaction.id}`,
   });
 }

@@ -2,6 +2,20 @@ import { eq } from 'drizzle-orm';
 import { db } from '../lib/db/client';
 import { interactions, contacts, type NewInteraction } from '../lib/db/schema';
 
+export async function updateRecap(interactionId: string, recap: string): Promise<void> {
+  const rows = await db()
+    .select({ structuredData: interactions.structuredData })
+    .from(interactions)
+    .where(eq(interactions.id, interactionId))
+    .limit(1);
+  const existing = (rows[0]?.structuredData as Record<string, unknown> | null) ?? {};
+  const merged = { ...existing, recap };
+  await db()
+    .update(interactions)
+    .set({ structuredData: merged })
+    .where(eq(interactions.id, interactionId));
+}
+
 export async function mintStub(source: NewInteraction['source']): Promise<string> {
   const [row] = await db()
     .insert(interactions)

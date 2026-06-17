@@ -19,6 +19,8 @@ describe('extract', () => {
         contacts: [{
           name: 'Sarah Chen', role: 'PM', company: 'Acme',
           emails: ['sarah@acme.com'],
+          phones: [],
+          preferred_channel: 'email',
           links: { x: 'sarahc', linkedin: 'sarah-chen' },
           context: 'Met at coffee in Vancouver',
           recap: 'We talked about USDC replacing bank rails.',

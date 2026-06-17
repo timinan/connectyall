@@ -28,7 +28,7 @@ describe('ContactService', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('createContact returns the inserted row', async () => {
-    const contact = await createContact({ userId: 'user-uuid-1', name: 'Sarah', role: 'PM', company: 'Acme', emails: [], links: {} });
+    const contact = await createContact({ userId: 'user-uuid-1', name: 'Sarah', role: 'PM', company: 'Acme', emails: [], phones: [], links: {} });
     expect(contact.name).toBe('Sarah');
     expect(insertMock).toHaveBeenCalled();
   });

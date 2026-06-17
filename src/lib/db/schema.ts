@@ -5,8 +5,8 @@ import {
 export const sourceEnum = pgEnum('source', ['voice', 'audio', 'video', 'manual']);
 export const usageEventKindEnum = pgEnum('usage_event_kind', ['capture', 'card_render', 'report']);
 
-export type Socials = { x?: string; linkedin?: string; email?: string; website?: string };
-export type ContactLinks = { telegram?: string; x?: string; linkedin?: string; website?: string };
+export type Socials = { x?: string; linkedin?: string; email?: string; website?: string; whatsapp?: string; wechat?: string; line?: string };
+export type ContactLinks = { telegram?: string; x?: string; linkedin?: string; website?: string; whatsapp?: string; wechat?: string; line?: string };
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -42,8 +42,10 @@ export const contacts = pgTable(
     role: text('role'),
     company: text('company'),
     emails: text('emails').array().default([]).notNull(),
+    phones: text('phones').array().default([]).notNull(),
+    preferredChannel: text('preferred_channel'),
     links: jsonb('links').$type<ContactLinks>().default({}).notNull(),
-    notesSummary: text('notes_summary'),
+    notes: text('notes'),
     lastTouchedAt: timestamp('last_touched_at', { withTimezone: true }).defaultNow().notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
