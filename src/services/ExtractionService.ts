@@ -7,6 +7,8 @@ export const ContactSchema = z.object({
   role: z.string().nullable(),
   company: z.string().nullable(),
   emails: z.array(z.string()),
+  phones: z.array(z.string()),
+  preferred_channel: z.enum(['telegram', 'email', 'phone', 'x', 'linkedin', 'website']).nullable(),
   links: z.object({
     telegram: z.string().optional(),
     x: z.string().optional(),
@@ -84,9 +86,29 @@ Website (links.website):
 - "her site is sarahchen.com" → "sarahchen.com"
 - Bare domains stay as-is
 
-Email goes in "emails" array. Phone numbers go in "context" as plain text.
+Email goes in "emails" array.
 
-If a handle is mentioned, you MUST include it. Do not omit because the spelling is uncertain — best-effort transcription of the handle is required.`;
+If a handle is mentioned, you MUST include it. Do not omit because the spelling is uncertain — best-effort transcription of the handle is required.
+
+PHONE EXTRACTION (phones is a top-level array):
+
+- "her number is 555-1234" → phones: ["555-1234"]
+- "she gave me her cell, +1 415 555 9999" → phones: ["+14155559999"]
+- "call him at 6 5 5 5 1 2 3 4" → phones: ["6555 1234"]
+- Normalize obvious patterns; preserve digits, "+", spaces, parens, dashes as-is otherwise
+
+PREFERRED CHANNEL (preferred_channel field, one of: telegram | email | phone | x | linkedin | website | null):
+
+Detect EXPLICIT preference signals first:
+- "email is best", "she said to email her", "best to reach via email" → "email"
+- "text her", "her cell is the best way", "give her a call" → "phone"
+- "DM her on twitter", "X is best" → "x"
+- "she's most active on linkedin" → "linkedin"
+- "telegram is the fastest", "ping her on tg" → "telegram"
+
+If no explicit preference but ONLY ONE channel was mentioned, mark that as preferred (inferred).
+If multiple channels mentioned with no preference signal, return null.
+If no contact channels were mentioned at all, return null.`;
 
 export async function extract(input: {
   transcript: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import {
   linkedinUrl, linkedinHandle, xUrl, xHandle, telegramUrl, telegramHandle,
 } from '@/lib/social-urls';
@@ -14,6 +14,8 @@ const socialUrl = {
   telegramHandle,
 };
 
+type PreferredChannel = 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website';
+
 type CardData = {
   status: 'processing' | 'ready' | 'failed';
   interaction?: { id: string; recap: string };
@@ -23,20 +25,153 @@ type CardData = {
     telegram: string | null;
     x: string | null;
     linkedin: string | null;
-    email: string | null;
+    website: string | null;
+    emails: string[];
+    phones: string[];
+    preferredChannel: PreferredChannel | null;
   };
-  cardUrl?: string;          // same-origin proxy
-  cardUrlExternal?: string;  // direct R2 URL — useful for download attribute
+  cardUrl?: string;
+  cardUrlExternal?: string;
   caption?: string;
   shareUrl?: string;
 };
 
+// ---------------------------------------------------------------------------
+// Inline-editable field row
+// ---------------------------------------------------------------------------
+type EditableFieldProps = {
+  icon: string;
+  value: string;
+  placeholder?: string;
+  isPreferred: boolean;
+  onSave: (v: string) => Promise<void>;
+  onTogglePreferred: () => Promise<void>;
+  onRemove?: () => Promise<void>;
+};
+
+function EditableField({ icon, value, placeholder, isPreferred, onSave, onTogglePreferred, onRemove }: EditableFieldProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  async function commit() {
+    setEditing(false);
+    if (draft !== value) await onSave(draft);
+  }
+
+  return (
+    <div className="flex items-center gap-2 py-1">
+      <span className="w-6 text-center flex-shrink-0">{icon}</span>
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setDraft(value); setEditing(false); } }}
+          className="flex-1 px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-white text-sm min-w-0"
+        />
+      ) : (
+        <button
+          className="flex-1 text-left text-sm text-neutral-200 truncate hover:text-white"
+          onClick={() => { setDraft(value); setEditing(true); }}
+        >
+          {value || <span className="text-neutral-500">{placeholder}</span>}
+        </button>
+      )}
+      <button
+        className="flex-shrink-0 text-lg leading-none"
+        title={isPreferred ? 'Clear preferred channel' : 'Set as preferred channel'}
+        onClick={onTogglePreferred}
+      >
+        {isPreferred ? '★' : '☆'}
+      </button>
+      {onRemove && (
+        <button className="flex-shrink-0 text-neutral-500 text-xs hover:text-red-400" onClick={onRemove} title="Remove">✕</button>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Add-field row
+// ---------------------------------------------------------------------------
+const ALL_CHANNELS: PreferredChannel[] = ['email', 'phone', 'telegram', 'x', 'linkedin', 'website'];
+const CHANNEL_LABELS: Record<PreferredChannel, string> = {
+  email: 'Email',
+  phone: 'Phone',
+  telegram: 'Telegram',
+  x: 'X',
+  linkedin: 'LinkedIn',
+  website: 'Website',
+};
+
+type AddFieldProps = {
+  existing: PreferredChannel[];
+  onAdd: (channel: PreferredChannel, value: string) => Promise<void>;
+};
+
+function AddField({ existing, onAdd }: AddFieldProps) {
+  const available = ALL_CHANNELS.filter(c => {
+    if (c === 'email' || c === 'phone') return true; // can have many
+    return !existing.includes(c);
+  });
+  const [selectedChannel, setSelectedChannel] = useState<PreferredChannel | ''>('');
+  const [value, setValue] = useState('');
+
+  if (available.length === 0) return null;
+
+  async function handleAdd() {
+    if (!selectedChannel || !value.trim()) return;
+    await onAdd(selectedChannel, value.trim());
+    setSelectedChannel('');
+    setValue('');
+  }
+
+  return (
+    <div className="flex items-center gap-2 pt-2 border-t border-neutral-800">
+      <span className="w-6 text-center flex-shrink-0 text-neutral-500">+</span>
+      <select
+        value={selectedChannel}
+        onChange={(e) => setSelectedChannel(e.target.value as PreferredChannel | '')}
+        className="bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-sm text-neutral-300 flex-shrink-0"
+      >
+        <option value="">Add field…</option>
+        {available.map(c => <option key={c} value={c}>{CHANNEL_LABELS[c]}</option>)}
+      </select>
+      {selectedChannel && (
+        <>
+          <input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
+            placeholder={selectedChannel === 'telegram' ? 'handle (no @)' : selectedChannel === 'email' ? 'email@example.com' : selectedChannel === 'phone' ? '+1 555 1234' : ''}
+            className="flex-1 px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-white text-sm min-w-0"
+            autoFocus
+          />
+          <button onClick={handleAdd} className="flex-shrink-0 text-sm px-3 py-1 rounded bg-white text-neutral-950 font-semibold">Add</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main page
+// ---------------------------------------------------------------------------
 export default function CardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [data, setData] = useState<CardData>({ status: 'processing' });
-  const [editingHandle, setEditingHandle] = useState(false);
-  const [newHandle, setNewHandle] = useState('');
   const [shareFile, setShareFile] = useState<File | null>(null);
+
+  async function refresh() {
+    const res = await fetch(`/api/cards/${id}`, { cache: 'no-store' });
+    if (res.ok) setData(await res.json());
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -90,19 +225,14 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
     navigator.share(payload).catch(() => { /* user cancelled */ });
   }
 
-  async function saveHandle() {
+  async function putField(body: object) {
     if (!data.contact) return;
-    const res = await fetch(`/api/contacts/${data.contact.id}`, {
+    await fetch(`/api/contacts/${data.contact.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram: newHandle.replace(/^@/, '') }),
+      body: JSON.stringify(body),
     });
-    if (res.ok) {
-      const refreshed = await fetch(`/api/cards/${id}`, { cache: 'no-store' });
-      setData(await refreshed.json());
-      setEditingHandle(false);
-      setNewHandle('');
-    }
+    await refresh();
   }
 
   if (data.status === 'processing') {
@@ -122,6 +252,15 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
     );
   }
 
+  const contact = data.contact;
+
+  // Determine which single-value channels are already present (for AddField)
+  const existingSingleChannels: PreferredChannel[] = [];
+  if (contact?.telegram) existingSingleChannels.push('telegram');
+  if (contact?.x) existingSingleChannels.push('x');
+  if (contact?.linkedin) existingSingleChannels.push('linkedin');
+  if (contact?.website) existingSingleChannels.push('website');
+
   return (
     <div className="p-6 max-w-md mx-auto space-y-4">
       {data.cardUrl && (
@@ -130,74 +269,174 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
         </div>
       )}
       <div className="space-y-1">
-        <p className="text-lg font-semibold">For {data.contact?.name}</p>
+        <p className="text-lg font-semibold">For {contact?.name}</p>
         <p className="italic text-neutral-300">&quot;{data.interaction?.recap}&quot;</p>
       </div>
-      <div className="flex items-center gap-2 text-sm text-neutral-400">
-        {data.contact?.telegram ? (
-          <span>@{data.contact.telegram}</span>
-        ) : (
-          <span>No Telegram handle captured</span>
-        )}
-        <button onClick={() => setEditingHandle(true)} className="underline">✏️ Fix</button>
-      </div>
-      {editingHandle && (
-        <div className="space-y-2">
-          <input
-            placeholder="@handle"
-            value={newHandle}
-            onChange={(e) => setNewHandle(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800"
-          />
-          <button onClick={saveHandle} className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold">Save</button>
-        </div>
-      )}
-      <button onClick={share} className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold">📤 Share (pick app)</button>
 
-      {(data.contact?.telegram || data.contact?.email || data.contact?.x || data.contact?.linkedin) && (
-        <div className="space-y-2 pt-2">
-          <p className="text-xs uppercase tracking-wide text-neutral-500">Send directly to {data.contact?.name?.split(' ')[0] ?? 'them'}</p>
-          {data.contact?.telegram && (
-            <a
-              href={socialUrl.telegram(data.contact.telegram)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
-            >
-              📱 Open Telegram with @{socialUrl.telegramHandle(data.contact.telegram)}
-            </a>
+      {/* Inline-editable contact fields */}
+      {contact && (
+        <div className="rounded-lg bg-neutral-950 border border-neutral-800 px-4 py-3 space-y-1">
+          {/* Emails */}
+          {contact.emails.map((email, i) => (
+            <EditableField
+              key={`email-${i}`}
+              icon="✉️"
+              value={email}
+              placeholder="email@example.com"
+              isPreferred={contact.preferredChannel === 'email'}
+              onSave={(v) => putField({ kind: 'email', index: i, value: v })}
+              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'email' ? null : 'email' })}
+              onRemove={() => putField({ kind: 'email-remove', index: i })}
+            />
+          ))}
+
+          {/* Phones */}
+          {contact.phones.map((phone, i) => (
+            <EditableField
+              key={`phone-${i}`}
+              icon="📞"
+              value={phone}
+              placeholder="+1 555 1234"
+              isPreferred={contact.preferredChannel === 'phone'}
+              onSave={(v) => putField({ kind: 'phone', index: i, value: v })}
+              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'phone' ? null : 'phone' })}
+              onRemove={() => putField({ kind: 'phone-remove', index: i })}
+            />
+          ))}
+
+          {/* Telegram */}
+          {contact.telegram && (
+            <EditableField
+              icon="📱"
+              value={contact.telegram}
+              placeholder="telegram handle"
+              isPreferred={contact.preferredChannel === 'telegram'}
+              onSave={(v) => putField({ kind: 'telegram', value: v.replace(/^@/, '') })}
+              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'telegram' ? null : 'telegram' })}
+            />
           )}
-          {data.contact?.email && (
-            <a
-              href={`mailto:${data.contact.email}?subject=${encodeURIComponent(`Card from ${data.interaction?.recap ? '' : 'me'}`)}&body=${encodeURIComponent(data.caption ?? '')}%0A%0A${encodeURIComponent(data.shareUrl ?? '')}`}
-              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
-            >
-              ✉️ Email {data.contact.email}
-            </a>
+
+          {/* X */}
+          {contact.x && (
+            <EditableField
+              icon="🐦"
+              value={contact.x}
+              placeholder="x handle"
+              isPreferred={contact.preferredChannel === 'x'}
+              onSave={(v) => putField({ kind: 'x', value: v.replace(/^@/, '') })}
+              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'x' ? null : 'x' })}
+            />
           )}
-          {data.contact?.x && (
-            <a
-              href={socialUrl.x(data.contact.x)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
-            >
-              🐦 Open X profile of @{socialUrl.xHandle(data.contact.x)}
-            </a>
+
+          {/* LinkedIn */}
+          {contact.linkedin && (
+            <EditableField
+              icon="💼"
+              value={contact.linkedin}
+              placeholder="linkedin handle"
+              isPreferred={contact.preferredChannel === 'linkedin'}
+              onSave={(v) => putField({ kind: 'linkedin', value: v })}
+              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'linkedin' ? null : 'linkedin' })}
+            />
           )}
-          {data.contact?.linkedin && (
-            <a
-              href={socialUrl.linkedin(data.contact.linkedin)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
-            >
-              💼 Open LinkedIn of {socialUrl.linkedinHandle(data.contact.linkedin)}
-            </a>
+
+          {/* Website */}
+          {contact.website && (
+            <EditableField
+              icon="🌐"
+              value={contact.website}
+              placeholder="website.com"
+              isPreferred={contact.preferredChannel === 'website'}
+              onSave={(v) => putField({ kind: 'website', value: v })}
+              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'website' ? null : 'website' })}
+            />
           )}
-          <p className="text-xs text-neutral-500 pt-1">After their chat opens, come back here and tap “📤 Share” → pick the same app to attach the card.</p>
+
+          {/* Add field */}
+          <AddField
+            existing={existingSingleChannels}
+            onAdd={(channel, value) => {
+              if (channel === 'email') return putField({ kind: 'email-add', value });
+              if (channel === 'phone') return putField({ kind: 'phone-add', value });
+              return putField({ kind: channel, value });
+            }}
+          />
         </div>
       )}
+
+      {/* Smart share routing */}
+      {(() => {
+        if (!contact) return null;
+        const pref = contact.preferredChannel;
+        const buttons: Array<{ label: string; href: string }> = [];
+
+        if (contact.emails[0]) {
+          const body = `${data.caption ?? ''}\n\n${data.shareUrl ?? ''}`;
+          buttons.push({
+            label: `✉️ Email ${contact.emails[0]}`,
+            href: `mailto:${contact.emails[0]}?subject=${encodeURIComponent('Following up')}&body=${encodeURIComponent(body)}`,
+          });
+        }
+        if (contact.phones[0]) {
+          const body = `${data.caption ?? ''}\n\n${data.shareUrl ?? ''}`;
+          buttons.push({
+            label: `💬 Text ${contact.phones[0]}`,
+            href: `sms:${contact.phones[0].replace(/[^+0-9]/g, '')}?body=${encodeURIComponent(body)}`,
+          });
+        }
+        if (contact.telegram) {
+          buttons.push({ label: `📱 Telegram @${socialUrl.telegramHandle(contact.telegram)}`, href: socialUrl.telegram(contact.telegram) });
+        }
+        if (contact.x) {
+          buttons.push({ label: `🐦 X @${socialUrl.xHandle(contact.x)}`, href: socialUrl.x(contact.x) });
+        }
+        if (contact.linkedin) {
+          buttons.push({ label: `💼 LinkedIn`, href: socialUrl.linkedin(contact.linkedin) });
+        }
+        if (contact.website) {
+          buttons.push({ label: `🌐 Website`, href: contact.website.startsWith('http') ? contact.website : `https://${contact.website}` });
+        }
+
+        if (buttons.length === 0) return null;
+
+        const channelToButtonKey = (label: string) => {
+          if (label.startsWith('✉️')) return 'email';
+          if (label.startsWith('💬')) return 'phone';
+          if (label.startsWith('📱')) return 'telegram';
+          if (label.startsWith('🐦')) return 'x';
+          if (label.startsWith('💼')) return 'linkedin';
+          if (label.startsWith('🌐')) return 'website';
+          return '';
+        };
+        const sorted = [...buttons].sort((a, b) => {
+          if (pref && channelToButtonKey(a.label) === pref) return -1;
+          if (pref && channelToButtonKey(b.label) === pref) return 1;
+          return 0;
+        });
+
+        return (
+          <div className="space-y-2 pt-2">
+            <p className="text-xs uppercase tracking-wide text-neutral-500">
+              Send to {contact.name.split(' ')[0]}
+              {pref && <span className="ml-2 text-neutral-400">— prefers {pref}</span>}
+            </p>
+            {sorted.map((btn, i) => (
+              <a
+                key={btn.label}
+                href={btn.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block w-full text-center px-4 py-3 rounded-lg ${i === 0 ? 'bg-white text-neutral-950 font-semibold' : 'bg-neutral-900 border border-neutral-800 text-white'}`}
+              >
+                {btn.label}
+              </a>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* OS share sheet — fallback */}
+      <button onClick={share} className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold">📤 Share (pick app)</button>
 
       <div className="pt-2 space-y-2">
         <button

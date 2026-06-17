@@ -53,10 +53,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     contact: {
       id: contact.id,
       name: contact.name,
-      telegram: structured?.links?.telegram ?? contact.links?.telegram ?? null,
-      x: structured?.links?.x ?? contact.links?.x ?? null,
-      linkedin: structured?.links?.linkedin ?? contact.links?.linkedin ?? null,
-      email: (structured?.emails && structured.emails[0]) ?? contact.emails?.[0] ?? null,
+      telegram: contact.links?.telegram ?? null,
+      x: contact.links?.x ?? null,
+      linkedin: contact.links?.linkedin ?? null,
+      website: contact.links?.website ?? null,
+      emails: contact.emails ?? [],
+      phones: contact.phones ?? [],
+      preferredChannel: contact.preferredChannel ?? null,
     },
     cardUrl: `/api/cards/${interaction.id}/image`, // same-origin proxy
     cardUrlExternal: `${env().R2_PUBLIC_URL_BASE}/cards/${interaction.id}.png`,

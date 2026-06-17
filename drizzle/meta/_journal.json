@@ -57,6 +57,13 @@
       "when": 1781637000000,
       "tag": "0007_drop_telegram_link_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781650000000,
+      "tag": "0008_contact_channels",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,20 @@ import {
   type Contact, type NewContact,
 } from '../lib/db/schema';
 
+export type UpdatableField =
+  | { kind: 'name'; value: string }
+  | { kind: 'telegram'; value: string }
+  | { kind: 'x'; value: string }
+  | { kind: 'linkedin'; value: string }
+  | { kind: 'website'; value: string }
+  | { kind: 'email'; index: number; value: string }
+  | { kind: 'email-add'; value: string }
+  | { kind: 'email-remove'; index: number }
+  | { kind: 'phone'; index: number; value: string }
+  | { kind: 'phone-add'; value: string }
+  | { kind: 'phone-remove'; index: number }
+  | { kind: 'preferred'; value: 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website' | null };
+
 export async function createContact(input: NewContact): Promise<Contact> {
   const [row] = await db().insert(contacts).values(input).returning();
   return row;
@@ -24,6 +38,8 @@ export async function getInteractionWithContact(
       contactRole: contacts.role,
       contactCompany: contacts.company,
       contactEmails: contacts.emails,
+      contactPhones: contacts.phones,
+      contactPreferredChannel: contacts.preferredChannel,
       contactLinks: contacts.links,
       contactNotesSummary: contacts.notesSummary,
       contactLastTouchedAt: contacts.lastTouchedAt,
@@ -44,6 +60,8 @@ export async function getInteractionWithContact(
       role: r.contactRole,
       company: r.contactCompany,
       emails: r.contactEmails,
+      phones: r.contactPhones,
+      preferredChannel: r.contactPreferredChannel,
       links: r.contactLinks,
       notesSummary: r.contactNotesSummary,
       lastTouchedAt: r.contactLastTouchedAt,
@@ -52,15 +70,76 @@ export async function getInteractionWithContact(
   };
 }
 
+export async function updateContactField(contactId: string, field: UpdatableField): Promise<void> {
+  switch (field.kind) {
+    case 'name':
+      await db().update(contacts).set({ name: field.value }).where(eq(contacts.id, contactId));
+      break;
+    case 'telegram':
+    case 'x':
+    case 'linkedin':
+    case 'website':
+      await db()
+        .update(contacts)
+        .set({ links: sql`${contacts.links} || ${JSON.stringify({ [field.kind]: field.value })}::jsonb` })
+        .where(eq(contacts.id, contactId));
+      break;
+    case 'email': {
+      const rows = await db().select({ emails: contacts.emails }).from(contacts).where(eq(contacts.id, contactId)).limit(1);
+      if (!rows[0]) break;
+      const emails = [...(rows[0].emails ?? [])];
+      emails[field.index] = field.value;
+      await db().update(contacts).set({ emails }).where(eq(contacts.id, contactId));
+      break;
+    }
+    case 'email-add': {
+      const rows = await db().select({ emails: contacts.emails }).from(contacts).where(eq(contacts.id, contactId)).limit(1);
+      if (!rows[0]) break;
+      const emails = [...(rows[0].emails ?? []), field.value];
+      await db().update(contacts).set({ emails }).where(eq(contacts.id, contactId));
+      break;
+    }
+    case 'email-remove': {
+      const rows = await db().select({ emails: contacts.emails }).from(contacts).where(eq(contacts.id, contactId)).limit(1);
+      if (!rows[0]) break;
+      const emails = (rows[0].emails ?? []).filter((_, i) => i !== field.index);
+      await db().update(contacts).set({ emails }).where(eq(contacts.id, contactId));
+      break;
+    }
+    case 'phone': {
+      const rows = await db().select({ phones: contacts.phones }).from(contacts).where(eq(contacts.id, contactId)).limit(1);
+      if (!rows[0]) break;
+      const phones = [...(rows[0].phones ?? [])];
+      phones[field.index] = field.value;
+      await db().update(contacts).set({ phones }).where(eq(contacts.id, contactId));
+      break;
+    }
+    case 'phone-add': {
+      const rows = await db().select({ phones: contacts.phones }).from(contacts).where(eq(contacts.id, contactId)).limit(1);
+      if (!rows[0]) break;
+      const phones = [...(rows[0].phones ?? []), field.value];
+      await db().update(contacts).set({ phones }).where(eq(contacts.id, contactId));
+      break;
+    }
+    case 'phone-remove': {
+      const rows = await db().select({ phones: contacts.phones }).from(contacts).where(eq(contacts.id, contactId)).limit(1);
+      if (!rows[0]) break;
+      const phones = (rows[0].phones ?? []).filter((_, i) => i !== field.index);
+      await db().update(contacts).set({ phones }).where(eq(contacts.id, contactId));
+      break;
+    }
+    case 'preferred':
+      await db().update(contacts).set({ preferredChannel: field.value }).where(eq(contacts.id, contactId));
+      break;
+  }
+}
+
 export async function setContactLink(
   contactId: string,
   kind: 'telegram' | 'x' | 'linkedin' | 'website',
   value: string
 ): Promise<void> {
-  await db()
-    .update(contacts)
-    .set({ links: sql`${contacts.links} || ${JSON.stringify({ [kind]: value })}::jsonb` })
-    .where(eq(contacts.id, contactId));
+  return updateContactField(contactId, { kind, value });
 }
 
 export async function findByNameAndCompany(
