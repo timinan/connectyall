@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Avatar, getFirstName } from '../record/greeting';
-import { LuCamera } from 'react-icons/lu';
+import { LuCamera, LuX, LuCheck } from 'react-icons/lu';
+import { ChannelIcon, type ChannelKind } from '../cards/[id]/channel-icons';
 
 type Profile = {
   displayName: string;
@@ -13,6 +14,39 @@ type Profile = {
   photoR2Url: string | null;
   onboardedAt: string | null;
 };
+
+type ProfileChannel = 'x' | 'linkedin' | 'email' | 'website' | 'telegram' | 'whatsapp' | 'wechat' | 'line' | 'phone';
+
+const PROFILE_CHANNELS: ProfileChannel[] = ['email', 'phone', 'telegram', 'x', 'linkedin', 'website', 'whatsapp', 'wechat', 'line'];
+
+const PROFILE_CHANNEL_LABELS: Record<ProfileChannel, string> = {
+  email: 'Email',
+  phone: 'Phone',
+  telegram: 'Telegram',
+  x: 'X',
+  linkedin: 'LinkedIn',
+  website: 'Website',
+  whatsapp: 'WhatsApp',
+  wechat: 'WeChat',
+  line: 'Line',
+};
+
+const PROFILE_CHANNEL_PLACEHOLDERS: Record<ProfileChannel, string> = {
+  email: 'email@example.com',
+  phone: '+1 555 1234',
+  telegram: 'handle (no @)',
+  x: 'x handle',
+  linkedin: 'linkedin handle',
+  website: 'website.com',
+  whatsapp: 'phone digits (e.g. 14155551234)',
+  wechat: 'WeChat ID',
+  line: 'Line ID',
+};
+
+function readChannel(profile: Profile, kind: ProfileChannel): string | null {
+  if (kind === 'telegram') return profile.telegramUsername;
+  return profile.socials[kind] ?? null;
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -55,11 +89,31 @@ export default function ProfilePage() {
     setProfile((p) => (p ? { ...p, photoR2Url } : p));
   }
 
-  async function setSocial(kind: string, value: string) {
+  async function saveChannel(kind: ProfileChannel, value: string) {
     await fetch('/api/profile', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ social: kind, value }),
+      body: JSON.stringify({ action: 'set', social: kind, value }),
+    });
+    setProfile((p) => {
+      if (!p) return p;
+      if (kind === 'telegram') return { ...p, telegramUsername: value };
+      return { ...p, socials: { ...p.socials, [kind]: value } };
+    });
+  }
+
+  async function clearChannel(kind: ProfileChannel) {
+    await fetch('/api/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'clear', social: kind }),
+    });
+    setProfile((p) => {
+      if (!p) return p;
+      if (kind === 'telegram') return { ...p, telegramUsername: null };
+      const next = { ...p.socials };
+      delete next[kind as keyof Profile['socials']];
+      return { ...p, socials: next };
     });
   }
 
@@ -125,16 +179,28 @@ export default function ProfilePage() {
           className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800"
         />
         <div className="space-y-2">
-          <label className="text-sm text-neutral-400">Socials (optional)</label>
-          {(['x', 'linkedin', 'email', 'website'] as const).map((kind) => (
-            <input
-              key={`${kind}-${profile?.socials?.[kind] ?? ''}`}
-              placeholder={kind}
-              className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800"
-              onBlur={(e) => e.target.value && setSocial(kind, e.target.value)}
-              defaultValue={profile?.socials?.[kind] ?? ''}
+          <label className="text-sm text-neutral-400">Channels (optional)</label>
+          {profile && PROFILE_CHANNELS.filter((k) => {
+            const v = readChannel(profile, k);
+            return v !== null && v !== '';
+          }).map((kind) => (
+            <ChannelRow
+              key={`${kind}-${readChannel(profile, kind)}`}
+              kind={kind}
+              initialValue={readChannel(profile, kind) ?? ''}
+              onSave={(v) => saveChannel(kind, v)}
+              onClear={() => clearChannel(kind)}
             />
           ))}
+          {profile && (
+            <AddChannel
+              existing={PROFILE_CHANNELS.filter((k) => {
+                const v = readChannel(profile, k);
+                return v !== null && v !== '';
+              })}
+              onAdd={saveChannel}
+            />
+          )}
         </div>
         <button
           type="submit"
@@ -144,6 +210,113 @@ export default function ProfilePage() {
           {saving ? 'Saving…' : 'Done — start recording'}
         </button>
       </form>
+    </div>
+  );
+}
+
+function ChannelRow({
+  kind,
+  initialValue,
+  onSave,
+  onClear,
+}: {
+  kind: ProfileChannel;
+  initialValue: string;
+  onSave: (v: string) => Promise<void>;
+  onClear: () => Promise<void>;
+}) {
+  const [value, setValue] = useState(initialValue);
+  return (
+    <div className="flex items-center gap-2">
+      <span className="flex items-center justify-center flex-shrink-0">
+        <ChannelIcon kind={kind as ChannelKind} size={18} />
+      </span>
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={() => { if (value.trim() && value !== initialValue) onSave(value.trim()); }}
+        placeholder={PROFILE_CHANNEL_PLACEHOLDERS[kind]}
+        className="flex-1 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-800 text-sm"
+      />
+      <button
+        type="button"
+        onClick={onClear}
+        aria-label={`Remove ${PROFILE_CHANNEL_LABELS[kind]}`}
+        className="text-neutral-500 hover:text-white p-2"
+      >
+        <LuX size={16} />
+      </button>
+    </div>
+  );
+}
+
+function AddChannel({
+  existing,
+  onAdd,
+}: {
+  existing: ProfileChannel[];
+  onAdd: (kind: ProfileChannel, value: string) => Promise<void>;
+}) {
+  const available = PROFILE_CHANNELS.filter((c) => !existing.includes(c));
+  const [expanded, setExpanded] = useState(false);
+  const [selected, setSelected] = useState<ProfileChannel | ''>('');
+  const [value, setValue] = useState('');
+
+  if (available.length === 0) return null;
+
+  async function handleAdd() {
+    if (!selected || !value.trim()) return;
+    await onAdd(selected, value.trim());
+    setSelected('');
+    setValue('');
+    setExpanded(false);
+  }
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-700 bg-neutral-900 text-white text-xs"
+      >
+        + Add field
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <select
+        value={selected}
+        onChange={(e) => setSelected(e.target.value as ProfileChannel | '')}
+        className="bg-neutral-900 border border-neutral-700 rounded px-2 py-2 text-sm text-neutral-300"
+        autoFocus
+      >
+        <option value="">Pick field…</option>
+        {available.map((c) => <option key={c} value={c}>{PROFILE_CHANNEL_LABELS[c]}</option>)}
+      </select>
+      {selected && (
+        <>
+          <span className="flex items-center justify-center flex-shrink-0">
+            <ChannelIcon kind={selected as ChannelKind} size={18} />
+          </span>
+          <input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
+            placeholder={PROFILE_CHANNEL_PLACEHOLDERS[selected]}
+            className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-800 text-sm"
+          />
+          <button
+            type="button"
+            onClick={handleAdd}
+            aria-label="Save"
+            className="p-2 text-white"
+          >
+            <LuCheck size={18} />
+          </button>
+        </>
+      )}
     </div>
   );
 }
