@@ -37,26 +37,123 @@ type CardData = {
 };
 
 // ---------------------------------------------------------------------------
-// Inline-editable field row
+// Inline-editable heading (contact name)
+// ---------------------------------------------------------------------------
+type EditableHeadingProps = {
+  value: string;
+  onSave: (v: string) => Promise<void>;
+};
+
+function EditableHeading({ value, onSave }: EditableHeadingProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setDraft(value); }, [value]);
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+
+  async function commit() {
+    setEditing(false);
+    if (draft.trim() && draft !== value) await onSave(draft.trim());
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit();
+          if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+        }}
+        className="text-xl font-bold w-full px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-white"
+      />
+    );
+  }
+
+  return (
+    <button
+      className="text-xl font-bold text-left hover:text-neutral-300 transition-colors"
+      onClick={() => { setDraft(value); setEditing(true); }}
+      title="Tap to edit name"
+    >
+      {value}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline-editable recap line
+// ---------------------------------------------------------------------------
+type EditableRecapProps = {
+  value: string;
+  onSave: (v: string) => Promise<void>;
+};
+
+function EditableRecap({ value, onSave }: EditableRecapProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => { setDraft(value); }, [value]);
+  useEffect(() => { if (editing) textareaRef.current?.focus(); }, [editing]);
+
+  async function commit() {
+    setEditing(false);
+    if (draft.trim() && draft !== value) await onSave(draft.trim());
+  }
+
+  if (editing) {
+    return (
+      <textarea
+        ref={textareaRef}
+        value={draft}
+        rows={3}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+        }}
+        className="w-full px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-neutral-300 italic text-sm resize-none"
+      />
+    );
+  }
+
+  return (
+    <button
+      className="italic text-neutral-300 text-sm text-left hover:text-neutral-200 transition-colors w-full"
+      onClick={() => { setDraft(value); setEditing(true); }}
+      title="Tap to edit recap"
+    >
+      &quot;{value}&quot;
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline-editable field row — with send + star + delete icons
 // ---------------------------------------------------------------------------
 type EditableFieldProps = {
   icon: string;
   value: string;
   placeholder?: string;
   isPreferred: boolean;
+  sendHref?: string;
   onSave: (v: string) => Promise<void>;
   onTogglePreferred: () => Promise<void>;
   onRemove?: () => Promise<void>;
 };
 
-function EditableField({ icon, value, placeholder, isPreferred, onSave, onTogglePreferred, onRemove }: EditableFieldProps) {
+function EditableField({
+  icon, value, placeholder, isPreferred, sendHref, onSave, onTogglePreferred, onRemove,
+}: EditableFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (editing) inputRef.current?.focus();
-  }, [editing]);
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
 
   async function commit() {
     setEditing(false);
@@ -64,34 +161,60 @@ function EditableField({ icon, value, placeholder, isPreferred, onSave, onToggle
   }
 
   return (
-    <div className="flex items-center gap-2 py-1">
-      <span className="w-6 text-center flex-shrink-0">{icon}</span>
+    <div className="flex items-center gap-1 py-1">
+      <span className="w-6 text-center flex-shrink-0 text-base">{icon}</span>
       {editing ? (
         <input
           ref={inputRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
-          onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setDraft(value); setEditing(false); } }}
-          className="flex-1 px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-white text-sm min-w-0"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit();
+            if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+          }}
+          className="flex-1 px-2 py-1 rounded bg-neutral-800 border border-neutral-700 text-white text-sm min-w-0"
         />
       ) : (
         <button
-          className="flex-1 text-left text-sm text-neutral-200 truncate hover:text-white"
+          className="flex-1 text-left text-sm text-neutral-200 truncate hover:text-white min-w-0"
           onClick={() => { setDraft(value); setEditing(true); }}
         >
           {value || <span className="text-neutral-500">{placeholder}</span>}
         </button>
       )}
+
+      {/* Star: preferred channel toggle */}
       <button
-        className="flex-shrink-0 text-lg leading-none"
+        className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-base hover:opacity-80"
         title={isPreferred ? 'Clear preferred channel' : 'Set as preferred channel'}
         onClick={onTogglePreferred}
       >
         {isPreferred ? '★' : '☆'}
       </button>
+
+      {/* Send: channel-specific deep link */}
+      {sendHref && (
+        <a
+          href={sendHref}
+          target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
+          rel="noopener noreferrer"
+          className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-base hover:opacity-80"
+          title="Send via this channel"
+        >
+          ✈️
+        </a>
+      )}
+
+      {/* Delete */}
       {onRemove && (
-        <button className="flex-shrink-0 text-neutral-500 text-xs hover:text-red-400" onClick={onRemove} title="Remove">✕</button>
+        <button
+          className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-neutral-500 hover:text-red-400 text-sm"
+          onClick={onRemove}
+          title="Remove"
+        >
+          ✕
+        </button>
       )}
     </div>
   );
@@ -117,7 +240,7 @@ type AddFieldProps = {
 
 function AddField({ existing, onAdd }: AddFieldProps) {
   const available = ALL_CHANNELS.filter(c => {
-    if (c === 'email' || c === 'phone') return true; // can have many
+    if (c === 'email' || c === 'phone') return true;
     return !existing.includes(c);
   });
   const [selectedChannel, setSelectedChannel] = useState<PreferredChannel | ''>('');
@@ -149,7 +272,12 @@ function AddField({ existing, onAdd }: AddFieldProps) {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
-            placeholder={selectedChannel === 'telegram' ? 'handle (no @)' : selectedChannel === 'email' ? 'email@example.com' : selectedChannel === 'phone' ? '+1 555 1234' : ''}
+            placeholder={
+              selectedChannel === 'telegram' ? 'handle (no @)'
+              : selectedChannel === 'email' ? 'email@example.com'
+              : selectedChannel === 'phone' ? '+1 555 1234'
+              : ''
+            }
             className="flex-1 px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-white text-sm min-w-0"
             autoFocus
           />
@@ -167,6 +295,10 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
   const { id } = use(params);
   const [data, setData] = useState<CardData>({ status: 'processing' });
   const [shareFile, setShareFile] = useState<File | null>(null);
+
+  // Local optimistic state for name and recap
+  const [localName, setLocalName] = useState<string | null>(null);
+  const [localRecap, setLocalRecap] = useState<string | null>(null);
 
   async function refresh() {
     const res = await fetch(`/api/cards/${id}`, { cache: 'no-store' });
@@ -192,9 +324,9 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
     return () => { cancelled = true; };
   }, [id]);
 
-  // Pre-fetch the card PNG once the card is ready, so navigator.share can be called
+  // Pre-fetch the card PNG once the card is ready so navigator.share can be called
   // synchronously inside the click handler (iOS Safari requires the user gesture to
-  // still be active when share() is called — any await beforehand kills the gesture).
+  // still be active when share() is called).
   useEffect(() => {
     if (data.status !== 'ready' || !data.cardUrl) return;
     let cancelled = false;
@@ -225,7 +357,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
     navigator.share(payload).catch(() => { /* user cancelled */ });
   }
 
-  async function putField(body: object) {
+  async function putContactField(body: object) {
     if (!data.contact) return;
     await fetch(`/api/contacts/${data.contact.id}`, {
       method: 'PUT',
@@ -233,6 +365,26 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
       body: JSON.stringify(body),
     });
     await refresh();
+  }
+
+  async function saveName(name: string) {
+    if (!data.contact) return;
+    setLocalName(name);
+    await fetch(`/api/contacts/${data.contact.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'name', value: name }),
+    });
+  }
+
+  async function saveRecap(recap: string) {
+    if (!data.interaction) return;
+    setLocalRecap(recap);
+    await fetch(`/api/interactions/${data.interaction.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recap }),
+    });
   }
 
   if (data.status === 'processing') {
@@ -253,6 +405,8 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
   }
 
   const contact = data.contact;
+  const contactName = localName ?? contact?.name ?? '';
+  const recapText = localRecap ?? data.interaction?.recap ?? '';
 
   // Determine which single-value channels are already present (for AddField)
   const existingSingleChannels: PreferredChannel[] = [];
@@ -261,19 +415,26 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
   if (contact?.linkedin) existingSingleChannels.push('linkedin');
   if (contact?.website) existingSingleChannels.push('website');
 
+  // Build send href for each channel
+  function emailSendHref(email: string) {
+    const body = `${data.caption ?? ''}\n\n${data.shareUrl ?? ''}`;
+    return `mailto:${email}?subject=${encodeURIComponent('Following up')}&body=${encodeURIComponent(body)}`;
+  }
+
+  function phoneSendHref(phone: string) {
+    const body = `${data.caption ?? ''}\n\n${data.shareUrl ?? ''}`;
+    return `sms:${phone.replace(/[^+0-9]/g, '')}?body=${encodeURIComponent(body)}`;
+  }
+
   return (
     <div className="p-6 max-w-md mx-auto space-y-4">
-      {data.cardUrl && (
-        <div className="flex justify-center pt-2">
-          <img src={data.cardUrl} alt="card" className="w-40 h-40 rounded-full object-cover bg-white" />
-        </div>
-      )}
+      {/* Editable heading: contact name + recap */}
       <div className="space-y-1">
-        <p className="text-lg font-semibold">For {contact?.name}</p>
-        <p className="italic text-neutral-300">&quot;{data.interaction?.recap}&quot;</p>
+        <EditableHeading value={contactName} onSave={saveName} />
+        {recapText && <EditableRecap value={recapText} onSave={saveRecap} />}
       </div>
 
-      {/* Inline-editable contact fields */}
+      {/* Inline-editable contact fields with per-row actions */}
       {contact && (
         <div className="rounded-lg bg-neutral-950 border border-neutral-800 px-4 py-3 space-y-1">
           {/* Emails */}
@@ -284,9 +445,10 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
               value={email}
               placeholder="email@example.com"
               isPreferred={contact.preferredChannel === 'email'}
-              onSave={(v) => putField({ kind: 'email', index: i, value: v })}
-              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'email' ? null : 'email' })}
-              onRemove={() => putField({ kind: 'email-remove', index: i })}
+              sendHref={emailSendHref(email)}
+              onSave={(v) => putContactField({ kind: 'email', index: i, value: v })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'email' ? null : 'email' })}
+              onRemove={() => putContactField({ kind: 'email-remove', index: i })}
             />
           ))}
 
@@ -298,9 +460,10 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
               value={phone}
               placeholder="+1 555 1234"
               isPreferred={contact.preferredChannel === 'phone'}
-              onSave={(v) => putField({ kind: 'phone', index: i, value: v })}
-              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'phone' ? null : 'phone' })}
-              onRemove={() => putField({ kind: 'phone-remove', index: i })}
+              sendHref={phoneSendHref(phone)}
+              onSave={(v) => putContactField({ kind: 'phone', index: i, value: v })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'phone' ? null : 'phone' })}
+              onRemove={() => putContactField({ kind: 'phone-remove', index: i })}
             />
           ))}
 
@@ -311,8 +474,10 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
               value={contact.telegram}
               placeholder="telegram handle"
               isPreferred={contact.preferredChannel === 'telegram'}
-              onSave={(v) => putField({ kind: 'telegram', value: v.replace(/^@/, '') })}
-              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'telegram' ? null : 'telegram' })}
+              sendHref={socialUrl.telegram(contact.telegram)}
+              onSave={(v) => putContactField({ kind: 'telegram', value: v.replace(/^@/, '') })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'telegram' ? null : 'telegram' })}
+              onRemove={() => putContactField({ kind: 'telegram-clear' })}
             />
           )}
 
@@ -323,8 +488,10 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
               value={contact.x}
               placeholder="x handle"
               isPreferred={contact.preferredChannel === 'x'}
-              onSave={(v) => putField({ kind: 'x', value: v.replace(/^@/, '') })}
-              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'x' ? null : 'x' })}
+              sendHref={socialUrl.x(contact.x)}
+              onSave={(v) => putContactField({ kind: 'x', value: v.replace(/^@/, '') })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'x' ? null : 'x' })}
+              onRemove={() => putContactField({ kind: 'x-clear' })}
             />
           )}
 
@@ -335,8 +502,10 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
               value={contact.linkedin}
               placeholder="linkedin handle"
               isPreferred={contact.preferredChannel === 'linkedin'}
-              onSave={(v) => putField({ kind: 'linkedin', value: v })}
-              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'linkedin' ? null : 'linkedin' })}
+              sendHref={socialUrl.linkedin(contact.linkedin)}
+              onSave={(v) => putContactField({ kind: 'linkedin', value: v })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'linkedin' ? null : 'linkedin' })}
+              onRemove={() => putContactField({ kind: 'linkedin-clear' })}
             />
           )}
 
@@ -347,8 +516,10 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
               value={contact.website}
               placeholder="website.com"
               isPreferred={contact.preferredChannel === 'website'}
-              onSave={(v) => putField({ kind: 'website', value: v })}
-              onTogglePreferred={() => putField({ kind: 'preferred', value: contact.preferredChannel === 'website' ? null : 'website' })}
+              sendHref={contact.website.startsWith('http') ? contact.website : `https://${contact.website}`}
+              onSave={(v) => putContactField({ kind: 'website', value: v })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'website' ? null : 'website' })}
+              onRemove={() => putContactField({ kind: 'website-clear' })}
             />
           )}
 
@@ -356,97 +527,29 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           <AddField
             existing={existingSingleChannels}
             onAdd={(channel, value) => {
-              if (channel === 'email') return putField({ kind: 'email-add', value });
-              if (channel === 'phone') return putField({ kind: 'phone-add', value });
-              return putField({ kind: channel, value });
+              if (channel === 'email') return putContactField({ kind: 'email-add', value });
+              if (channel === 'phone') return putContactField({ kind: 'phone-add', value });
+              return putContactField({ kind: channel, value });
             }}
           />
         </div>
       )}
 
-      {/* Smart share routing */}
-      {(() => {
-        if (!contact) return null;
-        const pref = contact.preferredChannel;
-        const buttons: Array<{ label: string; href: string }> = [];
+      {/* Primary OS share sheet */}
+      <button onClick={share} className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold">
+        📤 Share (pick app)
+      </button>
 
-        if (contact.emails[0]) {
-          const body = `${data.caption ?? ''}\n\n${data.shareUrl ?? ''}`;
-          buttons.push({
-            label: `✉️ Email ${contact.emails[0]}`,
-            href: `mailto:${contact.emails[0]}?subject=${encodeURIComponent('Following up')}&body=${encodeURIComponent(body)}`,
-          });
-        }
-        if (contact.phones[0]) {
-          const body = `${data.caption ?? ''}\n\n${data.shareUrl ?? ''}`;
-          buttons.push({
-            label: `💬 Text ${contact.phones[0]}`,
-            href: `sms:${contact.phones[0].replace(/[^+0-9]/g, '')}?body=${encodeURIComponent(body)}`,
-          });
-        }
-        if (contact.telegram) {
-          buttons.push({ label: `📱 Telegram @${socialUrl.telegramHandle(contact.telegram)}`, href: socialUrl.telegram(contact.telegram) });
-        }
-        if (contact.x) {
-          buttons.push({ label: `🐦 X @${socialUrl.xHandle(contact.x)}`, href: socialUrl.x(contact.x) });
-        }
-        if (contact.linkedin) {
-          buttons.push({ label: `💼 LinkedIn`, href: socialUrl.linkedin(contact.linkedin) });
-        }
-        if (contact.website) {
-          buttons.push({ label: `🌐 Website`, href: contact.website.startsWith('http') ? contact.website : `https://${contact.website}` });
-        }
-
-        if (buttons.length === 0) return null;
-
-        const channelToButtonKey = (label: string) => {
-          if (label.startsWith('✉️')) return 'email';
-          if (label.startsWith('💬')) return 'phone';
-          if (label.startsWith('📱')) return 'telegram';
-          if (label.startsWith('🐦')) return 'x';
-          if (label.startsWith('💼')) return 'linkedin';
-          if (label.startsWith('🌐')) return 'website';
-          return '';
-        };
-        const sorted = [...buttons].sort((a, b) => {
-          if (pref && channelToButtonKey(a.label) === pref) return -1;
-          if (pref && channelToButtonKey(b.label) === pref) return 1;
-          return 0;
-        });
-
-        return (
-          <div className="space-y-2 pt-2">
-            <p className="text-xs uppercase tracking-wide text-neutral-500">
-              Send to {contact.name.split(' ')[0]}
-              {pref && <span className="ml-2 text-neutral-400">— prefers {pref}</span>}
-            </p>
-            {sorted.map((btn, i) => (
-              <a
-                key={btn.label}
-                href={btn.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`block w-full text-center px-4 py-3 rounded-lg ${i === 0 ? 'bg-white text-neutral-950 font-semibold' : 'bg-neutral-900 border border-neutral-800 text-white'}`}
-              >
-                {btn.label}
-              </a>
-            ))}
-          </div>
-        );
-      })()}
-
-      {/* OS share sheet — fallback */}
-      <button onClick={share} className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold">📤 Share (pick app)</button>
-
-      <div className="pt-2 space-y-2">
-        <button
-          onClick={() => navigator.clipboard.writeText(data.caption ?? '')}
-          className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
+      {/* Save contact to address book */}
+      {contact && (
+        <a
+          href={`/api/contacts/${contact.id}/vcard`}
+          download
+          className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
         >
-          📋 Copy caption
-        </button>
-        <a href={data.cardUrlExternal ?? data.cardUrl} download className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white">💾 Save image</a>
-      </div>
+          💾 Save {contactName} to my Contacts
+        </a>
+      )}
     </div>
   );
 }

@@ -22,6 +22,10 @@ const Body = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('phone-add'), value: z.string().min(4).max(40) }),
   z.object({ kind: z.literal('phone-remove'), index: z.number().int().min(0) }),
   z.object({ kind: z.literal('preferred'), value: z.enum(['telegram', 'email', 'phone', 'x', 'linkedin', 'website']).nullable() }),
+  z.object({ kind: z.literal('telegram-clear') }),
+  z.object({ kind: z.literal('x-clear') }),
+  z.object({ kind: z.literal('linkedin-clear') }),
+  z.object({ kind: z.literal('website-clear') }),
 ]);
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {

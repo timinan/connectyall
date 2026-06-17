@@ -19,3 +19,27 @@ export function buildVCard(input: {
   lines.push('END:VCARD');
   return lines.join(CRLF);
 }
+
+export function buildContactVCard(input: {
+  name: string;
+  emails: string[];
+  phones: string[];
+  telegram: string | null;
+  x: string | null;
+  linkedin: string | null;
+  website: string | null;
+  company?: string | null;
+  role?: string | null;
+}): string {
+  const lines: string[] = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${input.name}`, `N:${input.name};;;;`];
+  if (input.company) lines.push(`ORG:${input.company}`);
+  if (input.role) lines.push(`TITLE:${input.role}`);
+  for (const email of input.emails) lines.push(`EMAIL;TYPE=INTERNET:${email}`);
+  for (const phone of input.phones) lines.push(`TEL:${phone}`);
+  if (input.telegram) lines.push(`URL;TYPE=Telegram:${telegramUrl(input.telegram)}`);
+  if (input.x) lines.push(`URL;TYPE=Twitter:${xUrl(input.x)}`);
+  if (input.linkedin) lines.push(`URL;TYPE=LinkedIn:${linkedinUrl(input.linkedin)}`);
+  if (input.website) lines.push(`URL;TYPE=Website:${websiteUrl(input.website)}`);
+  lines.push('END:VCARD');
+  return lines.join(CRLF);
+}

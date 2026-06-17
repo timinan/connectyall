@@ -11,6 +11,10 @@ export type UpdatableField =
   | { kind: 'x'; value: string }
   | { kind: 'linkedin'; value: string }
   | { kind: 'website'; value: string }
+  | { kind: 'telegram-clear' }
+  | { kind: 'x-clear' }
+  | { kind: 'linkedin-clear' }
+  | { kind: 'website-clear' }
   | { kind: 'email'; index: number; value: string }
   | { kind: 'email-add'; value: string }
   | { kind: 'email-remove'; index: number }
@@ -126,6 +130,17 @@ export async function updateContactField(contactId: string, field: UpdatableFiel
       if (!rows[0]) break;
       const phones = (rows[0].phones ?? []).filter((_, i) => i !== field.index);
       await db().update(contacts).set({ phones }).where(eq(contacts.id, contactId));
+      break;
+    }
+    case 'telegram-clear':
+    case 'x-clear':
+    case 'linkedin-clear':
+    case 'website-clear': {
+      const linkKey = field.kind.replace('-clear', ''); // 'telegram' | 'x' | 'linkedin' | 'website'
+      await db()
+        .update(contacts)
+        .set({ links: sql`${contacts.links} - ${linkKey}` })
+        .where(eq(contacts.id, contactId));
       break;
     }
     case 'preferred':
