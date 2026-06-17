@@ -10,7 +10,7 @@ Today `/app/record` jumps straight into "Tap to start" with no acknowledgement o
 
 ## Scope
 
-Only the logged-in record page. The profile page (`/app/profile`) already supports editing every relevant field and is reused as-is. No new API endpoints, no schema changes, no migrations.
+The logged-in record page (`/app/record`) gets a greeting + avatar header. The profile page (`/app/profile`) gets a personalized headline so it feels welcoming for first-timers and consistent for returning edits. No new API endpoints, no schema changes, no migrations.
 
 ## Design
 
@@ -53,11 +53,22 @@ When the upload finishes, the page navigates to `/app/cards/[id]`, so we don't n
 
 Extract the greeting + avatar into a new client component `src/app/app/record/greeting.tsx` so `record/page.tsx` stays focused on the recording state machine. The new component is self-contained: it does its own profile fetch, owns its loading state, and renders nothing while loading except the avatar skeleton.
 
+### Profile page headline
+
+The existing `/app/profile` page is the same screen used for first-time onboarding (because `/app` redirects un-onboarded users to it) and for editing later. Today the headline is `Set up your card` regardless. Replace it with a context-aware greeting:
+
+- **First-time user** (`!profile?.onboardedAt`): `Hello, please set up your profile below`
+- **Returning user** (`profile.onboardedAt` is set): `Hello, <first-name>, please edit your profile below`
+
+If `profile` hasn't loaded yet (the page already does a client-side fetch in `useEffect`), render `Hello` only (no trailing line) as a soft placeholder. Once `profile` resolves, swap to the right headline. This is one `<h1>` whose content depends on `profile`, not a separate component.
+
+First-name resolution uses the same `getFirstName` helper introduced in `greeting.tsx`. Import it from there (the profile page is already a client component, so the import is straightforward).
+
 ## Files Affected
 
 - **Modify** `src/app/app/record/page.tsx` — import the new component, render it when `state === 'idle'`.
-- **Create** `src/app/app/record/greeting.tsx` — fetches profile, renders greeting + avatar + edit badge wrapped in a `<Link>`.
-- **No changes** to `src/app/app/profile/page.tsx` — the existing form already saves and routes back to `/app/record`.
+- **Create** `src/app/app/record/greeting.tsx` — fetches profile, renders greeting + avatar + edit badge wrapped in a `<Link>`. Exports a `getFirstName(displayName)` helper.
+- **Modify** `src/app/app/profile/page.tsx` — replace the static `Set up your card` headline with the context-aware greeting described above. Import `getFirstName` from `../record/greeting`.
 - **No changes** to `src/app/api/profile/route.ts` — the existing `GET` already returns everything we need.
 
 ## Out of Scope
@@ -75,10 +86,10 @@ This is purely a presentational change with no business logic. Add one unit test
 - `getFirstName('Tim Nan') === 'Tim'`, `getFirstName('') === null`, `getFirstName(null) === null`, `getFirstName('   Tim  ') === 'Tim'`. Helper lives in `greeting.tsx`.
 
 Browser verification on the preview deploy:
-- Logged-in user with photo set → sees photo + first name greeting.
-- Logged-in user without photo → sees initial-bubble fallback.
-- Tap avatar → lands on `/app/profile`. Edit, click "Done" → returns to `/app/record` and the new info shows.
-- Start recording → greeting + avatar disappear, mic UI shifts up. Stop / upload finishes → navigates to `/app/cards/[id]` as before.
+- **First-time onboarding:** Sign in with a brand-new account → land on `/app/profile` → see `Hello, please set up your profile below` headline. Fill out form, save. Lands on `/app/record` with the greeting + avatar header.
+- **Returning user, edit flow:** Already-onboarded user lands on `/app/record`, sees `Hello, Tim 👋` + their avatar. Taps avatar → lands on `/app/profile` → headline reads `Hello, Tim, please edit your profile below`. Make a change, click "Done" → back on `/app/record`, header reflects the new info.
+- **No photo:** Same flows with no photo set → avatar is the initial-bubble fallback.
+- **Recording:** Tap mic → greeting + avatar disappear, mic UI shifts up. Stop / upload finishes → navigates to `/app/cards/[id]` as before.
 
 ## Risks
 
