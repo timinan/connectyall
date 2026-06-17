@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getFirstName } from '../record/greeting';
 
 type Profile = {
   displayName: string;
   tagline: string | null;
   socials: { x?: string; linkedin?: string; email?: string; website?: string };
   telegramUsername: string | null;
+  onboardedAt: string | null;
 };
 
 export default function ProfilePage() {
@@ -55,9 +57,20 @@ export default function ProfilePage() {
     });
   }
 
+  function headline() {
+    if (!profile) return 'Hello';
+    const firstName = getFirstName(profile.displayName);
+    if (profile.onboardedAt) {
+      return firstName
+        ? `Hello, ${firstName}, please edit your profile below`
+        : 'Hello, please edit your profile below';
+    }
+    return 'Hello, please set up your profile below';
+  }
+
   return (
     <div className="p-6 max-w-md mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">Set up your card</h1>
+      <h1 className="text-2xl font-bold">{headline()}</h1>
       <form
         onSubmit={(e) => { e.preventDefault(); saveBasics(e.currentTarget); }}
         className="space-y-3"
