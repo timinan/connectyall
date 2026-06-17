@@ -95,3 +95,154 @@ Browser verification on the preview deploy:
 
 - **Layout shift on slow networks:** if the profile fetch is slow, the skeleton is visible for a noticeable beat. Acceptable for v1 — most users will have it cached after their first session.
 - **Photo R2 URL caching:** R2 returns long-cache headers. If the user changes their photo and immediately comes back here, the browser may still show the old one. Existing `/app/profile` uploads have the same property; we'll fix at the platform level if it becomes a complaint.
+
+---
+
+# Addendum — Profile Page Redesign (round 2)
+
+After the first round shipped, feedback was:
+
+1. The avatar on the record page felt too small at 96px.
+2. The profile page socials block (a static 4-input loop) didn't match the polished per-row inline-edit pattern we built for the post-capture contact page.
+3. The profile page photo picker was a raw `<input type="file">` with no visual treatment — uneditable in a way that matched the rest of the app.
+
+This addendum specifies those three changes together since they touch the same files.
+
+## Avatar bump
+
+- `greeting.tsx` `Avatar` size: **96×96 → 128×128** (`w-24 h-24` → `w-32 h-32`).
+- Pencil edit badge: **28px → 32px** (`w-7 h-7` → `w-8 h-8`), icon size 14 → 16.
+- Initial-bubble font: stays `text-4xl` (still reads well at 128px).
+- Skeleton: tracks the new 128px size.
+
+## Profile page — avatar with camera badge
+
+The profile page (`/app/profile`) gets a hero avatar block above the form:
+
+- Render the same `Avatar` component used by the greeting (export it from `greeting.tsx` to share).
+- Bottom-right badge uses a **camera icon** (`LuCamera` from `react-icons/lu`), not a pencil. Camera reads as "change photo"; pencil reads as "edit text."
+- Tapping the badge triggers a hidden `<input type="file" accept="image/*">`. The existing `uploadPhoto(file)` handler stays; only the trigger surface changes.
+- After upload completes, optimistically refresh the local `profile` state so the new photo appears without a page reload. The endpoint already returns `{ photoR2Url }` from the multipart PUT — use that.
+- Remove the existing naked `<input type="file">` element from the form.
+
+## Profile page — channels block redesign
+
+Replace the current 4-input loop (`x | linkedin | email | website` rendered as plain inputs) with the same per-row pattern from the post-capture contact page.
+
+### Supported channels (9)
+
+`x, linkedin, email, website, telegram, whatsapp, wechat, line, phone`. This matches `PreferredChannel` on the contact page so visual treatment, icons, and labels stay consistent across the app.
+
+### Row layout (one per active channel)
+
+```
+[brand icon] [value — tap-edit input, saves onBlur]  [✕ remove]
+```
+
+- Brand icon: reuse `ChannelIcon` from `src/app/app/cards/[id]/channel-icons.tsx`. Cross-import is fine for v1; if it spreads further we'll move to `src/app/app/_components/`.
+- Value: a controlled `<input>` styled like the existing form inputs. Save fires `onBlur` if the value changed (same pattern as today, just per-row). Empty value renders the channel's placeholder (e.g. `handle (no @)` for telegram, `+1 555 1234` for phone).
+- Remove: an `LuX` icon button. Clicking calls the new clear endpoint (see API section) and removes the row from the UI.
+
+### Add field component
+
+Below the rows, an `+ Add field` chip-style button. Tapping expands inline into:
+
+```
+[channel select] [icon] [value input] [✓ save]
+```
+
+- The select shows only channels not already active.
+- After save: the new row appears above, the picker collapses back to the `+ Add field` button.
+- Implementation mirrors the contact page's `AddField` but is a fresh, simpler component scoped to the profile page (different data shape — single value per channel, no email/phone arrays).
+
+### State model
+
+The profile page's local `profile` already holds `{ displayName, tagline, socials, telegramUsername, onboardedAt }`. Extend with the union of all 9 channels via a derived helper:
+
+```typescript
+function activeChannels(p: Profile): Array<{ kind: PreferredChannel; value: string }> { ... }
+```
+
+`telegram` reads from `p.telegramUsername`; the other 8 read from `p.socials.<kind>`. Order: stable, matches `ALL_CHANNELS` definition from the contact page.
+
+## API extension
+
+### Type
+
+Add `phone?: string` to the `Socials` type in `src/lib/db/schema.ts`. The remaining 6 (`x, linkedin, email, website, whatsapp, wechat, line`) are already present. No SQL migration — pure jsonb extension.
+
+### `SocialSchema` (in `src/app/api/profile/route.ts`)
+
+Expand the union to cover both set and clear:
+
+```typescript
+const SocialSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('set'),
+    social: z.enum(['x', 'linkedin', 'email', 'website', 'telegram', 'whatsapp', 'wechat', 'line', 'phone']),
+    value: z.string().min(1).max(255),
+  }),
+  z.object({
+    action: z.literal('clear'),
+    social: z.enum(['x', 'linkedin', 'email', 'website', 'telegram', 'whatsapp', 'wechat', 'line', 'phone']),
+  }),
+]);
+```
+
+Backwards-compat note: the existing client code on `/app/profile` sends `{ social, value }` without an `action` field. The PUT handler should accept the legacy shape and treat it as `action: 'set'`, OR — since we're rewriting the profile page UI in the same PR — just update the client to always send `action`. **Pick the second**: simpler, no compatibility shim, and there are no other clients of this endpoint.
+
+### Handler routing
+
+- `action: 'set'`:
+  - If `social === 'telegram'`: `users.telegramUsername = value` (use existing column-level update path).
+  - Else: call `setSocial(userId, social, value)` (existing jsonb merge).
+- `action: 'clear'`:
+  - If `social === 'telegram'`: `users.telegramUsername = null`.
+  - Else: call new `clearSocial(userId, social)` which does `socials: sql\`${users.socials} - ${kind}\``.
+
+Telegram normalization on set: run `telegramHandle(value)` (already imported) for consistency with the contact-side flow.
+
+### New service function
+
+`src/services/UserProfileService.ts`:
+
+```typescript
+export async function clearSocial(userId: string, kind: keyof Socials): Promise<void> {
+  await db()
+    .update(users)
+    .set({ socials: sql`${users.socials} - ${kind}` })
+    .where(eq(users.id, userId));
+}
+```
+
+## Files affected (round 2)
+
+- **Modify** `src/app/app/record/greeting.tsx` — bump avatar to 128px, bump pencil badge proportionally, export `Avatar`.
+- **Modify** `src/app/app/profile/page.tsx` — new avatar+camera block, replace 4-input loop with per-row channel list + AddField, drop the existing file input.
+- **Modify** `src/lib/db/schema.ts` — add `phone?: string` to `Socials`.
+- **Modify** `src/app/api/profile/route.ts` — new `SocialSchema` (discriminated union with set/clear), new routing logic, telegram-as-channel branch.
+- **Modify** `src/services/UserProfileService.ts` — add `clearSocial`.
+- **No changes** to `src/app/app/cards/[id]/channel-icons.tsx` or the contact page — they're reused as-is.
+- **No DB migration**.
+
+## Testing (round 2)
+
+Unit tests:
+- `clearSocial` removes the key from jsonb (integration test against a test row — there's already a `ContactService.test.ts` pattern to follow).
+- API PUT: `{ action: 'set', social: 'telegram', value: '@timnan' }` updates `users.telegramUsername` to `timnan` (normalized).
+- API PUT: `{ action: 'clear', social: 'x' }` removes `x` from jsonb.
+- API PUT: `{ action: 'clear', social: 'telegram' }` sets `telegramUsername` to null.
+
+Browser verification:
+- All 9 channels can be added one by one, persisted, edited, removed.
+- Camera badge on the avatar opens the file picker. Upload completes → photo updates in place.
+- Telegram round-trips correctly (set saves, edit shows current handle, remove clears).
+- Avatar size feels right at 128px on a phone.
+
+## Out of scope (round 2)
+
+- Drag-to-reorder channels.
+- Multiple emails or phones on the profile (contacts have arrays; profile stays single-value-per-channel).
+- Image cropping / preview before upload.
+- Removing the avatar entirely (clear photo). Add later if requested.
+- Migrating telegram out of its dedicated column into `socials.telegram`. Keeping the column avoids a backfill; the UI treats it uniformly anyway.
