@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Greeting } from './greeting';
 
 type State = 'idle' | 'recording' | 'uploading';
 
@@ -90,6 +91,7 @@ export default function RecordPage() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm space-y-8">
+        {state === 'idle' && <Greeting />}
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">{state === 'recording' ? 'Recording…' : 'Tap to start'}</h1>
           <p className="text-neutral-400 text-sm">{state === 'recording' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : 'Tell me about who you just met.'}</p>
