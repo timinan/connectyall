@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getFirstName } from '../record/greeting';
+import { Avatar, getFirstName } from '../record/greeting';
+import { LuCamera } from 'react-icons/lu';
 
 type Profile = {
   displayName: string;
   tagline: string | null;
-  socials: { x?: string; linkedin?: string; email?: string; website?: string };
+  socials: { x?: string; linkedin?: string; email?: string; website?: string; whatsapp?: string; wechat?: string; line?: string; phone?: string };
   telegramUsername: string | null;
+  photoR2Url: string | null;
   onboardedAt: string | null;
 };
 
@@ -16,6 +18,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -46,7 +49,10 @@ export default function ProfilePage() {
   async function uploadPhoto(file: File) {
     const fd = new FormData();
     fd.append('photo', file);
-    await fetch('/api/profile', { method: 'PUT', body: fd });
+    const res = await fetch('/api/profile', { method: 'PUT', body: fd });
+    if (!res.ok) return;
+    const { photoR2Url } = await res.json();
+    setProfile((p) => (p ? { ...p, photoR2Url } : p));
   }
 
   async function setSocial(kind: string, value: string) {
@@ -70,7 +76,29 @@ export default function ProfilePage() {
 
   return (
     <div className="p-6 max-w-md mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">{headline()}</h1>
+      <div className="flex flex-col items-center gap-4">
+        <h1 className="text-2xl font-bold text-center">{headline()}</h1>
+        <div className="relative inline-block">
+          <Avatar
+            profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : 'loading'}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            aria-label="Change photo"
+            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white text-neutral-950 flex items-center justify-center shadow ring-2 ring-neutral-950"
+          >
+            <LuCamera size={16} />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
+          />
+        </div>
+      </div>
       <form
         onSubmit={(e) => { e.preventDefault(); saveBasics(e.currentTarget); }}
         className="space-y-3"
@@ -95,12 +123,6 @@ export default function ProfilePage() {
           placeholder="Optional — extra context the AI uses for extraction"
           rows={2}
           className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800"
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
-          className="block text-sm"
         />
         <div className="space-y-2">
           <label className="text-sm text-neutral-400">Socials (optional)</label>
