@@ -64,6 +64,13 @@
       "when": 1781650000000,
       "tag": "0008_contact_channels",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781660000000,
+      "tag": "0009_rename_notes_summary",
+      "breakpoints": true
     }
   ]
 }

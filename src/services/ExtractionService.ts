@@ -15,6 +15,7 @@ export const ContactSchema = z.object({
     linkedin: z.string().optional(),
     website: z.string().optional(),
   }),
+  notes: z.string().nullable(),
   context: z.string(),
   recap: z.string(),
   user_commitments: z.array(z.string()),
@@ -96,6 +97,29 @@ PHONE EXTRACTION (phones is a top-level array):
 - "she gave me her cell, +1 415 555 9999" → phones: ["+14155559999"]
 - "call him at 6 5 5 5 1 2 3 4" → phones: ["6555 1234"]
 - Normalize obvious patterns; preserve digits, "+", spaces, parens, dashes as-is otherwise
+
+NOTES vs RECAP — IMPORTANT distinction:
+
+"notes" = WHO THIS PERSON IS. Biographical / contextual facts that persist
+across meetings. STAYS PRIVATE — never shared with the contact. One short
+sentence. Examples:
+- "Product manager at Meta"
+- "Works at a nonprofit for Jesus"
+- "Recently moved from SF to Berlin"
+- "Friend of Sarah's from college"
+
+"recap" = WHAT YOU TALKED ABOUT in THIS conversation. Per-meeting. Goes
+INTO the share preview, so the contact will see this. One sentence,
+substance-only (no "we talked about" framing — see existing rules).
+
+Rules for distinguishing:
+- "She's a PM at Meta"          → notes: "PM at Meta"     | recap: null (or whatever else was discussed)
+- "We chatted about her PM role at Meta" → recap: "Her PM role at Meta"  | notes: null (unless something biographical was also said)
+- "He's working at a nonprofit and we discussed his fundraising plans" → notes: "Working at a nonprofit"  | recap: "His fundraising plans"
+
+If only biographical info was given, recap should be the most generic available
+("our meeting", or null). If only conversational topics were discussed, notes
+should be null.
 
 PREFERRED CHANNEL (preferred_channel field, one of: telegram | email | phone | x | linkedin | website | null):
 

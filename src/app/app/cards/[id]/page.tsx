@@ -22,6 +22,7 @@ type CardData = {
   contact?: {
     id: string;
     name: string;
+    notes: string | null;
     telegram: string | null;
     x: string | null;
     linkedin: string | null;
@@ -75,35 +76,41 @@ function EditableHeading({ value, onSave }: EditableHeadingProps) {
 
   return (
     <button
-      className="text-xl font-bold text-left hover:text-neutral-300 transition-colors"
+      className="text-xl font-bold text-left hover:text-neutral-300 transition-colors flex items-center gap-1.5"
       onClick={() => { setDraft(value); setEditing(true); }}
       title="Tap to edit name"
     >
       {value}
+      <span className="text-base text-neutral-500 font-normal">✏️</span>
     </button>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Inline-editable recap line
+// Inline-editable textarea field (notes + recap)
 // ---------------------------------------------------------------------------
-type EditableRecapProps = {
-  value: string;
-  onSave: (v: string) => Promise<void>;
+type EditableTextAreaProps = {
+  value: string | null;
+  placeholder: string;
+  onSave: (v: string | null) => Promise<void>;
 };
 
-function EditableRecap({ value, onSave }: EditableRecapProps) {
+function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
+  const [draft, setDraft] = useState(value ?? '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => { setDraft(value); }, [value]);
+  useEffect(() => { setDraft(value ?? ''); }, [value]);
   useEffect(() => { if (editing) textareaRef.current?.focus(); }, [editing]);
 
   async function commit() {
     setEditing(false);
-    if (draft.trim() && draft !== value) await onSave(draft.trim());
+    const trimmed = draft.trim();
+    const next = trimmed || null;
+    if (next !== value) await onSave(next);
   }
+
+  const displayValue = value?.trim();
 
   if (editing) {
     return (
@@ -114,26 +121,31 @@ function EditableRecap({ value, onSave }: EditableRecapProps) {
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
-          if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+          if (e.key === 'Escape') { setDraft(value ?? ''); setEditing(false); }
         }}
-        className="w-full px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-neutral-300 italic text-sm resize-none"
+        className="w-full px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-neutral-300 text-sm resize-none"
       />
     );
   }
 
   return (
     <button
-      className="italic text-neutral-300 text-sm text-left hover:text-neutral-200 transition-colors w-full"
-      onClick={() => { setDraft(value); setEditing(true); }}
-      title="Tap to edit recap"
+      className="text-sm text-left w-full flex items-start gap-1.5 hover:text-neutral-200 transition-colors"
+      onClick={() => { setDraft(value ?? ''); setEditing(true); }}
+      title="Tap to edit"
     >
-      &quot;{value}&quot;
+      {displayValue ? (
+        <span className="text-neutral-300 flex-1">{displayValue}</span>
+      ) : (
+        <span className="text-neutral-600 flex-1 italic">{placeholder}</span>
+      )}
+      <span className="text-neutral-500 flex-shrink-0 mt-0.5">✏️</span>
     </button>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Inline-editable field row — with send + star + delete icons
+// Inline-editable field row — star left, send button, delete
 // ---------------------------------------------------------------------------
 type EditableFieldProps = {
   icon: string;
@@ -162,6 +174,15 @@ function EditableField({
 
   return (
     <div className="flex items-center gap-1 py-1">
+      {/* Star: preferred channel toggle — far left */}
+      <button
+        className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-base hover:opacity-80"
+        title={isPreferred ? 'Clear preferred channel' : 'Set as preferred channel'}
+        onClick={onTogglePreferred}
+      >
+        {isPreferred ? '★' : '☆'}
+      </button>
+
       <span className="w-6 text-center flex-shrink-0 text-base">{icon}</span>
       {editing ? (
         <input
@@ -184,32 +205,23 @@ function EditableField({
         </button>
       )}
 
-      {/* Star: preferred channel toggle */}
-      <button
-        className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-base hover:opacity-80"
-        title={isPreferred ? 'Clear preferred channel' : 'Set as preferred channel'}
-        onClick={onTogglePreferred}
-      >
-        {isPreferred ? '★' : '☆'}
-      </button>
-
-      {/* Send: channel-specific deep link */}
+      {/* Send: labeled button */}
       {sendHref && (
         <a
           href={sendHref}
           target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
           rel="noopener noreferrer"
-          className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-base hover:opacity-80"
+          className="flex-shrink-0 px-2.5 py-1 rounded-md bg-neutral-700 text-white text-xs font-medium hover:bg-neutral-600 transition-colors"
           title="Send via this channel"
         >
-          ✈️
+          Send
         </a>
       )}
 
       {/* Delete */}
       {onRemove && (
         <button
-          className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-neutral-500 hover:text-red-400 text-sm"
+          className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-red-400 text-sm"
           onClick={onRemove}
           title="Remove"
         >
@@ -296,8 +308,9 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
   const [data, setData] = useState<CardData>({ status: 'processing' });
   const [shareFile, setShareFile] = useState<File | null>(null);
 
-  // Local optimistic state for name and recap
+  // Local optimistic state for name, notes, and recap
   const [localName, setLocalName] = useState<string | null>(null);
+  const [localNotes, setLocalNotes] = useState<string | null | undefined>(undefined);
   const [localRecap, setLocalRecap] = useState<string | null>(null);
 
   async function refresh() {
@@ -377,6 +390,16 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
     });
   }
 
+  async function saveNotes(notes: string | null) {
+    if (!data.contact) return;
+    setLocalNotes(notes);
+    await fetch(`/api/contacts/${data.contact.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'notes', value: notes }),
+    });
+  }
+
   async function saveRecap(recap: string) {
     if (!data.interaction) return;
     setLocalRecap(recap);
@@ -406,6 +429,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
 
   const contact = data.contact;
   const contactName = localName ?? contact?.name ?? '';
+  const notesValue = localNotes !== undefined ? localNotes : (contact?.notes ?? null);
   const recapText = localRecap ?? data.interaction?.recap ?? '';
 
   // Determine which single-value channels are already present (for AddField)
@@ -428,10 +452,34 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <div className="p-6 max-w-md mx-auto space-y-4">
-      {/* Editable heading: contact name + recap */}
-      <div className="space-y-1">
+      {/* Editable heading: contact name */}
+      <div>
         <EditableHeading value={contactName} onSave={saveName} />
-        {recapText && <EditableRecap value={recapText} onSave={saveRecap} />}
+      </div>
+
+      {/* Notes + Recap sections */}
+      <div className="rounded-lg bg-neutral-950 border border-neutral-800 px-4 py-3 space-y-3">
+        {/* Private note (notes) */}
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">🔒 Private note</p>
+          <EditableTextArea
+            value={notesValue}
+            placeholder="Tap to add a private note about who they are…"
+            onSave={saveNotes}
+          />
+        </div>
+
+        <div className="border-t border-neutral-800" />
+
+        {/* What we talked about (recap) */}
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">What we talked about</p>
+          <EditableTextArea
+            value={recapText || null}
+            placeholder="Tap to edit the recap…"
+            onSave={(v) => saveRecap(v ?? '')}
+          />
+        </div>
       </div>
 
       {/* Inline-editable contact fields with per-row actions */}
@@ -523,29 +571,32 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
             />
           )}
 
-          {/* Add field */}
-          <AddField
-            existing={existingSingleChannels}
-            onAdd={(channel, value) => {
-              if (channel === 'email') return putContactField({ kind: 'email-add', value });
-              if (channel === 'phone') return putContactField({ kind: 'phone-add', value });
-              return putContactField({ kind: channel, value });
-            }}
-          />
+          {/* Add field + Share (pick app) — paired chip-style row */}
+          <div className="flex items-center gap-2 pt-2 border-t border-neutral-800">
+            <AddField
+              existing={existingSingleChannels}
+              onAdd={(channel, value) => {
+                if (channel === 'email') return putContactField({ kind: 'email-add', value });
+                if (channel === 'phone') return putContactField({ kind: 'phone-add', value });
+                return putContactField({ kind: channel, value });
+              }}
+            />
+            <button
+              onClick={share}
+              className="flex-shrink-0 px-3 py-1 rounded-full border border-neutral-700 text-neutral-400 text-xs hover:border-neutral-500 hover:text-neutral-300 transition-colors"
+            >
+              📤 Share (pick app)
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Primary OS share sheet */}
-      <button onClick={share} className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold">
-        📤 Share (pick app)
-      </button>
-
-      {/* Save contact to address book */}
+      {/* Save contact to address book — primary-style button */}
       {contact && (
         <a
           href={`/api/contacts/${contact.id}/vcard`}
           download
-          className="block w-full text-center px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-white"
+          className="block w-full text-center px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold hover:bg-neutral-100 transition-colors"
         >
           💾 Save {contactName} to my Contacts
         </a>

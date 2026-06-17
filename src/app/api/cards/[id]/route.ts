@@ -53,6 +53,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     contact: {
       id: contact.id,
       name: contact.name,
+      notes: contact.notes ?? null,
       telegram: contact.links?.telegram ?? null,
       x: contact.links?.x ?? null,
       linkedin: contact.links?.linkedin ?? null,

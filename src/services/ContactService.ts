@@ -21,7 +21,8 @@ export type UpdatableField =
   | { kind: 'phone'; index: number; value: string }
   | { kind: 'phone-add'; value: string }
   | { kind: 'phone-remove'; index: number }
-  | { kind: 'preferred'; value: 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website' | null };
+  | { kind: 'preferred'; value: 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website' | null }
+  | { kind: 'notes'; value: string | null };
 
 export async function createContact(input: NewContact): Promise<Contact> {
   const [row] = await db().insert(contacts).values(input).returning();
@@ -45,7 +46,7 @@ export async function getInteractionWithContact(
       contactPhones: contacts.phones,
       contactPreferredChannel: contacts.preferredChannel,
       contactLinks: contacts.links,
-      contactNotesSummary: contacts.notesSummary,
+      contactNotes: contacts.notes,
       contactLastTouchedAt: contacts.lastTouchedAt,
       contactCreatedAt: contacts.createdAt,
     })
@@ -67,7 +68,7 @@ export async function getInteractionWithContact(
       phones: r.contactPhones,
       preferredChannel: r.contactPreferredChannel,
       links: r.contactLinks,
-      notesSummary: r.contactNotesSummary,
+      notes: r.contactNotes,
       lastTouchedAt: r.contactLastTouchedAt,
       createdAt: r.contactCreatedAt,
     },
@@ -145,6 +146,9 @@ export async function updateContactField(contactId: string, field: UpdatableFiel
     }
     case 'preferred':
       await db().update(contacts).set({ preferredChannel: field.value }).where(eq(contacts.id, contactId));
+      break;
+    case 'notes':
+      await db().update(contacts).set({ notes: field.value }).where(eq(contacts.id, contactId));
       break;
   }
 }

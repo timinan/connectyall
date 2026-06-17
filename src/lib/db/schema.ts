@@ -45,7 +45,7 @@ export const contacts = pgTable(
     phones: text('phones').array().default([]).notNull(),
     preferredChannel: text('preferred_channel'),
     links: jsonb('links').$type<ContactLinks>().default({}).notNull(),
-    notesSummary: text('notes_summary'),
+    notes: text('notes'),
     lastTouchedAt: timestamp('last_touched_at', { withTimezone: true }).defaultNow().notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
