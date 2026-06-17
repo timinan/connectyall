@@ -46,3 +46,30 @@ export function websiteUrl(input: string): string {
 export function emailMailto(input: string): string {
   return `mailto:${input.trim()}`;
 }
+
+// WhatsApp — stored as phone number (digits only), URL uses wa.me/<digits>
+export function whatsappHandle(input: string): string {
+  return strip(input).replace(/\D/g, '');
+}
+export function whatsappUrl(input: string): string {
+  return `https://wa.me/${whatsappHandle(input)}`;
+}
+
+// WeChat — stored as raw ID (alphanumeric + underscore)
+export function wechatHandle(input: string): string {
+  return strip(input).replace(/^https?:\/\/.*\//i, '');
+}
+export function wechatUrl(input: string): string {
+  // WeChat has no reliable web deep-link. The 'weixin://' scheme opens the app
+  // on iOS/Android but only to the home tab. For now we return a tel-style
+  // link that just exposes the handle so the user can copy it.
+  return `weixin://dl/chat?${wechatHandle(input)}`;
+}
+
+// Line — stored as Line ID (without ~ prefix), URL adds the ~
+export function lineHandle(input: string): string {
+  return strip(input).replace(/^https?:\/\/line\.me\/(ti\/)?p\/~?/i, '').replace(/^~/, '');
+}
+export function lineUrl(input: string): string {
+  return `https://line.me/ti/p/~${lineHandle(input)}`;
+}

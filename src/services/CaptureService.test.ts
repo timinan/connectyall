@@ -95,7 +95,7 @@ describe('processCapture', () => {
     transcribeMock.mockResolvedValue('hi I met Sarah');
     extractMock.mockResolvedValue({
       contacts: [{
-        name: 'Sarah', role: null, company: null, emails: [], links: {},
+        name: 'Sarah', role: null, company: null, emails: [], phones: [], preferred_channel: null, links: {},
         context: 'met', recap: 'we talked', user_commitments: [], their_commitments: [],
       }],
       was_live_recording: false,

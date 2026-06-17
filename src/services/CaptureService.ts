@@ -1,6 +1,6 @@
 import { and, gte, eq, sql } from 'drizzle-orm';
 import { db } from '../lib/db/client';
-import { usageEvents } from '../lib/db/schema';
+import { usageEvents, contacts } from '../lib/db/schema';
 import { env } from '../lib/env';
 import { transcribe } from './TranscriptionService';
 import { extract, type ExtractedContact } from './ExtractionService';
@@ -35,14 +35,28 @@ async function downloadFromR2(key: string): Promise<Uint8Array> {
 
 async function ensureContact(userId: string, c: ExtractedContact) {
   const existing = await findByNameAndCompany(userId, c.name, c.company);
-  if (existing) return existing;
+  if (existing) {
+    // Merge any new info from this capture into the existing contact
+    const updates: Partial<{ phones: string[]; preferredChannel: string | null; notes: string | null }> = {};
+    const newPhones = c.phones.filter(p => !existing.phones.includes(p));
+    if (newPhones.length > 0) updates.phones = [...existing.phones, ...newPhones];
+    if (!existing.preferredChannel && c.preferred_channel) updates.preferredChannel = c.preferred_channel;
+    if (!existing.notes && c.notes) updates.notes = c.notes;
+    if (Object.keys(updates).length > 0) {
+      await db().update(contacts).set(updates).where(eq(contacts.id, existing.id));
+    }
+    return existing;
+  }
   return createContact({
     userId,
     name: c.name,
     role: c.role,
     company: c.company,
     emails: c.emails,
+    phones: c.phones,
     links: c.links,
+    preferredChannel: c.preferred_channel,
+    notes: c.notes,
   });
 }
 
