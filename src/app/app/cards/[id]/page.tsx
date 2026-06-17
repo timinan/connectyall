@@ -255,6 +255,7 @@ function AddField({ existing, onAdd }: AddFieldProps) {
     if (c === 'email' || c === 'phone') return true;
     return !existing.includes(c);
   });
+  const [expanded, setExpanded] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<PreferredChannel | ''>('');
   const [value, setValue] = useState('');
 
@@ -265,17 +266,29 @@ function AddField({ existing, onAdd }: AddFieldProps) {
     await onAdd(selectedChannel, value.trim());
     setSelectedChannel('');
     setValue('');
+    setExpanded(false);
+  }
+
+  if (!expanded) {
+    return (
+      <button
+        onClick={() => setExpanded(true)}
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-700 bg-neutral-900 text-white text-xs whitespace-nowrap"
+      >
+        + Add field
+      </button>
+    );
   }
 
   return (
-    <div className="flex items-center gap-2 pt-2 border-t border-neutral-800">
-      <span className="w-6 text-center flex-shrink-0 text-neutral-500">+</span>
+    <div className="flex items-center gap-2 flex-wrap w-full">
       <select
         value={selectedChannel}
         onChange={(e) => setSelectedChannel(e.target.value as PreferredChannel | '')}
         className="bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-sm text-neutral-300 flex-shrink-0"
+        autoFocus
       >
-        <option value="">Add field…</option>
+        <option value="">Pick field…</option>
         {available.map(c => <option key={c} value={c}>{CHANNEL_LABELS[c]}</option>)}
       </select>
       {selectedChannel && (
@@ -291,11 +304,17 @@ function AddField({ existing, onAdd }: AddFieldProps) {
               : ''
             }
             className="flex-1 px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-white text-sm min-w-0"
-            autoFocus
           />
           <button onClick={handleAdd} className="flex-shrink-0 text-sm px-3 py-1 rounded bg-white text-neutral-950 font-semibold">Add</button>
         </>
       )}
+      <button
+        onClick={() => { setExpanded(false); setSelectedChannel(''); setValue(''); }}
+        className="flex-shrink-0 text-neutral-500 hover:text-neutral-300 text-sm"
+        title="Cancel"
+      >
+        ✕
+      </button>
     </div>
   );
 }
@@ -571,8 +590,8 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
             />
           )}
 
-          {/* Add field + Share (pick app) — paired chip-style row */}
-          <div className="flex items-center gap-2 pt-2 border-t border-neutral-800">
+          {/* Action chip row: Add field · Share · Save to contacts */}
+          <div className="flex flex-wrap gap-2 pt-3 border-t border-neutral-800">
             <AddField
               existing={existingSingleChannels}
               onAdd={(channel, value) => {
@@ -583,23 +602,19 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
             />
             <button
               onClick={share}
-              className="flex-shrink-0 px-3 py-1 rounded-full border border-neutral-700 text-neutral-400 text-xs hover:border-neutral-500 hover:text-neutral-300 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-700 bg-neutral-900 text-white text-xs whitespace-nowrap"
             >
-              📤 Share (pick app)
+              📤 Share
             </button>
+            <a
+              href={`/api/contacts/${contact.id}/vcard`}
+              download
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-700 bg-neutral-900 text-white text-xs whitespace-nowrap"
+            >
+              {(() => { const first = contactName.trim().split(/\s+/)[0]; return first ? `💾 Save ${first} to contacts` : '💾 Save to contacts'; })()}
+            </a>
           </div>
         </div>
-      )}
-
-      {/* Save contact to address book — primary-style button */}
-      {contact && (
-        <a
-          href={`/api/contacts/${contact.id}/vcard`}
-          download
-          className="block w-full text-center px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold hover:bg-neutral-100 transition-colors"
-        >
-          💾 Save {contactName} to my Contacts
-        </a>
       )}
     </div>
   );

@@ -3,13 +3,21 @@ import { linkedinUrl, xUrl, telegramUrl, websiteUrl } from './social-urls';
 
 const CRLF = '\r\n';
 
+function splitName(fullName: string): { given: string; family: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { given: '', family: '' };
+  if (parts.length === 1) return { given: parts[0], family: '' };
+  return { given: parts.slice(0, -1).join(' '), family: parts[parts.length - 1] };
+}
+
 export function buildVCard(input: {
   displayName: string;
   tagline: string | null;
   socials: Socials;
   telegramUsername: string | null;
 }): string {
-  const lines: string[] = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${input.displayName}`, `N:${input.displayName};;;;`];
+  const { given, family } = splitName(input.displayName);
+  const lines: string[] = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${input.displayName}`, `N:${family};${given};;;`];
   if (input.tagline) lines.push(`TITLE:${input.tagline}`);
   if (input.socials.email) lines.push(`EMAIL;TYPE=INTERNET:${input.socials.email}`);
   if (input.socials.website) lines.push(`URL;TYPE=Website:${websiteUrl(input.socials.website)}`);
@@ -31,7 +39,8 @@ export function buildContactVCard(input: {
   company?: string | null;
   role?: string | null;
 }): string {
-  const lines: string[] = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${input.name}`, `N:${input.name};;;;`];
+  const { given, family } = splitName(input.name);
+  const lines: string[] = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${input.name}`, `N:${family};${given};;;`];
   if (input.company) lines.push(`ORG:${input.company}`);
   if (input.role) lines.push(`TITLE:${input.role}`);
   for (const email of input.emails) lines.push(`EMAIL;TYPE=INTERNET:${email}`);
