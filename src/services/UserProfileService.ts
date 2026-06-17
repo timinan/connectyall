@@ -87,3 +87,10 @@ export async function setPhotoFromBytes(
   await db().update(users).set({ photoR2Url: url }).where(eq(users.id, userId));
   return url;
 }
+
+export async function clearSocial(userId: string, kind: keyof Socials): Promise<void> {
+  await db()
+    .update(users)
+    .set({ socials: sql`${users.socials} - ${kind}` })
+    .where(eq(users.id, userId));
+}
