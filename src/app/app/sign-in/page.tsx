@@ -26,7 +26,7 @@ export default function SignInPage() {
       <div className="max-w-sm w-full space-y-6">
         <div className="space-y-2 text-center">
           <h1 className="text-4xl font-bold">Connectyall</h1>
-          <p className="text-neutral-400 text-sm">Voice memo → designed card → share to anyone.</p>
+          <p className="text-neutral-400 text-sm">Voice notes that connect y&apos;all.</p>
         </div>
         {status === 'sent' ? (
           <p className="text-center text-neutral-300">Magic link sent to <strong>{email}</strong>. Check your inbox.</p>

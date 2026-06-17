@@ -4,7 +4,10 @@ export default function Home() {
       <div className="max-w-xl text-center space-y-6">
         <h1 className="text-5xl font-bold tracking-tight">Connectyall</h1>
         <p className="text-xl text-neutral-300">
-          Voice memo after meeting someone. Forward them a designed card with the recap. Your network builds itself.
+          Voice notes that connect y&apos;all.
+        </p>
+        <p className="text-base text-neutral-400">
+          Connectyall turns the voice memo you record after meeting someone into a connection you can pass along the same day. Talk it out, we handle the rest. They get your details, you remember theirs.
         </p>
         <a
           href="/app"
