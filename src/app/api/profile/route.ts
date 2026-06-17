@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { getServerSession } from '@/lib/auth/session';
-import { upsertProfile, setSocial, setPhotoFromBytes, getById } from '@/services/UserProfileService';
+import { upsertProfile, setSocial, clearSocial, setPhotoFromBytes, getById } from '@/services/UserProfileService';
 import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
 import { linkedinHandle, xHandle, telegramHandle } from '@/lib/social-urls';
@@ -16,10 +16,19 @@ const ProfileSchema = z.object({
   selfIntro: z.string().max(280).nullable().optional(),
 });
 
-const SocialSchema = z.object({
-  social: z.enum(['x', 'linkedin', 'email', 'website']),
-  value: z.string().min(1).max(255),
-});
+const ChannelEnum = z.enum(['x', 'linkedin', 'email', 'website', 'telegram', 'whatsapp', 'wechat', 'line', 'phone']);
+
+const SocialSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('set'),
+    social: ChannelEnum,
+    value: z.string().min(1).max(255),
+  }),
+  z.object({
+    action: z.literal('clear'),
+    social: ChannelEnum,
+  }),
+]);
 
 export async function GET() {
   const session = await getServerSession();
@@ -47,10 +56,25 @@ export async function PUT(req: Request) {
 
   const social = SocialSchema.safeParse(body);
   if (social.success) {
+    const { action, social: kind } = social.data;
+    if (action === 'clear') {
+      if (kind === 'telegram') {
+        await db().update(users).set({ telegramUsername: null }).where(eq(users.id, session.user.id));
+      } else {
+        await clearSocial(session.user.id, kind as Exclude<typeof kind, 'telegram'>);
+      }
+      return NextResponse.json({ ok: true });
+    }
+    // action === 'set'
     let value = social.data.value;
-    if (social.data.social === 'linkedin') value = linkedinHandle(value);
-    else if (social.data.social === 'x') value = xHandle(value);
-    await setSocial(session.user.id, social.data.social, value);
+    if (kind === 'linkedin') value = linkedinHandle(value);
+    else if (kind === 'x') value = xHandle(value);
+    else if (kind === 'telegram') value = telegramHandle(value);
+    if (kind === 'telegram') {
+      await db().update(users).set({ telegramUsername: value }).where(eq(users.id, session.user.id));
+    } else {
+      await setSocial(session.user.id, kind, value);
+    }
     return NextResponse.json({ ok: true });
   }
 
