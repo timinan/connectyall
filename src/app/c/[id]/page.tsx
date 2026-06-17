@@ -3,6 +3,7 @@ import { getInteractionWithContact } from '@/services/ContactService';
 import { getById } from '@/services/UserProfileService';
 import { env } from '@/lib/env';
 import { linkedinUrl, xUrl, telegramUrl, websiteUrl, whatsappUrl, wechatUrl, lineUrl } from '@/lib/social-urls';
+import { CHANNEL_ICONS, ChannelIcon, type ChannelKind } from '@/app/app/cards/[id]/channel-icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,15 +44,15 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
   const recap = (interaction.structuredData as { recap?: string } | null)?.recap ?? '';
   const cardUrl = `${env().R2_PUBLIC_URL_BASE}/cards/${interaction.id}.png`;
 
-  const links: Array<{ label: string; href: string }> = [];
-  if (profile.telegramUsername) links.push({ label: '📱 Telegram', href: telegramUrl(profile.telegramUsername) });
-  if (profile.socials.x) links.push({ label: '🐦 X', href: xUrl(profile.socials.x) });
-  if (profile.socials.linkedin) links.push({ label: '💼 LinkedIn', href: linkedinUrl(profile.socials.linkedin) });
-  if (profile.socials.email) links.push({ label: '📧 Email', href: `mailto:${profile.socials.email}` });
-  if (profile.socials.website) links.push({ label: '🌐 Website', href: websiteUrl(profile.socials.website) });
-  if (profile.socials.whatsapp) links.push({ label: '💚 WhatsApp', href: whatsappUrl(profile.socials.whatsapp) });
-  if (profile.socials.wechat) links.push({ label: '🐉 WeChat', href: wechatUrl(profile.socials.wechat) });
-  if (profile.socials.line) links.push({ label: '📲 Line', href: lineUrl(profile.socials.line) });
+  const links: Array<{ kind: ChannelKind; href: string }> = [];
+  if (profile.telegramUsername) links.push({ kind: 'telegram', href: telegramUrl(profile.telegramUsername) });
+  if (profile.socials.x) links.push({ kind: 'x', href: xUrl(profile.socials.x) });
+  if (profile.socials.linkedin) links.push({ kind: 'linkedin', href: linkedinUrl(profile.socials.linkedin) });
+  if (profile.socials.email) links.push({ kind: 'email', href: `mailto:${profile.socials.email}` });
+  if (profile.socials.website) links.push({ kind: 'website', href: websiteUrl(profile.socials.website) });
+  if (profile.socials.whatsapp) links.push({ kind: 'whatsapp', href: whatsappUrl(profile.socials.whatsapp) });
+  if (profile.socials.wechat) links.push({ kind: 'wechat', href: wechatUrl(profile.socials.wechat) });
+  if (profile.socials.line) links.push({ kind: 'line', href: lineUrl(profile.socials.line) });
 
   return (
     <main className="min-h-screen bg-neutral-950 text-white p-6 flex flex-col items-center">
@@ -73,8 +74,9 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
         )}
         <div className="grid grid-cols-2 gap-3">
           {links.map((l) => (
-            <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" className="px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-center text-sm">
-              {l.label}
+            <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" className="px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-center text-sm flex items-center justify-center gap-2">
+              <ChannelIcon kind={l.kind} size={18} />
+              <span>{CHANNEL_ICONS[l.kind].label}</span>
             </a>
           ))}
         </div>

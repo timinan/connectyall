@@ -1,10 +1,12 @@
 'use client';
 
 import { use, useEffect, useRef, useState } from 'react';
+import { LuSend, LuStar, LuPencil, LuX as LuXIcon } from 'react-icons/lu';
 import {
   linkedinUrl, linkedinHandle, xUrl, xHandle, telegramUrl, telegramHandle,
   whatsappUrl, wechatUrl, lineUrl,
 } from '@/lib/social-urls';
+import { ChannelIcon, type ChannelKind } from './channel-icons';
 
 const socialUrl = {
   linkedin: linkedinUrl,
@@ -88,7 +90,7 @@ function EditableHeading({ value, onSave }: EditableHeadingProps) {
       title="Tap to edit name"
     >
       {value}
-      <span className="text-base text-neutral-500 font-normal">✏️</span>
+      <LuPencil size={14} className="text-neutral-500" />
     </button>
   );
 }
@@ -146,7 +148,7 @@ function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps)
       ) : (
         <span className="text-neutral-600 flex-1 italic">{placeholder}</span>
       )}
-      <span className="text-neutral-500 flex-shrink-0 mt-0.5">✏️</span>
+      <LuPencil size={12} className="text-neutral-500 flex-shrink-0 mt-0.5" />
     </button>
   );
 }
@@ -155,7 +157,7 @@ function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps)
 // Inline-editable field row — star left, send button, delete
 // ---------------------------------------------------------------------------
 type EditableFieldProps = {
-  icon: string;
+  kind: ChannelKind;
   value: string;
   placeholder?: string;
   isPreferred: boolean;
@@ -166,7 +168,7 @@ type EditableFieldProps = {
 };
 
 function EditableField({
-  icon, value, placeholder, isPreferred, sendHref, onSave, onTogglePreferred, onRemove,
+  kind, value, placeholder, isPreferred, sendHref, onSave, onTogglePreferred, onRemove,
 }: EditableFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -183,14 +185,20 @@ function EditableField({
     <div className="flex items-center gap-1 py-1">
       {/* Star: preferred channel toggle — far left */}
       <button
-        className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-base hover:opacity-80"
+        className="flex-shrink-0 w-7 h-7 flex items-center justify-center hover:opacity-80"
         title={isPreferred ? 'Clear preferred channel' : 'Set as preferred channel'}
         onClick={onTogglePreferred}
       >
-        {isPreferred ? '★' : '☆'}
+        <LuStar
+          size={16}
+          fill={isPreferred ? '#FACC15' : 'none'}
+          color={isPreferred ? '#FACC15' : '#737373'}
+        />
       </button>
 
-      <span className="w-6 text-center flex-shrink-0 text-base">{icon}</span>
+      <span className="w-6 flex items-center justify-center flex-shrink-0">
+        <ChannelIcon kind={kind} size={18} />
+      </span>
       {editing ? (
         <input
           ref={inputRef}
@@ -205,10 +213,11 @@ function EditableField({
         />
       ) : (
         <button
-          className="flex-1 text-left text-sm text-neutral-200 truncate hover:text-white min-w-0"
+          className="flex-1 text-left text-sm text-neutral-200 truncate hover:text-white min-w-0 flex items-center gap-1"
           onClick={() => { setDraft(value); setEditing(true); }}
         >
           {value || <span className="text-neutral-500">{placeholder}</span>}
+          <LuPencil size={12} className="text-neutral-500 flex-shrink-0" />
         </button>
       )}
 
@@ -218,21 +227,22 @@ function EditableField({
           href={sendHref}
           target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
           rel="noopener noreferrer"
-          className="flex-shrink-0 px-2.5 py-1 rounded-md bg-neutral-700 text-white text-xs font-medium hover:bg-neutral-600 transition-colors"
+          className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-neutral-700 text-white text-xs font-medium hover:bg-neutral-600 transition-colors"
           title="Send via this channel"
         >
-          Send
+          <LuSend size={14} />
+          <span>Send</span>
         </a>
       )}
 
       {/* Delete */}
       {onRemove && (
         <button
-          className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-red-400 text-sm"
+          className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-red-400"
           onClick={onRemove}
           title="Remove"
         >
-          ✕
+          <LuXIcon size={14} />
         </button>
       )}
     </div>
@@ -303,6 +313,9 @@ function AddField({ existing, onAdd }: AddFieldProps) {
       </select>
       {selectedChannel && (
         <>
+          <span className="flex items-center justify-center flex-shrink-0">
+            <ChannelIcon kind={selectedChannel as ChannelKind} size={18} />
+          </span>
           <input
             value={value}
             onChange={(e) => setValue(e.target.value)}
@@ -323,10 +336,10 @@ function AddField({ existing, onAdd }: AddFieldProps) {
       )}
       <button
         onClick={() => { setExpanded(false); setSelectedChannel(''); setValue(''); }}
-        className="flex-shrink-0 text-neutral-500 hover:text-neutral-300 text-sm"
+        className="flex-shrink-0 text-neutral-500 hover:text-neutral-300"
         title="Cancel"
       >
-        ✕
+        <LuXIcon size={14} />
       </button>
     </div>
   );
@@ -531,7 +544,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           {contact.emails.map((email, i) => (
             <EditableField
               key={`email-${i}`}
-              icon="✉️"
+              kind="email"
               value={email}
               placeholder="email@example.com"
               isPreferred={contact.preferredChannel === 'email'}
@@ -546,7 +559,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           {contact.phones.map((phone, i) => (
             <EditableField
               key={`phone-${i}`}
-              icon="📞"
+              kind="phone"
               value={phone}
               placeholder="+1 555 1234"
               isPreferred={contact.preferredChannel === 'phone'}
@@ -560,7 +573,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           {/* Telegram */}
           {contact.telegram && (
             <EditableField
-              icon="📱"
+              kind="telegram"
               value={contact.telegram}
               placeholder="telegram handle"
               isPreferred={contact.preferredChannel === 'telegram'}
@@ -574,7 +587,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           {/* X */}
           {contact.x && (
             <EditableField
-              icon="🐦"
+              kind="x"
               value={contact.x}
               placeholder="x handle"
               isPreferred={contact.preferredChannel === 'x'}
@@ -588,7 +601,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           {/* LinkedIn */}
           {contact.linkedin && (
             <EditableField
-              icon="💼"
+              kind="linkedin"
               value={contact.linkedin}
               placeholder="linkedin handle"
               isPreferred={contact.preferredChannel === 'linkedin'}
@@ -602,7 +615,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           {/* Website */}
           {contact.website && (
             <EditableField
-              icon="🌐"
+              kind="website"
               value={contact.website}
               placeholder="website.com"
               isPreferred={contact.preferredChannel === 'website'}
@@ -616,7 +629,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           {/* WhatsApp */}
           {contact.whatsapp && (
             <EditableField
-              icon="💚"
+              kind="whatsapp"
               value={contact.whatsapp}
               placeholder="phone digits"
               isPreferred={contact.preferredChannel === 'whatsapp'}
@@ -630,7 +643,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           {/* WeChat */}
           {contact.wechat && (
             <EditableField
-              icon="🐉"
+              kind="wechat"
               value={contact.wechat}
               placeholder="WeChat ID"
               isPreferred={contact.preferredChannel === 'wechat'}
@@ -644,7 +657,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           {/* Line */}
           {contact.line && (
             <EditableField
-              icon="📲"
+              kind="line"
               value={contact.line}
               placeholder="Line ID"
               isPreferred={contact.preferredChannel === 'line'}
