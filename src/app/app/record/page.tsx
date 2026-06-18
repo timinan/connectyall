@@ -91,7 +91,11 @@ export default function RecordPage() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm space-y-8">
-        {state === 'idle' && <Greeting />}
+        {state === 'idle' && (
+          <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 px-6 py-8 border border-purple-200/60 shadow-sm">
+            <Greeting />
+          </div>
+        )}
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">{state === 'recording' ? 'Recording…' : "Who'd you meet?"}</h1>
           <p className="text-neutral-600 text-sm">{state === 'recording' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : 'Tell me about who you just met.'}</p>
