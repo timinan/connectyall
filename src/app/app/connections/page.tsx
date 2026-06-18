@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LuSearch, LuX, LuTrash2 } from 'react-icons/lu';
+import { LuSearch, LuX, LuTrash2, LuPlus, LuMic, LuArrowUpRight } from 'react-icons/lu';
 import { APP_CONTAINER } from '../_layout-constants';
-import { NavToggle } from '@/components/nav-toggle';
-import { ChannelIcon, type ChannelKind } from '../cards/[id]/channel-icons';
+import { PageHeader } from '@/components/page-header';
+import { BottomNav } from '@/components/bottom-nav';
+import { type ChannelKind } from '../cards/[id]/channel-icons';
 import { relativeDate } from '@/lib/relative-date';
 
 type Connection = {
@@ -40,11 +41,27 @@ function lastNameKey(name: string): string {
   return parts[parts.length - 1].toLowerCase();
 }
 
+function relativeDateMono(iso: string): string {
+  return relativeDate(iso).toUpperCase();
+}
+
+const CHANNEL_TAG: Record<ChannelKind, string> = {
+  email: 'EMAIL',
+  phone: 'PH',
+  telegram: 'TG',
+  x: 'X',
+  linkedin: 'IN',
+  website: 'WEB',
+  whatsapp: 'WA',
+  wechat: 'WC',
+  line: 'LINE',
+};
+
 function Bubble({ name }: { name: string }) {
   const letter = (name.trim().charAt(0) || '?').toUpperCase();
   return (
     <div
-      className="w-12 h-12 rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
+      className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
       style={{ backgroundColor: pickBg(name) }}
     >
       {letter}
@@ -68,7 +85,11 @@ function ConnectionRow({ c, onAskDelete }: RowProps) {
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
   const intercepted = useRef(false);
-  const sub = [c.company, c.role].filter(Boolean).join(' · ');
+  const subParts: string[] = [];
+  if (c.company) subParts.push(c.company);
+  if (c.role) subParts.push(c.role);
+  const subText = subParts.join(' · ');
+  const tag = c.preferredChannel ? CHANNEL_TAG[c.preferredChannel] : null;
 
   function onTouchStart(e: React.TouchEvent) {
     startX.current = e.touches[0].clientX;
@@ -81,7 +102,6 @@ function ConnectionRow({ c, onAskDelete }: RowProps) {
     if (startX.current === null || startY.current === null) return;
     const dx = e.touches[0].clientX - startX.current;
     const dy = e.touches[0].clientY - startY.current;
-    // If the gesture is more vertical than horizontal, let the page scroll.
     if (!intercepted.current && Math.abs(dy) > Math.abs(dx)) {
       startX.current = null;
       startY.current = null;
@@ -104,8 +124,6 @@ function ConnectionRow({ c, onAskDelete }: RowProps) {
   }
 
   function onClick(e: React.MouseEvent) {
-    // Suppress navigation if the row was just swiped — touchend resets translateX
-    // to 0, so we read intercepted.current as the signal.
     if (intercepted.current) {
       e.preventDefault();
       intercepted.current = false;
@@ -114,7 +132,6 @@ function ConnectionRow({ c, onAskDelete }: RowProps) {
 
   return (
     <li className="relative">
-      {/* Red delete affordance behind the row */}
       <div
         className="absolute inset-0 rounded-3xl bg-red-500 flex items-center justify-end pr-6 pointer-events-none"
         style={{ opacity: Math.min(1, Math.abs(translateX) / SWIPE_THRESHOLD) }}
@@ -131,16 +148,22 @@ function ConnectionRow({ c, onAskDelete }: RowProps) {
           transform: `translateX(${translateX}px)`,
           transition: animating ? 'transform 0.2s ease-out' : 'none',
         }}
-        className="relative flex items-center gap-3 p-3 rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm hover:border-purple-300"
+        className="relative flex items-center gap-3 px-3.5 py-3 rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:border-brand/40 transition"
       >
         <Bubble name={c.name} />
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-neutral-950 truncate">{c.name}</p>
-          {sub && <p className="text-xs text-neutral-600 truncate">{sub}</p>}
+          <p className="font-bold text-[14px] text-neutral-950 truncate">{c.name}</p>
+          {(subText || tag) && (
+            <p className="text-[11px] text-muted truncate mt-0.5">
+              {subText}
+              {subText && tag && <span className="mx-1">·</span>}
+              {tag && <span className="font-mono text-brand tracking-[0.1em] font-bold">{tag}</span>}
+            </p>
+          )}
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          {c.preferredChannel && <ChannelIcon kind={c.preferredChannel} size={16} />}
-          <p className="text-xs text-neutral-600 whitespace-nowrap">{relativeDate(c.lastTouchedAt)}</p>
+          <span className="font-mono text-[10px] tracking-[0.15em] text-muted font-medium">{relativeDateMono(c.lastTouchedAt)}</span>
+          <LuArrowUpRight size={14} className="text-neutral-400" />
         </div>
       </Link>
     </li>
@@ -164,25 +187,40 @@ function ConfirmDelete({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40">
       <div className="rounded-3xl bg-white shadow-xl max-w-sm w-full px-6 py-6 space-y-4">
-        <p className="text-lg font-semibold text-neutral-950">Delete {name}?</p>
-        <p className="text-sm text-neutral-600">This will remove this connection and every meeting you have with them. You can&apos;t undo it.</p>
+        <p className="text-lg font-bold text-neutral-950">Delete {name}?</p>
+        <p className="text-sm text-muted">This will remove this connection and every meeting you have with them. You can&apos;t undo it.</p>
         <div className="flex gap-2 pt-2">
           <button
             onClick={onCancel}
             disabled={busy}
-            className="flex-1 px-4 py-2 rounded-full bg-white border border-neutral-200 text-neutral-950 text-sm font-semibold hover:bg-neutral-50 transition disabled:opacity-50"
+            className="flex-1 px-4 py-2 rounded-full bg-white border border-line text-neutral-950 text-sm font-bold hover:bg-neutral-50 transition disabled:opacity-50"
           >
             No
           </button>
           <button
             onClick={handleConfirm}
             disabled={busy}
-            className="flex-1 px-4 py-2 rounded-full bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition disabled:opacity-50"
+            className="flex-1 px-4 py-2 rounded-full bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition disabled:opacity-50"
           >
             {busy ? 'Deleting…' : 'Yes, delete'}
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function GlowRings() {
+  return (
+    <div
+      aria-hidden
+      className="absolute w-[300px] h-[300px] rounded-full"
+      style={{
+        background: 'radial-gradient(circle, rgba(124, 92, 255, 0.14) 0%, rgba(124, 92, 255, 0.04) 60%, rgba(124, 92, 255, 0) 80%)',
+      }}
+    >
+      <div className="absolute inset-[30px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
+      <div className="absolute inset-[60px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
     </div>
   );
 }
@@ -204,8 +242,6 @@ export default function ConnectionsPage() {
     })();
   }, []);
 
-  // First-visit "swipe left to delete" hint — fades out, then unmounts so
-  // it doesn't leave a gap under the parent's space-y-4.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (window.localStorage.getItem(HINT_STORAGE_KEY)) return;
@@ -219,7 +255,6 @@ export default function ConnectionsPage() {
     return () => window.clearTimeout(fadeTimer);
   }, [rows]);
 
-  // Once the fade-out finishes, drop the element from the DOM.
   useEffect(() => {
     if (hintVisible || !hintMounted) return;
     const t = window.setTimeout(() => setHintMounted(false), 500);
@@ -258,30 +293,45 @@ export default function ConnectionsPage() {
     setConfirm(null);
   }
 
+  const totalMeetings = rows?.reduce((acc, c) => acc + (c.meetingsCount ?? 0), 0) ?? 0;
+  const status = rows ? `${rows.length} PEOPLE · ${totalMeetings} MEMOS` : null;
+
   return (
     <div className={APP_CONTAINER}>
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Your connections</h1>
-        <NavToggle />
-      </div>
+      <PageHeader status={status} />
 
-      {rows === null && <p className="text-neutral-600 text-sm">Loading…</p>}
+      {rows === null && <p className="text-muted text-sm">Loading…</p>}
+
+      {rows && (
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-5xl font-extrabold leading-[1.02] tracking-tight">
+            Your <span className="text-brand">network</span>
+          </h1>
+          <Link
+            href="/app/record"
+            aria-label="Record a new connection"
+            className="flex-shrink-0 w-11 h-11 rounded-full bg-brand text-white flex items-center justify-center shadow-[0_6px_16px_rgba(124,92,255,0.35)] hover:opacity-90 transition"
+          >
+            <LuPlus size={22} />
+          </Link>
+        </div>
+      )}
 
       {rows && rows.length > 0 && (
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <LuSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+            <LuSearch size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search name or company"
-              className="w-full pl-8 pr-8 py-2 rounded-full bg-white border border-neutral-200 text-sm placeholder:text-neutral-500"
+              placeholder="Search names, roles, tags…"
+              className="w-full pl-10 pr-10 py-2.5 rounded-full bg-surface border border-line text-sm placeholder:text-muted shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
             />
             {query && (
               <button
                 onClick={() => setQuery('')}
                 aria-label="Clear search"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-950"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-neutral-950"
               >
                 <LuX size={14} />
               </button>
@@ -290,7 +340,7 @@ export default function ConnectionsPage() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
-            className="bg-white border border-neutral-200 rounded-full px-3 py-2 text-sm text-neutral-700"
+            className="bg-surface border border-line rounded-full px-3 py-2.5 text-sm text-muted shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
           >
             <option value="recent">Recent</option>
             <option value="first">First name</option>
@@ -300,35 +350,57 @@ export default function ConnectionsPage() {
       )}
 
       {rows && rows.length === 0 && (
-        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-8 text-center space-y-3">
-          <p className="text-neutral-700">No connections yet.</p>
-          <Link href="/app/record" className="inline-block px-4 py-2 rounded-full bg-neutral-950 text-white text-sm font-semibold hover:bg-neutral-800 transition">
-            + Record your first
-          </Link>
+        <div className="flex-1 flex flex-col gap-8 pt-3">
+          <div>
+            <div className="font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">NOBODY HERE YET</div>
+            <h2 className="mt-3 text-5xl font-extrabold leading-[1.02] tracking-tight">
+              Your<br />
+              <span className="text-brand">network awaits.</span>
+            </h2>
+            <p className="mt-4 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">
+              Record your first voice memo and they&apos;ll show up here automatically.
+            </p>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center gap-5">
+            <div className="relative flex items-center justify-center py-6">
+              <GlowRings />
+              <Link
+                href="/app/record"
+                className="relative z-10 inline-flex items-center gap-2 px-7 py-5 rounded-full bg-brand text-white font-bold text-base shadow-[0_14px_36px_rgba(124,92,255,0.40)]"
+              >
+                <LuMic size={20} /> Record your first
+              </Link>
+            </div>
+            <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium">
+              <span className="text-brand mr-1">●</span> TAP TO RECORD <span className="text-neutral-400">·</span> UP TO 60S
+            </div>
+          </div>
         </div>
       )}
 
       {visible && visible.length === 0 && rows && rows.length > 0 && (
-        <p className="text-neutral-600 text-sm text-center py-6">No matches for &ldquo;{query}&rdquo;.</p>
+        <p className="text-muted text-sm text-center py-6">No matches for &ldquo;{query}&rdquo;.</p>
       )}
 
       {hintMounted && (
         <button
           onClick={dismissHint}
           aria-hidden={!hintVisible}
-          className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold hover:bg-amber-200 transition-opacity duration-500 ${hintVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-full bg-amber-100 text-amber-800 font-mono text-[10px] tracking-[0.18em] uppercase font-semibold hover:bg-amber-200 transition-opacity duration-500 ${hintVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         >
           <span>✨</span>
-          <span className="flex-1 text-left">Tip: swipe left on a connection to delete it.</span>
+          <span className="flex-1 text-left">SWIPE LEFT TO DELETE</span>
           <LuX size={12} />
         </button>
       )}
 
-      <ul className="space-y-3">
-        {visible && visible.map((c) => (
-          <ConnectionRow key={c.contactId} c={c} onAskDelete={setConfirm} />
-        ))}
-      </ul>
+      {visible && visible.length > 0 && (
+        <ul className="space-y-3">
+          {visible.map((c) => (
+            <ConnectionRow key={c.contactId} c={c} onAskDelete={setConfirm} />
+          ))}
+        </ul>
+      )}
 
       {confirm && (
         <ConfirmDelete
@@ -337,6 +409,8 @@ export default function ConnectionsPage() {
           onCancel={() => setConfirm(null)}
         />
       )}
+
+      <BottomNav />
     </div>
   );
 }
