@@ -707,7 +707,7 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
         href="/app/record"
         className="block w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-semibold text-center hover:bg-neutral-800 transition"
       >
-        ✓ Done
+        ✓ Save
       </Link>
     </div>
   );
