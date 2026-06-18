@@ -192,6 +192,7 @@ export default function ConnectionsPage() {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('recent');
   const [confirm, setConfirm] = useState<Connection | null>(null);
+  const [hintMounted, setHintMounted] = useState(false);
   const [hintVisible, setHintVisible] = useState(false);
 
   useEffect(() => {
@@ -203,19 +204,27 @@ export default function ConnectionsPage() {
     })();
   }, []);
 
-  // First-visit "swipe left to delete" hint — auto-fades after a few seconds
-  // and stores a flag so it never shows again on this device.
+  // First-visit "swipe left to delete" hint — fades out, then unmounts so
+  // it doesn't leave a gap under the parent's space-y-4.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (window.localStorage.getItem(HINT_STORAGE_KEY)) return;
     if (!rows || rows.length === 0) return;
+    setHintMounted(true);
     setHintVisible(true);
-    const timer = window.setTimeout(() => {
+    const fadeTimer = window.setTimeout(() => {
       setHintVisible(false);
       window.localStorage.setItem(HINT_STORAGE_KEY, '1');
     }, HINT_TIMEOUT_MS);
-    return () => window.clearTimeout(timer);
+    return () => window.clearTimeout(fadeTimer);
   }, [rows]);
+
+  // Once the fade-out finishes, drop the element from the DOM.
+  useEffect(() => {
+    if (hintVisible || !hintMounted) return;
+    const t = window.setTimeout(() => setHintMounted(false), 500);
+    return () => window.clearTimeout(t);
+  }, [hintVisible, hintMounted]);
 
   function dismissHint() {
     setHintVisible(false);
@@ -303,15 +312,17 @@ export default function ConnectionsPage() {
         <p className="text-neutral-600 text-sm text-center py-6">No matches for &ldquo;{query}&rdquo;.</p>
       )}
 
-      <button
-        onClick={dismissHint}
-        aria-hidden={!hintVisible}
-        className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold hover:bg-amber-200 transition-opacity duration-500 ${hintVisible ? 'opacity-100' : 'opacity-0 pointer-events-none h-0 py-0 overflow-hidden'}`}
-      >
-        <span>✨</span>
-        <span className="flex-1 text-left">Tip: swipe left on a connection to delete it.</span>
-        <LuX size={12} />
-      </button>
+      {hintMounted && (
+        <button
+          onClick={dismissHint}
+          aria-hidden={!hintVisible}
+          className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold hover:bg-amber-200 transition-opacity duration-500 ${hintVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        >
+          <span>✨</span>
+          <span className="flex-1 text-left">Tip: swipe left on a connection to delete it.</span>
+          <LuX size={12} />
+        </button>
+      )}
 
       <ul className="space-y-3">
         {visible && visible.map((c) => (
