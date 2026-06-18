@@ -23,7 +23,7 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-950 px-6 py-10 flex flex-col">
+    <div className="min-h-[calc(100dvh-3rem)] bg-neutral-50 text-neutral-950 px-6 py-8 flex flex-col">
       <header>
         <Logo />
       </header>

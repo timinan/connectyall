@@ -129,7 +129,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="p-6 max-w-md mx-auto space-y-4">
+    <div className="p-6 pb-20 max-w-md mx-auto space-y-4">
       <form
         onSubmit={(e) => { e.preventDefault(); saveBasics(e.currentTarget); }}
         className="space-y-4"

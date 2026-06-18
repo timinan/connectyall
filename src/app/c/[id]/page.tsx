@@ -55,7 +55,7 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
   if (profile.socials.line) links.push({ kind: 'line', href: lineUrl(profile.socials.line) });
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-950 p-6 flex flex-col items-center">
+    <main className="min-h-[calc(100dvh-3rem)] bg-neutral-50 text-neutral-950 p-6 pb-10 flex flex-col items-center">
       <div className="max-w-md w-full space-y-6">
         <div className="flex justify-center pt-4">
           <img

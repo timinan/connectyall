@@ -507,7 +507,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
   }
 
   return (
-    <div className="p-6 max-w-md mx-auto space-y-4">
+    <div className="p-6 pb-20 max-w-md mx-auto space-y-4">
       {/* Editable heading: contact name */}
       <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-5">
         <EditableHeading value={contactName} onSave={saveName} />

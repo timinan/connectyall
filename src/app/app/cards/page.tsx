@@ -27,7 +27,7 @@ export default async function CardsPage() {
   const base = env().R2_PUBLIC_URL_BASE;
 
   return (
-    <div className="p-6 max-w-md mx-auto space-y-4">
+    <div className="p-6 pb-20 max-w-md mx-auto space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Your connections</h1>
         <Link href="/app/record" className="px-4 py-2 rounded-full bg-neutral-950 text-white text-sm font-semibold hover:bg-neutral-800 transition">+ Record</Link>
