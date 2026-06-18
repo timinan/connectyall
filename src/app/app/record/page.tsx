@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Greeting } from './greeting';
-import { NavToggle } from '@/components/nav-toggle';
-import { LogoSpinner } from '@/components/logo';
+import { LuMic } from 'react-icons/lu';
+import { PageHeader } from '@/components/page-header';
+import { BottomNav } from '@/components/bottom-nav';
+import { getGreetingLabel } from '@/lib/greeting';
 
 type State = 'idle' | 'recording' | 'uploading';
 
@@ -12,12 +14,23 @@ export default function RecordPage() {
   const router = useRouter();
   const [state, setState] = useState<State>('idle');
   const [elapsed, setElapsed] = useState(0);
-  const [levels, setLevels] = useState<number[]>(Array(20).fill(0));
+  const [levels, setLevels] = useState<number[]>(Array(15).fill(0));
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
   const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch('/api/profile', { cache: 'no-store' });
+      if (res.ok) {
+        const json = await res.json();
+        setDisplayName(json.profile?.displayName ?? null);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -54,8 +67,8 @@ export default function RecordPage() {
     const data = new Uint8Array(analyser.frequencyBinCount);
     function tick() {
       analyser.getByteFrequencyData(data);
-      const next = Array.from({ length: 20 }, (_, i) => {
-        const idx = Math.floor((i / 20) * data.length);
+      const next = Array.from({ length: 15 }, (_, i) => {
+        const idx = Math.floor((i / 15) * data.length);
         return data[idx] / 255;
       });
       setLevels(next);
@@ -87,9 +100,8 @@ export default function RecordPage() {
       return;
     }
     const { interactionId } = await res.json();
-    // Poll until processing finishes, then go to the contact page.
-    const start = Date.now();
-    while (Date.now() - start < 60_000) {
+    const startTime = Date.now();
+    while (Date.now() - startTime < 60_000) {
       await new Promise((r) => setTimeout(r, 1500));
       const poll = await fetch(`/api/cards/${interactionId}`, { cache: 'no-store' });
       if (!poll.ok) continue;
@@ -104,49 +116,159 @@ export default function RecordPage() {
         return;
       }
     }
-    // Timeout fallback — drop them on the connections list so they can find it once it's ready.
     router.push('/app/connections');
   }
 
+  const status: ReactNode =
+    state === 'recording' ? <span className="text-red-600">● REC</span> :
+    state === 'uploading' ? <span>● PROCESSING</span> :
+    <span><span className="text-brand">●</span> READY</span>;
+
+  const greeting = getGreetingLabel(displayName);
+
   return (
-    <div className="flex-1 flex flex-col p-6 gap-4 max-w-md w-full mx-auto">
-      {state === 'idle' && (
-        <div className="flex justify-end">
-          <NavToggle />
-        </div>
-      )}
-      {state === 'idle' && (
-        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-5">
-          <Greeting />
-        </div>
-      )}
-      {state === 'uploading' ? (
-        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-8 py-10 flex-1 flex flex-col items-center justify-center gap-5">
-          <LogoSpinner size={64} />
-          <p className="text-neutral-800 font-medium text-lg">Connecting y&apos;all…</p>
-          <p className="text-neutral-600 text-sm text-center">Hang tight while we turn your voice memo into a connection.</p>
-        </div>
-      ) : (
-        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-6 flex-1 flex flex-col items-center justify-center gap-5">
-          <div className="text-center space-y-1">
-            <h1 className="text-2xl font-bold">{state === 'recording' ? 'Recording…' : "Who'd you meet?"}</h1>
-            <p className="text-neutral-600 text-sm">{state === 'recording' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : 'Tell me about who you just met.'}</p>
+    <div className="px-6 py-6 pb-28 max-w-xl mx-auto w-full min-h-[100dvh] flex flex-col">
+      <PageHeader status={status} />
+      <div className="flex-1 flex flex-col pt-3 gap-8">
+        {state === 'idle' && (
+          <Top
+            label={greeting}
+            headlineFirst="Who did you"
+            headlineAccent="just meet?"
+            sub="Tap to record. We'll pull a name, channels, and the gist — no typing."
+          />
+        )}
+        {state === 'recording' && (
+          <Top
+            label={<><span className="text-red-600">●</span> RECORDING · {fmtTime(elapsed)}</>}
+            labelTone="red"
+            headlineFirst="Listening"
+            headlineAccent="closely."
+            sub="When you're done, tap stop. We'll turn it into a connection."
+          />
+        )}
+        {state === 'uploading' && (
+          <Top
+            label={<>● PROCESSING</>}
+            headlineFirst="Connecting"
+            headlineAccent="y'all…"
+            sub="Hang tight while we turn your voice into a connection."
+          />
+        )}
+        <div className="flex-1 flex flex-col items-center justify-center gap-5">
+          <div className="relative flex items-center justify-center">
+            <GlowRings tone={state === 'recording' ? 'red' : 'brand'} />
+            {state === 'idle' && (
+              <button
+                onClick={start}
+                className="relative z-10 w-[150px] h-[150px] rounded-full bg-brand text-white flex items-center justify-center shadow-[0_14px_36px_rgba(124,92,255,0.40)]"
+                aria-label="Tap to record"
+              >
+                <LuMic size={50} />
+              </button>
+            )}
+            {state === 'recording' && (
+              <button
+                onClick={stop}
+                className="relative z-10 w-[150px] h-[150px] rounded-full bg-red-500 text-white flex items-center justify-center shadow-[0_14px_36px_rgba(220,38,38,0.40)]"
+                aria-label="Tap to stop"
+              >
+                <div className="w-12 h-12 rounded bg-white" />
+              </button>
+            )}
+            {state === 'uploading' && (
+              <div
+                className="logo-spinner relative z-10 w-[150px] h-[150px] rounded-3xl bg-brand text-white flex items-center justify-center font-extrabold text-[78px] shadow-[0_14px_36px_rgba(124,92,255,0.40)]"
+                style={{ perspective: 600 }}
+                aria-hidden
+              >
+                c
+              </div>
+            )}
           </div>
-          <div className="flex items-end justify-center gap-1 h-16">
+          <div className="flex items-end justify-center gap-1 h-14 px-4">
             {levels.map((v, i) => (
-              <div key={i} style={{ height: `${Math.max(8, v * 64)}px` }} className="w-1 bg-neutral-700/70 rounded" />
+              <div
+                key={i}
+                style={{ height: `${Math.max(8, v * 56)}px` }}
+                className={`w-1 ${state === 'recording' ? 'bg-red-500/55' : 'bg-brand/55'} rounded`}
+              />
             ))}
           </div>
-          <button
-            onClick={() => (state === 'idle' ? start() : state === 'recording' ? stop() : undefined)}
-            className={`w-24 h-24 rounded-full flex items-center justify-center font-semibold transition shadow-lg ${
-              state === 'recording' ? 'bg-red-500 text-white' : 'bg-neutral-950 text-white'
-            }`}
-          >
-            {state === 'idle' ? '●' : '■'}
-          </button>
+          <Caption state={state} />
         </div>
-      )}
+      </div>
+      <BottomNav />
     </div>
   );
+}
+
+function Top({
+  label,
+  labelTone,
+  headlineFirst,
+  headlineAccent,
+  sub,
+}: {
+  label: ReactNode;
+  labelTone?: 'red';
+  headlineFirst: string;
+  headlineAccent: string;
+  sub: string;
+}) {
+  return (
+    <div>
+      <div className={`font-mono text-[13px] tracking-[0.2em] font-semibold uppercase ${labelTone === 'red' ? 'text-red-600' : 'text-muted'}`}>
+        {label}
+      </div>
+      <h1 className="mt-3 text-5xl font-extrabold leading-[1.02] tracking-tight">
+        {headlineFirst}
+        <br />
+        <span className="text-brand">{headlineAccent}</span>
+      </h1>
+      <p className="mt-4 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">{sub}</p>
+    </div>
+  );
+}
+
+function GlowRings({ tone }: { tone: 'brand' | 'red' }) {
+  const rgb = tone === 'red' ? '220, 38, 38' : '124, 92, 255';
+  return (
+    <div
+      aria-hidden
+      className="absolute w-[300px] h-[300px] rounded-full"
+      style={{
+        background: `radial-gradient(circle, rgba(${rgb}, 0.14) 0%, rgba(${rgb}, 0.04) 60%, rgba(${rgb}, 0) 80%)`,
+      }}
+    >
+      <div className="absolute inset-[30px] rounded-full" style={{ background: `rgba(${rgb}, 0.06)` }} />
+      <div className="absolute inset-[60px] rounded-full" style={{ background: `rgba(${rgb}, 0.12)` }} />
+    </div>
+  );
+}
+
+function Caption({ state }: { state: State }) {
+  if (state === 'recording') {
+    return (
+      <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-red-600 font-medium">
+        <span className="mr-1">●</span> TAP TO STOP
+      </div>
+    );
+  }
+  if (state === 'uploading') {
+    return (
+      <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium">
+        <span className="text-neutral-400 mr-1">●</span> PROCESSING…
+      </div>
+    );
+  }
+  return (
+    <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium">
+      <span className="text-brand mr-1">●</span> TAP TO RECORD <span className="text-neutral-400">·</span> UP TO 60S
+    </div>
+  );
+}
+
+function fmtTime(seconds: number) {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
