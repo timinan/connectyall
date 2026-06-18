@@ -13,12 +13,12 @@ export type ChannelKind =
 type IconConfig = { Icon: IconType; color: string; label: string };
 
 export const CHANNEL_ICONS: Record<ChannelKind, IconConfig> = {
-  email:    { Icon: LuMail,       color: '#FFFFFF', label: 'Email'    },
-  phone:    { Icon: LuPhone,      color: '#FFFFFF', label: 'Phone'    },
+  email:    { Icon: LuMail,       color: '#0F0F0F', label: 'Email'    },
+  phone:    { Icon: LuPhone,      color: '#0F0F0F', label: 'Phone'    },
   telegram: { Icon: SiTelegram,   color: '#26A5E4', label: 'Telegram' },
-  x:        { Icon: SiX,          color: '#FFFFFF', label: 'X'        },
+  x:        { Icon: SiX,          color: '#0F0F0F', label: 'X'        },
   linkedin: { Icon: FaLinkedin,   color: '#0A66C2', label: 'LinkedIn' },
-  website:  { Icon: LuGlobe,      color: '#FFFFFF', label: 'Website'  },
+  website:  { Icon: LuGlobe,      color: '#0F0F0F', label: 'Website'  },
   whatsapp: { Icon: SiWhatsapp,   color: '#25D366', label: 'WhatsApp' },
   wechat:   { Icon: SiWechat,     color: '#07C160', label: 'WeChat'   },
   line:     { Icon: SiLine,       color: '#06C755', label: 'Line'     },
