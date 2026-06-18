@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Greeting } from './greeting';
+import { NavToggle } from '@/components/nav-toggle';
 
 type State = 'idle' | 'recording' | 'uploading';
 
@@ -85,11 +86,34 @@ export default function RecordPage() {
       return;
     }
     const { interactionId } = await res.json();
-    router.push(`/app/cards/${interactionId}`);
+    // Poll until processing finishes, then go to the contact page.
+    const start = Date.now();
+    while (Date.now() - start < 60_000) {
+      await new Promise((r) => setTimeout(r, 1500));
+      const poll = await fetch(`/api/cards/${interactionId}`, { cache: 'no-store' });
+      if (!poll.ok) continue;
+      const payload = await poll.json();
+      if (payload.status === 'failed') {
+        alert('Sorry — that recording could not be processed.');
+        setState('idle');
+        return;
+      }
+      if (payload.status === 'ready') {
+        router.push(`/app/connections/${payload.contact.id}`);
+        return;
+      }
+    }
+    // Timeout fallback — drop them on the connections list so they can find it once it's ready.
+    router.push('/app/connections');
   }
 
   return (
     <div className="flex-1 flex flex-col p-6 gap-4 max-w-md w-full mx-auto">
+      {state === 'idle' && (
+        <div className="flex justify-end">
+          <NavToggle />
+        </div>
+      )}
       {state === 'idle' && (
         <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-5">
           <Greeting />
