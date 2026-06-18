@@ -78,14 +78,14 @@ function EditableHeading({ value, onSave }: EditableHeadingProps) {
           if (e.key === 'Enter') commit();
           if (e.key === 'Escape') { setDraft(value); setEditing(false); }
         }}
-        className="text-xl font-bold w-full px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-white"
+        className="text-xl font-bold w-full px-2 py-1 rounded bg-white border border-neutral-200 text-neutral-950"
       />
     );
   }
 
   return (
     <button
-      className="text-xl font-bold text-left hover:text-neutral-300 transition-colors flex items-center gap-1.5"
+      className="text-xl font-bold text-left text-neutral-950 hover:text-neutral-700 transition-colors flex items-center gap-1.5"
       onClick={() => { setDraft(value); setEditing(true); }}
       title="Tap to edit name"
     >
@@ -132,19 +132,19 @@ function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps)
         onKeyDown={(e) => {
           if (e.key === 'Escape') { setDraft(value ?? ''); setEditing(false); }
         }}
-        className="w-full px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-neutral-300 text-sm resize-none"
+        className="w-full px-2 py-1 rounded bg-white border border-neutral-200 text-neutral-700 text-sm resize-none"
       />
     );
   }
 
   return (
     <button
-      className="text-sm text-left w-full flex items-start gap-1.5 hover:text-neutral-200 transition-colors"
+      className="text-sm text-left w-full flex items-start gap-1.5 hover:text-neutral-950 transition-colors"
       onClick={() => { setDraft(value ?? ''); setEditing(true); }}
       title="Tap to edit"
     >
       {displayValue ? (
-        <span className="text-neutral-300 flex-1">{displayValue}</span>
+        <span className="text-neutral-700 flex-1">{displayValue}</span>
       ) : (
         <span className="text-neutral-600 flex-1 italic">{placeholder}</span>
       )}
@@ -209,11 +209,11 @@ function EditableField({
             if (e.key === 'Enter') commit();
             if (e.key === 'Escape') { setDraft(value); setEditing(false); }
           }}
-          className="flex-1 px-2 py-1 rounded bg-neutral-800 border border-neutral-700 text-white text-sm min-w-0"
+          className="flex-1 px-2 py-1 rounded bg-white border border-neutral-200 text-neutral-950 text-sm min-w-0"
         />
       ) : (
         <button
-          className="flex-1 text-left text-sm text-neutral-200 truncate hover:text-white min-w-0 flex items-center gap-1"
+          className="flex-1 text-left text-sm text-neutral-950 truncate hover:text-neutral-700 min-w-0 flex items-center gap-1"
           onClick={() => { setDraft(value); setEditing(true); }}
         >
           {value || <span className="text-neutral-500">{placeholder}</span>}
@@ -227,7 +227,7 @@ function EditableField({
           href={sendHref}
           target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
           rel="noopener noreferrer"
-          className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-neutral-700 text-white text-xs font-medium hover:bg-neutral-600 transition-colors"
+          className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-neutral-950 text-white text-xs font-medium hover:bg-neutral-800 transition-colors"
           title="Send via this channel"
         >
           <LuSend size={14} />
@@ -293,7 +293,7 @@ function AddField({ existing, onAdd }: AddFieldProps) {
     return (
       <button
         onClick={() => setExpanded(true)}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-700 bg-neutral-900 text-white text-xs whitespace-nowrap"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-200 bg-white text-neutral-950 text-xs whitespace-nowrap"
       >
         + Add field
       </button>
@@ -305,7 +305,7 @@ function AddField({ existing, onAdd }: AddFieldProps) {
       <select
         value={selectedChannel}
         onChange={(e) => setSelectedChannel(e.target.value as PreferredChannel | '')}
-        className="bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-sm text-neutral-300 flex-shrink-0"
+        className="bg-white border border-neutral-200 rounded px-2 py-1 text-sm text-neutral-700 flex-shrink-0"
         autoFocus
       >
         <option value="">Pick field…</option>
@@ -329,14 +329,14 @@ function AddField({ existing, onAdd }: AddFieldProps) {
               : selectedChannel === 'line' ? 'Line ID (no @)'
               : ''
             }
-            className="flex-1 px-2 py-1 rounded bg-neutral-900 border border-neutral-700 text-white text-sm min-w-0"
+            className="flex-1 px-2 py-1 rounded bg-white border border-neutral-200 text-neutral-950 text-sm min-w-0"
           />
-          <button onClick={handleAdd} className="flex-shrink-0 text-sm px-3 py-1 rounded bg-white text-neutral-950 font-semibold">Add</button>
+          <button onClick={handleAdd} className="flex-shrink-0 text-sm px-3 py-1 rounded bg-neutral-950 text-white font-semibold hover:bg-neutral-800 transition">Add</button>
         </>
       )}
       <button
         onClick={() => { setExpanded(false); setSelectedChannel(''); setValue(''); }}
-        className="flex-shrink-0 text-neutral-500 hover:text-neutral-300"
+        className="flex-shrink-0 text-neutral-500 hover:text-neutral-700"
         title="Cancel"
       >
         <LuXIcon size={14} />
@@ -458,7 +458,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
   if (data.status === 'processing') {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8">
-        <p className="text-neutral-400">Connecting y&apos;all…</p>
+        <p className="text-neutral-600">Connecting y&apos;all…</p>
       </div>
     );
   }
@@ -467,7 +467,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8">
         <p className="text-red-400 mb-4">Something went wrong with this capture.</p>
-        <a href="/app/record" className="px-4 py-2 rounded-lg bg-white text-neutral-950 font-semibold">Try again</a>
+        <a href="/app/record" className="px-4 py-2 rounded-lg bg-neutral-950 text-white font-semibold hover:bg-neutral-800 transition">Try again</a>
       </div>
     );
   }
@@ -513,7 +513,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       {/* Notes + Recap sections */}
-      <div className="rounded-lg bg-neutral-950 border border-neutral-800 px-4 py-3 space-y-3">
+      <div className="rounded-lg bg-white border border-neutral-200 px-4 py-3 space-y-3">
         {/* Private note (notes) */}
         <div className="space-y-1">
           <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">🔒 Private note</p>
@@ -524,7 +524,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           />
         </div>
 
-        <div className="border-t border-neutral-800" />
+        <div className="border-t border-neutral-200" />
 
         {/* What we talked about (recap) */}
         <div className="space-y-1">
@@ -539,7 +539,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
 
       {/* Inline-editable contact fields with per-row actions */}
       {contact && (
-        <div className="rounded-lg bg-neutral-950 border border-neutral-800 px-4 py-3 space-y-1">
+        <div className="rounded-lg bg-white border border-neutral-200 px-4 py-3 space-y-1">
           {/* Emails */}
           {contact.emails.map((email, i) => (
             <EditableField
@@ -669,7 +669,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           )}
 
           {/* Action chip row: Add field · Share · Save to contacts */}
-          <div className="flex flex-wrap gap-2 pt-3 border-t border-neutral-800">
+          <div className="flex flex-wrap gap-2 pt-3 border-t border-neutral-200">
             <AddField
               existing={existingSingleChannels}
               onAdd={(channel, value) => {
@@ -682,14 +682,14 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
             />
             <button
               onClick={share}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-700 bg-neutral-900 text-white text-xs whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-neutral-950 text-white text-xs whitespace-nowrap hover:bg-neutral-800 transition"
             >
               📤 Share
             </button>
             <a
               href={`/api/contacts/${contact.id}/vcard`}
               download
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-700 bg-neutral-900 text-white text-xs whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-200 bg-white text-neutral-950 text-xs whitespace-nowrap"
             >
               {(() => { const first = contactName.trim().split(/\s+/)[0]; return first ? `💾 Save ${first} to contacts` : '💾 Save to contacts'; })()}
             </a>
