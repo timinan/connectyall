@@ -9,7 +9,8 @@ import {
 } from '@/lib/social-urls';
 import { ChannelIcon, type ChannelKind } from '../../cards/[id]/channel-icons';
 import { APP_CONTAINER } from '../../_layout-constants';
-import { NavToggle } from '@/components/nav-toggle';
+import { PageHeader } from '@/components/page-header';
+import { BottomNav } from '@/components/bottom-nav';
 
 const socialUrl = {
   linkedin: linkedinUrl,
@@ -49,6 +50,9 @@ type Data = {
   shareUrl: string | null;
 };
 
+// Shared card surface style for the refreshed visual language.
+const CARD_BASE = 'rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)]';
+
 // ---------------------------------------------------------------------------
 // Inline-editable heading (contact name)
 // ---------------------------------------------------------------------------
@@ -81,19 +85,19 @@ function EditableHeading({ value, onSave }: EditableHeadingProps) {
           if (e.key === 'Enter') commit();
           if (e.key === 'Escape') { setDraft(value); setEditing(false); }
         }}
-        className="text-xl font-bold w-full px-2 py-1 rounded bg-white border border-neutral-200 text-neutral-950"
+        className="text-[30px] font-extrabold tracking-tight w-full px-2 py-1 rounded-lg bg-cream border border-line text-neutral-950"
       />
     );
   }
 
   return (
     <button
-      className="text-xl font-bold text-left text-neutral-950 hover:text-neutral-700 transition-colors flex items-center gap-1.5"
+      className="text-left text-neutral-950 hover:text-neutral-700 transition-colors flex items-center gap-2"
       onClick={() => { setDraft(value); setEditing(true); }}
       title="Tap to edit name"
     >
-      {value}
-      <LuPencil size={14} className="text-neutral-500" />
+      <span>{value}</span>
+      <LuPencil size={16} className="text-neutral-400" />
     </button>
   );
 }
@@ -135,7 +139,7 @@ function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps)
         onKeyDown={(e) => {
           if (e.key === 'Escape') { setDraft(value ?? ''); setEditing(false); }
         }}
-        className="w-full px-2 py-1 rounded bg-white border border-neutral-200 text-neutral-700 text-sm resize-none"
+        className="w-full px-2 py-1 rounded-lg bg-cream border border-line text-neutral-700 text-sm resize-none"
       />
     );
   }
@@ -149,9 +153,9 @@ function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps)
       {displayValue ? (
         <span className="text-neutral-700 flex-1">{displayValue}</span>
       ) : (
-        <span className="text-neutral-600 flex-1 italic">{placeholder}</span>
+        <span className="text-neutral-500 flex-1 italic">{placeholder}</span>
       )}
-      <LuPencil size={12} className="text-neutral-500 flex-shrink-0 mt-0.5" />
+      <LuPencil size={14} className="text-neutral-400 flex-shrink-0 mt-0.5" />
     </button>
   );
 }
@@ -212,15 +216,15 @@ function EditableField({
             if (e.key === 'Enter') commit();
             if (e.key === 'Escape') { setDraft(value); setEditing(false); }
           }}
-          className="flex-1 px-2 py-1 rounded bg-white border border-neutral-200 text-neutral-950 text-sm min-w-0"
+          className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-neutral-950 text-sm min-w-0"
         />
       ) : (
         <button
-          className="flex-1 text-left text-sm text-neutral-950 truncate hover:text-neutral-700 min-w-0 flex items-center gap-1"
+          className="flex-1 text-left text-sm text-neutral-950 truncate hover:text-neutral-700 min-w-0 flex items-center gap-1 px-2 py-1 rounded-lg bg-cream border border-line"
           onClick={() => { setDraft(value); setEditing(true); }}
         >
-          {value || <span className="text-neutral-500">{placeholder}</span>}
-          <LuPencil size={12} className="text-neutral-500 flex-shrink-0" />
+          <span className="truncate">{value || <span className="text-neutral-500">{placeholder}</span>}</span>
+          <LuPencil size={12} className="text-neutral-400 flex-shrink-0 ml-auto" />
         </button>
       )}
 
@@ -241,7 +245,7 @@ function EditableField({
       {/* Delete */}
       {onRemove && (
         <button
-          className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-red-400"
+          className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-red-400"
           onClick={onRemove}
           title="Remove"
         >
@@ -296,7 +300,7 @@ function AddField({ existing, onAdd }: AddFieldProps) {
     return (
       <button
         onClick={() => setExpanded(true)}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-200 bg-white text-neutral-950 text-xs whitespace-nowrap"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-line bg-surface text-neutral-950 text-xs font-semibold whitespace-nowrap"
       >
         + Add field
       </button>
@@ -308,7 +312,7 @@ function AddField({ existing, onAdd }: AddFieldProps) {
       <select
         value={selectedChannel}
         onChange={(e) => setSelectedChannel(e.target.value as PreferredChannel | '')}
-        className="bg-white border border-neutral-200 rounded px-2 py-1 text-sm text-neutral-700 flex-shrink-0"
+        className="bg-cream border border-line rounded-lg px-2 py-1 text-sm text-neutral-700 flex-shrink-0"
         autoFocus
       >
         <option value="">Pick field…</option>
@@ -332,14 +336,14 @@ function AddField({ existing, onAdd }: AddFieldProps) {
               : selectedChannel === 'line' ? 'Line ID (no @)'
               : ''
             }
-            className="flex-1 px-2 py-1 rounded bg-white border border-neutral-200 text-neutral-950 text-sm min-w-0"
+            className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-neutral-950 text-sm min-w-0"
           />
-          <button onClick={handleAdd} className="flex-shrink-0 text-sm px-3 py-1 rounded bg-neutral-950 text-white font-semibold hover:bg-neutral-800 transition">Add</button>
+          <button onClick={handleAdd} className="flex-shrink-0 text-sm px-3 py-1 rounded-full bg-neutral-950 text-white font-semibold hover:bg-neutral-800 transition">Add</button>
         </>
       )}
       <button
         onClick={() => { setExpanded(false); setSelectedChannel(''); setValue(''); }}
-        className="flex-shrink-0 text-neutral-500 hover:text-neutral-700"
+        className="flex-shrink-0 text-neutral-400 hover:text-neutral-700"
         title="Cancel"
       >
         <LuXIcon size={14} />
@@ -353,16 +357,16 @@ function AddField({ existing, onAdd }: AddFieldProps) {
 // ---------------------------------------------------------------------------
 function PastMeeting({ occurredAt, recap }: { occurredAt: string; recap: string | null }) {
   const [expanded, setExpanded] = useState(false);
-  const date = new Date(occurredAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  const date = new Date(occurredAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
   const preview = recap ? (recap.length > 80 ? recap.slice(0, 80) + '…' : recap) : '(no recap)';
   return (
     <li>
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="text-left w-full p-2 rounded-lg hover:bg-white/50 transition"
+        className="text-left w-full px-3 py-2 rounded-2xl bg-cream hover:bg-cream/80 transition"
       >
-        <p className="text-xs text-neutral-700 font-medium">{date}</p>
-        <p className="text-sm text-neutral-700">{expanded ? (recap ?? '(no recap)') : preview}</p>
+        <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-brand font-bold">{date}</div>
+        <div className="text-[13px] text-neutral-700 mt-1">{expanded ? (recap ?? '(no recap)') : preview}</div>
       </button>
     </li>
   );
@@ -450,13 +454,14 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
   if (notFound || (data && !data.contact)) {
     return (
       <div className={APP_CONTAINER}>
-        <div className="flex justify-end"><NavToggle /></div>
-        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-8 text-center space-y-3">
+        <PageHeader />
+        <div className={`${CARD_BASE} px-5 py-8 text-center space-y-3`}>
           <p className="text-neutral-700">Connection not found.</p>
           <Link href="/app/connections" className="inline-block px-4 py-2 rounded-full bg-neutral-950 text-white text-sm font-semibold hover:bg-neutral-800 transition">
             Back to connections
           </Link>
         </div>
+        <BottomNav />
       </div>
     );
   }
@@ -464,7 +469,17 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
   if (!data) {
     return (
       <div className={APP_CONTAINER}>
-        <div className="flex justify-end"><NavToggle /></div>
+        <PageHeader />
+        <div className={`${CARD_BASE} px-5 py-8`}>
+          <div className="h-4 w-32 rounded bg-cream animate-pulse" />
+          <div className="mt-3 h-7 w-56 rounded bg-cream animate-pulse" />
+        </div>
+        <div className={`${CARD_BASE} px-5 py-4 space-y-3`}>
+          <div className="h-3 w-24 rounded bg-cream animate-pulse" />
+          <div className="h-4 w-full rounded bg-cream animate-pulse" />
+          <div className="h-4 w-3/4 rounded bg-cream animate-pulse" />
+        </div>
+        <BottomNav />
       </div>
     );
   }
@@ -473,6 +488,7 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
   const contactName = localName ?? contact?.name ?? '';
   const notesValue = localNotes !== undefined ? localNotes : (contact?.notes ?? null);
   const recapText = localRecap ?? data.latestRecap ?? '';
+  const meetingsCount = data.previousMeetings.length + 1;
 
   // Determine which single-value channels are already present (for AddField)
   const existingSingleChannels: PreferredChannel[] = [];
@@ -504,20 +520,21 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className={APP_CONTAINER}>
-      <div className="flex justify-end">
-        <NavToggle />
-      </div>
+      <PageHeader status={`${meetingsCount} MEETINGS`} />
 
       {/* Editable heading: contact name */}
-      <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-5">
-        <EditableHeading value={contactName} onSave={saveName} />
+      <div className={`${CARD_BASE} px-5 py-5`}>
+        <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">CONTACT</div>
+        <div className="mt-1 text-[30px] font-extrabold tracking-tight">
+          <EditableHeading value={contactName} onSave={saveName} />
+        </div>
       </div>
 
       {/* Notes + Recap sections */}
-      <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-4 space-y-3">
+      <div className={`${CARD_BASE} px-5 py-4 space-y-3`}>
         {/* Private note (notes) */}
         <div className="space-y-1">
-          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">🔒 Private note</p>
+          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">PRIVATE NOTE</div>
           <EditableTextArea
             value={notesValue}
             placeholder="Tap to add a private note about who they are…"
@@ -525,24 +542,27 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
           />
         </div>
 
-        <div className="border-t border-neutral-200" />
-
-        {/* What we talked about (recap) */}
         {data.latestInteractionId && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">What we talked about</p>
-            <EditableTextArea
-              value={recapText || null}
-              placeholder="Tap to edit the recap…"
-              onSave={(v) => saveRecap(v ?? '')}
-            />
-          </div>
+          <>
+            <div className="border-t border-line" />
+
+            {/* What we talked about (recap) */}
+            <div className="space-y-1">
+              <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">WHAT WE TALKED ABOUT</div>
+              <EditableTextArea
+                value={recapText || null}
+                placeholder="Tap to edit the recap…"
+                onSave={(v) => saveRecap(v ?? '')}
+              />
+            </div>
+          </>
         )}
       </div>
 
       {/* Inline-editable contact fields with per-row actions */}
       {contact && (
-        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-4 space-y-1">
+        <div className={`${CARD_BASE} px-5 py-4 space-y-1`}>
+          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold pb-1">CHANNELS</div>
           {/* Emails */}
           {contact.emails.map((email, i) => (
             <EditableField
@@ -672,7 +692,7 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
           )}
 
           {/* Action chip row: Add field · Save to contacts */}
-          <div className="flex flex-wrap gap-2 pt-3 border-t border-neutral-200">
+          <div className="flex flex-wrap gap-2 pt-3 border-t border-line">
             <AddField
               existing={existingSingleChannels}
               onAdd={(channel, value) => {
@@ -686,7 +706,7 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
             <a
               href={`/api/contacts/${contact.id}/vcard`}
               download
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-200 bg-white text-neutral-950 text-xs whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-line bg-surface text-neutral-950 text-xs font-semibold whitespace-nowrap"
             >
               {(() => { const first = contactName.trim().split(/\s+/)[0]; return first ? `💾 Save ${first} to contacts` : '💾 Save to contacts'; })()}
             </a>
@@ -694,8 +714,10 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
         </div>
       )}
       {data.previousMeetings.length > 0 && (
-        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-4 space-y-3">
-          <p className="text-sm text-neutral-700 font-medium">Previous meetings ({data.previousMeetings.length})</p>
+        <div className={`${CARD_BASE} px-5 py-4 space-y-3`}>
+          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">
+            PREVIOUS MEETINGS · {data.previousMeetings.length}
+          </div>
           <ul className="space-y-2">
             {data.previousMeetings.map((m) => (
               <PastMeeting key={m.interactionId} occurredAt={m.occurredAt} recap={m.recap} />
@@ -709,6 +731,7 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
       >
         ✓ Save
       </Link>
+      <BottomNav />
     </div>
   );
 }
