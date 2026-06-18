@@ -55,26 +55,26 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
   if (profile.socials.line) links.push({ kind: 'line', href: lineUrl(profile.socials.line) });
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-white p-6 flex flex-col items-center">
+    <main className="min-h-[calc(100dvh-3rem)] text-neutral-950 p-6 pb-10 flex flex-col items-center">
       <div className="max-w-md w-full space-y-6">
         <div className="flex justify-center pt-4">
           <img
             src={cardUrl}
             alt={profile.displayName}
-            className="w-48 h-48 rounded-full object-cover bg-white"
+            className="w-48 h-48 rounded-full object-cover bg-white border border-neutral-200"
           />
         </div>
         <div className="space-y-1 text-center">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">For {contact.name}</p>
-          <h1 className="text-3xl font-bold">{profile.displayName}</h1>
-          {profile.tagline && <p className="text-neutral-300">{profile.tagline}</p>}
+          <p className="text-xs uppercase tracking-wide text-neutral-600">For {contact.name}</p>
+          <h1 className="text-3xl font-bold"><span className="text-brand">{profile.displayName}</span></h1>
+          {profile.tagline && <p className="text-neutral-700">{profile.tagline}</p>}
         </div>
         {recap && (
-          <p className="italic text-neutral-300 text-center">&ldquo;{recap}&rdquo;</p>
+          <p className="italic text-neutral-700 text-center">&ldquo;{recap}&rdquo;</p>
         )}
         <div className="grid grid-cols-2 gap-3">
           {links.map((l) => (
-            <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" className="px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800 text-center text-sm flex items-center justify-center gap-2">
+            <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" className="px-4 py-3 rounded-lg bg-white border border-neutral-200 text-neutral-950 text-center text-sm flex items-center justify-center gap-2 hover:border-neutral-400 transition">
               <ChannelIcon kind={l.kind} size={18} />
               <span>{CHANNEL_ICONS[l.kind].label}</span>
             </a>
@@ -82,11 +82,10 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
         </div>
         <a
           href={`/c/${interaction.id}/vcard`}
-          className="block w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold text-center"
+          className="block w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-semibold text-center hover:bg-neutral-800 transition"
         >
           💾 Save {profile.displayName.split(' ')[0]} to Contacts
         </a>
-        <p className="text-center text-xs text-neutral-500"><a href="/" className="underline">made with Connectyall</a></p>
       </div>
     </main>
   );

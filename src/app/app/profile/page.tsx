@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { APP_CONTAINER } from '../_layout-constants';
 import { Avatar, getFirstName } from '../record/greeting';
 import { LuCamera, LuX, LuCheck } from 'react-icons/lu';
 import { ChannelIcon, type ChannelKind } from '../cards/[id]/channel-icons';
@@ -117,69 +118,72 @@ export default function ProfilePage() {
     });
   }
 
-  function headline() {
+  function headline(): React.ReactNode {
     if (!profile) return 'Hello';
     const firstName = getFirstName(profile.displayName);
     if (profile.onboardedAt) {
       return firstName
-        ? `Hey ${firstName}, keep your details fresh.`
+        ? <>Hey <span className="text-brand">{firstName}</span>, keep your details fresh.</>
         : 'Keep your details fresh.';
     }
-    return "Welcome. Let's set up how people reach you.";
+    return <><span className="text-brand">Welcome.</span> Let&apos;s set up how people reach you.</>;
   }
 
   return (
-    <div className="p-6 max-w-md mx-auto space-y-6">
-      <div className="flex flex-col items-center gap-4">
-        <h1 className="text-2xl font-bold text-center">{headline()}</h1>
-        <div className="relative inline-block">
-          <Avatar
-            profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : 'loading'}
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            aria-label="Change photo"
-            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white text-neutral-950 flex items-center justify-center shadow ring-2 ring-neutral-950"
-          >
-            <LuCamera size={16} />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
-          />
-        </div>
-      </div>
+    <div className={APP_CONTAINER}>
       <form
         onSubmit={(e) => { e.preventDefault(); saveBasics(e.currentTarget); }}
-        className="space-y-3"
+        className="space-y-4"
       >
-        <input
-          name="displayName"
-          placeholder="Display name (Tim Nan)"
-          required
-          className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800"
-          defaultValue={profile?.displayName ?? ''}
-          key={`name-${profile?.displayName ?? ''}`}
-        />
-        <input
-          name="tagline"
-          placeholder="One-liner (PM building crypto products)"
-          className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800"
-          defaultValue={profile?.tagline ?? ''}
-          key={`tagline-${profile?.tagline ?? ''}`}
-        />
-        <textarea
-          name="selfIntro"
-          placeholder="Optional — extra context the AI uses for extraction"
-          rows={2}
-          className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800"
-        />
-        <div className="space-y-2">
-          <label className="text-sm text-neutral-400">How people can reach you</label>
+        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-5 space-y-4">
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative inline-block">
+              <Avatar
+                profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : 'loading'}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Change photo"
+                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-neutral-950 text-white flex items-center justify-center shadow ring-2 ring-white"
+              >
+                <LuCamera size={16} />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
+              />
+            </div>
+            <h1 className="text-2xl font-bold text-center">{headline()}</h1>
+          </div>
+          <label className="text-sm text-neutral-700 font-medium block">Your info</label>
+          <input
+            name="displayName"
+            placeholder="Display name (Tim Nan)"
+            required
+            className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
+            defaultValue={profile?.displayName ?? ''}
+            key={`name-${profile?.displayName ?? ''}`}
+          />
+          <input
+            name="tagline"
+            placeholder="One-liner (PM building crypto products)"
+            className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
+            defaultValue={profile?.tagline ?? ''}
+            key={`tagline-${profile?.tagline ?? ''}`}
+          />
+          <textarea
+            name="selfIntro"
+            placeholder="Optional — extra context the AI uses for extraction"
+            rows={2}
+            className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
+          />
+        </div>
+        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-4 space-y-2">
+          <label className="text-sm text-neutral-700 font-medium block">How people can reach you</label>
           {profile && PROFILE_CHANNELS.filter((k) => {
             const v = readChannel(profile, k);
             return v !== null && v !== '';
@@ -205,7 +209,7 @@ export default function ProfilePage() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold disabled:opacity-50"
+          className="w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-semibold disabled:opacity-50 hover:bg-neutral-800 transition"
         >
           {saving ? 'Saving…' : 'Save and start connecting'}
         </button>
@@ -236,13 +240,13 @@ function ChannelRow({
         onChange={(e) => setValue(e.target.value)}
         onBlur={() => { if (value.trim() && value !== initialValue) onSave(value.trim()); }}
         placeholder={PROFILE_CHANNEL_PLACEHOLDERS[kind]}
-        className="flex-1 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-800 text-sm"
+        className="flex-1 px-3 py-2 rounded-lg bg-white border border-neutral-200 text-sm"
       />
       <button
         type="button"
         onClick={onClear}
         aria-label={`Remove ${PROFILE_CHANNEL_LABELS[kind]}`}
-        className="text-neutral-500 hover:text-white p-2"
+        className="text-neutral-500 hover:text-neutral-950 p-2"
       >
         <LuX size={16} />
       </button>
@@ -277,7 +281,7 @@ function AddChannel({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-700 bg-neutral-900 text-white text-xs"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-200 bg-white text-neutral-950 text-xs"
       >
         + Add field
       </button>
@@ -289,7 +293,7 @@ function AddChannel({
       <select
         value={selected}
         onChange={(e) => setSelected(e.target.value as ProfileChannel | '')}
-        className="bg-neutral-900 border border-neutral-700 rounded px-2 py-2 text-sm text-neutral-300"
+        className="bg-white border border-neutral-200 rounded px-2 py-2 text-sm text-neutral-600"
         autoFocus
       >
         <option value="">Pick field…</option>
@@ -305,13 +309,13 @@ function AddChannel({
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
             placeholder={PROFILE_CHANNEL_PLACEHOLDERS[selected]}
-            className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-800 text-sm"
+            className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-white border border-neutral-200 text-sm"
           />
           <button
             type="button"
             onClick={handleAdd}
             aria-label="Save"
-            className="p-2 text-white"
+            className="p-2 text-neutral-950"
           >
             <LuCheck size={18} />
           </button>
