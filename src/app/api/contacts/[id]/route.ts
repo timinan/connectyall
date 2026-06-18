@@ -51,3 +51,21 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   await updateContactField(id, parsed.data);
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getServerSession();
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
+  const { id } = await params;
+  const rows = await db().select({ userId: contacts.userId }).from(contacts).where(eq(contacts.id, id)).limit(1);
+  if (!rows[0]) return NextResponse.json({ error: 'not found' }, { status: 404 });
+  if (rows[0].userId !== session.user.id) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+
+  // interactions are cascaded by the FK on contact_id.
+  // R2 card PNGs for the contact's past interactions are not cleaned up here —
+  // that cleanup will land in the privacy-hardening branch.
+  await db().delete(contacts).where(eq(contacts.id, id));
+  return NextResponse.json({ ok: true });
+}

@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { LuSearch, LuX } from 'react-icons/lu';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { LuSearch, LuX, LuTrash2 } from 'react-icons/lu';
 import { APP_CONTAINER } from '../_layout-constants';
 import { NavToggle } from '@/components/nav-toggle';
 import { ChannelIcon, type ChannelKind } from '../cards/[id]/channel-icons';
@@ -52,10 +52,144 @@ function Bubble({ name }: { name: string }) {
   );
 }
 
+const SWIPE_THRESHOLD = 80;
+const SWIPE_MAX_TRANSLATE = 120;
+
+type RowProps = {
+  c: Connection;
+  onAskDelete: (c: Connection) => void;
+};
+
+function ConnectionRow({ c, onAskDelete }: RowProps) {
+  const [translateX, setTranslateX] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const startX = useRef<number | null>(null);
+  const startY = useRef<number | null>(null);
+  const intercepted = useRef(false);
+  const sub = [c.company, c.role].filter(Boolean).join(' · ');
+
+  function onTouchStart(e: React.TouchEvent) {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+    intercepted.current = false;
+    setAnimating(false);
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (startX.current === null || startY.current === null) return;
+    const dx = e.touches[0].clientX - startX.current;
+    const dy = e.touches[0].clientY - startY.current;
+    // If the gesture is more vertical than horizontal, let the page scroll.
+    if (!intercepted.current && Math.abs(dy) > Math.abs(dx)) {
+      startX.current = null;
+      startY.current = null;
+      return;
+    }
+    if (dx < 0) {
+      intercepted.current = true;
+      setTranslateX(Math.max(dx, -SWIPE_MAX_TRANSLATE));
+    }
+  }
+
+  function onTouchEnd() {
+    if (startX.current === null) return;
+    const passedThreshold = translateX <= -SWIPE_THRESHOLD;
+    startX.current = null;
+    startY.current = null;
+    setAnimating(true);
+    setTranslateX(0);
+    if (passedThreshold) onAskDelete(c);
+  }
+
+  function onClick(e: React.MouseEvent) {
+    // Suppress navigation if the row was just swiped — touchend resets translateX
+    // to 0, so we read intercepted.current as the signal.
+    if (intercepted.current) {
+      e.preventDefault();
+      intercepted.current = false;
+    }
+  }
+
+  return (
+    <li className="relative">
+      {/* Red delete affordance behind the row */}
+      <div
+        className="absolute inset-0 rounded-3xl bg-red-500 flex items-center justify-end pr-6 pointer-events-none"
+        style={{ opacity: Math.min(1, Math.abs(translateX) / SWIPE_THRESHOLD) }}
+      >
+        <LuTrash2 size={22} className="text-white" />
+      </div>
+      <Link
+        href={`/app/connections/${c.contactId}`}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onClick={onClick}
+        style={{
+          transform: `translateX(${translateX}px)`,
+          transition: animating ? 'transform 0.2s ease-out' : 'none',
+        }}
+        className="relative flex items-center gap-3 p-3 rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm hover:border-purple-300"
+      >
+        <Bubble name={c.name} />
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-neutral-950 truncate">{c.name}</p>
+          {sub && <p className="text-xs text-neutral-600 truncate">{sub}</p>}
+        </div>
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          {c.preferredChannel && <ChannelIcon kind={c.preferredChannel} size={16} />}
+          <p className="text-xs text-neutral-600 whitespace-nowrap">{relativeDate(c.lastTouchedAt)}</p>
+        </div>
+      </Link>
+    </li>
+  );
+}
+
+function ConfirmDelete({
+  name,
+  onConfirm,
+  onCancel,
+}: {
+  name: string;
+  onConfirm: () => Promise<void> | void;
+  onCancel: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  async function handleConfirm() {
+    setBusy(true);
+    try { await onConfirm(); } finally { setBusy(false); }
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40">
+      <div className="rounded-3xl bg-white shadow-xl max-w-sm w-full px-6 py-6 space-y-4">
+        <p className="text-lg font-semibold text-neutral-950">Delete {name}?</p>
+        <p className="text-sm text-neutral-600">This will remove this connection and every meeting you have with them. You can&apos;t undo it.</p>
+        <div className="flex gap-2 pt-2">
+          <button
+            onClick={onCancel}
+            disabled={busy}
+            className="flex-1 px-4 py-2 rounded-full bg-white border border-neutral-200 text-neutral-950 text-sm font-semibold hover:bg-neutral-50 transition disabled:opacity-50"
+          >
+            No
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={busy}
+            className="flex-1 px-4 py-2 rounded-full bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition disabled:opacity-50"
+          >
+            {busy ? 'Deleting…' : 'Yes, delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ConnectionsPage() {
   const [rows, setRows] = useState<Connection[] | null>(null);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('recent');
+  const [confirm, setConfirm] = useState<Connection | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -78,9 +212,18 @@ export default function ConnectionsPage() {
     const sorted = [...filtered];
     if (sort === 'first') sorted.sort((a, b) => firstNameKey(a.name).localeCompare(firstNameKey(b.name)));
     else if (sort === 'last') sorted.sort((a, b) => lastNameKey(a.name).localeCompare(lastNameKey(b.name)));
-    // 'recent' keeps the server's lastTouchedAt DESC order
     return sorted;
   }, [rows, query, sort]);
+
+  async function deleteContact(id: string) {
+    const res = await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      alert('Could not delete this connection. Try again.');
+      return;
+    }
+    setRows((prev) => prev?.filter((c) => c.contactId !== id) ?? prev);
+    setConfirm(null);
+  }
 
   return (
     <div className={APP_CONTAINER}>
@@ -137,28 +280,18 @@ export default function ConnectionsPage() {
       )}
 
       <ul className="space-y-3">
-        {visible && visible.map((c) => {
-          const sub = [c.company, c.role].filter(Boolean).join(' · ');
-          return (
-            <li key={c.contactId}>
-              <Link
-                href={`/app/connections/${c.contactId}`}
-                className="flex items-center gap-3 p-3 rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm hover:border-purple-300 transition"
-              >
-                <Bubble name={c.name} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-neutral-950 truncate">{c.name}</p>
-                  {sub && <p className="text-xs text-neutral-600 truncate">{sub}</p>}
-                </div>
-                <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  {c.preferredChannel && <ChannelIcon kind={c.preferredChannel} size={16} />}
-                  <p className="text-xs text-neutral-600 whitespace-nowrap">{relativeDate(c.lastTouchedAt)}</p>
-                </div>
-              </Link>
-            </li>
-          );
-        })}
+        {visible && visible.map((c) => (
+          <ConnectionRow key={c.contactId} c={c} onAskDelete={setConfirm} />
+        ))}
       </ul>
+
+      {confirm && (
+        <ConfirmDelete
+          name={confirm.name}
+          onConfirm={() => deleteContact(confirm.contactId)}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
     </div>
   );
 }
