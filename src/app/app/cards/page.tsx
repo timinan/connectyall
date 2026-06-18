@@ -5,6 +5,7 @@ import { eq, desc } from 'drizzle-orm';
 import { db } from '@/lib/db/client';
 import { contacts, interactions } from '@/lib/db/schema';
 import { env } from '@/lib/env';
+import { APP_CONTAINER } from '../_layout-constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +28,7 @@ export default async function CardsPage() {
   const base = env().R2_PUBLIC_URL_BASE;
 
   return (
-    <div className="p-6 pb-20 max-w-md mx-auto space-y-4">
+    <div className={APP_CONTAINER}>
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Your connections</h1>
         <Link href="/app/record" className="px-4 py-2 rounded-full bg-neutral-950 text-white text-sm font-semibold hover:bg-neutral-800 transition">+ Record</Link>

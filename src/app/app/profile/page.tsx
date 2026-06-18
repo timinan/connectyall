@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { APP_CONTAINER } from '../_layout-constants';
 import { Avatar, getFirstName } from '../record/greeting';
 import { LuCamera, LuX, LuCheck } from 'react-icons/lu';
 import { ChannelIcon, type ChannelKind } from '../cards/[id]/channel-icons';
@@ -129,7 +130,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="p-6 pb-20 max-w-md mx-auto space-y-4">
+    <div className={APP_CONTAINER}>
       <form
         onSubmit={(e) => { e.preventDefault(); saveBasics(e.currentTarget); }}
         className="space-y-4"
