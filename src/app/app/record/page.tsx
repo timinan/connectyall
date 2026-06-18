@@ -93,7 +93,7 @@ export default function RecordPage() {
       <div className="w-full max-w-sm space-y-8">
         {state === 'idle' && <Greeting />}
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold">{state === 'recording' ? 'Recording…' : 'Tap to start'}</h1>
+          <h1 className="text-2xl font-bold">{state === 'recording' ? 'Recording…' : "Who'd you meet?"}</h1>
           <p className="text-neutral-400 text-sm">{state === 'recording' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : 'Tell me about who you just met.'}</p>
         </div>
         <div className="flex items-end justify-center gap-1 h-20">
@@ -112,7 +112,7 @@ export default function RecordPage() {
             {state === 'idle' ? '●' : state === 'recording' ? '■' : '…'}
           </button>
         </div>
-        {state === 'uploading' && <p className="text-center text-neutral-400 text-sm">Cooking your card…</p>}
+        {state === 'uploading' && <p className="text-center text-neutral-400 text-sm">Connecting y&apos;all…</p>}
       </div>
     </div>
   );
