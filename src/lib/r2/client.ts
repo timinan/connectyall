@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { env } from '../env';
 
 let cached: S3Client | undefined;
@@ -35,3 +35,30 @@ export async function uploadPhoto(input: {
 }
 
 export const uploadBytes = uploadPhoto;
+
+export async function downloadObject(key: string): Promise<Uint8Array> {
+  const e = env();
+  const res = await s3().send(new GetObjectCommand({ Bucket: e.R2_BUCKET_NAME, Key: key }));
+  if (!res.Body) throw new Error(`R2: empty body for ${key}`);
+  const bytes = await res.Body.transformToByteArray();
+  return bytes;
+}
+
+export async function deleteObject(key: string): Promise<void> {
+  const e = env();
+  await s3().send(new DeleteObjectCommand({ Bucket: e.R2_BUCKET_NAME, Key: key }));
+}
+
+export async function listObjects(prefix: string): Promise<string[]> {
+  const e = env();
+  const out: string[] = [];
+  let token: string | undefined;
+  do {
+    const res = await s3().send(
+      new ListObjectsV2Command({ Bucket: e.R2_BUCKET_NAME, Prefix: prefix, ContinuationToken: token })
+    );
+    for (const obj of res.Contents ?? []) if (obj.Key) out.push(obj.Key);
+    token = res.IsTruncated ? res.NextContinuationToken : undefined;
+  } while (token);
+  return out;
+}
