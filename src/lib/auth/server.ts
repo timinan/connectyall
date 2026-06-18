@@ -20,6 +20,10 @@ export function auth() {
         generateId: () => randomUUID(),
       },
     },
+    session: {
+      expiresIn: 60 * 60 * 24 * 365, // 365 days
+      updateAge: 60 * 60 * 24,        // refresh the cookie's expiry every 24 h of activity
+    },
     database: drizzleAdapter(db(), {
       provider: 'pg',
       schema: {
