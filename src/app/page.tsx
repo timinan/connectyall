@@ -3,7 +3,7 @@ import { Logo } from '@/components/logo';
 
 export default function Home() {
   return (
-    <main className="min-h-[calc(100dvh-3rem)] bg-neutral-50 text-neutral-950 px-6 py-8 flex flex-col">
+    <main className="min-h-[calc(100dvh-3rem)] text-neutral-950 px-6 py-8 flex flex-col">
       <header>
         <Logo />
       </header>

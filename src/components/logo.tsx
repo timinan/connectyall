@@ -36,3 +36,11 @@ export function Logo({ size = 40, className }: Props) {
     </div>
   );
 }
+
+export function LogoSpinner({ size = 56 }: { size?: number }) {
+  return (
+    <div className="logo-spinner inline-flex" style={{ perspective: 400 }}>
+      <LogoMark size={size} />
+    </div>
+  );
+}
