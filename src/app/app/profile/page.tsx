@@ -6,6 +6,7 @@ import { APP_CONTAINER } from '../_layout-constants';
 import { Avatar, getFirstName } from '../record/greeting';
 import { LuCamera, LuX, LuCheck } from 'react-icons/lu';
 import { ChannelIcon, type ChannelKind } from '../cards/[id]/channel-icons';
+import { NavToggle } from '@/components/nav-toggle';
 
 type Profile = {
   displayName: string;
@@ -131,6 +132,9 @@ export default function ProfilePage() {
 
   return (
     <div className={APP_CONTAINER}>
+      <div className="flex justify-end">
+        <NavToggle />
+      </div>
       <form
         onSubmit={(e) => { e.preventDefault(); saveBasics(e.currentTarget); }}
         className="space-y-4"
