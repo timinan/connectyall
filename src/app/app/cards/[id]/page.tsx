@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { use, useEffect, useRef, useState } from 'react';
 import { LuSend, LuStar, LuPencil, LuX as LuXIcon } from 'react-icons/lu';
 import {
@@ -513,7 +514,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       {/* Notes + Recap sections */}
-      <div className="rounded-lg bg-white border border-neutral-200 px-4 py-3 space-y-3">
+      <div className="rounded-3xl bg-white border border-neutral-200 shadow-sm px-5 py-4 space-y-3">
         {/* Private note (notes) */}
         <div className="space-y-1">
           <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">🔒 Private note</p>
@@ -539,7 +540,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
 
       {/* Inline-editable contact fields with per-row actions */}
       {contact && (
-        <div className="rounded-lg bg-white border border-neutral-200 px-4 py-3 space-y-1">
+        <div className="rounded-3xl bg-white border border-neutral-200 shadow-sm px-5 py-4 space-y-1">
           {/* Emails */}
           {contact.emails.map((email, i) => (
             <EditableField
@@ -668,7 +669,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
             />
           )}
 
-          {/* Action chip row: Add field · Share · Save to contacts */}
+          {/* Action chip row: Add field · Save to contacts */}
           <div className="flex flex-wrap gap-2 pt-3 border-t border-neutral-200">
             <AddField
               existing={existingSingleChannels}
@@ -680,12 +681,6 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
                 return putContactField({ kind: channel, value });
               }}
             />
-            <button
-              onClick={share}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-neutral-950 text-white text-xs whitespace-nowrap hover:bg-neutral-800 transition"
-            >
-              📤 Share
-            </button>
             <a
               href={`/api/contacts/${contact.id}/vcard`}
               download
@@ -696,6 +691,12 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
           </div>
         </div>
       )}
+      <Link
+        href="/app/record"
+        className="block w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-semibold text-center hover:bg-neutral-800 transition"
+      >
+        ✓ Done
+      </Link>
     </div>
   );
 }

@@ -155,30 +155,33 @@ export default function ProfilePage() {
       </div>
       <form
         onSubmit={(e) => { e.preventDefault(); saveBasics(e.currentTarget); }}
-        className="space-y-3"
+        className="space-y-4"
       >
-        <input
-          name="displayName"
-          placeholder="Display name (Tim Nan)"
-          required
-          className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
-          defaultValue={profile?.displayName ?? ''}
-          key={`name-${profile?.displayName ?? ''}`}
-        />
-        <input
-          name="tagline"
-          placeholder="One-liner (PM building crypto products)"
-          className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
-          defaultValue={profile?.tagline ?? ''}
-          key={`tagline-${profile?.tagline ?? ''}`}
-        />
-        <textarea
-          name="selfIntro"
-          placeholder="Optional — extra context the AI uses for extraction"
-          rows={2}
-          className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
-        />
-        <div className="space-y-2">
+        <div className="rounded-3xl bg-white border border-neutral-200 shadow-sm px-5 py-4 space-y-3">
+          <label className="text-sm text-neutral-600">Your info</label>
+          <input
+            name="displayName"
+            placeholder="Display name (Tim Nan)"
+            required
+            className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
+            defaultValue={profile?.displayName ?? ''}
+            key={`name-${profile?.displayName ?? ''}`}
+          />
+          <input
+            name="tagline"
+            placeholder="One-liner (PM building crypto products)"
+            className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
+            defaultValue={profile?.tagline ?? ''}
+            key={`tagline-${profile?.tagline ?? ''}`}
+          />
+          <textarea
+            name="selfIntro"
+            placeholder="Optional — extra context the AI uses for extraction"
+            rows={2}
+            className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
+          />
+        </div>
+        <div className="rounded-3xl bg-white border border-neutral-200 shadow-sm px-5 py-4 space-y-2">
           <label className="text-sm text-neutral-600">How people can reach you</label>
           {profile && PROFILE_CHANNELS.filter((k) => {
             const v = readChannel(profile, k);
