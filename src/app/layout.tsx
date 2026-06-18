@@ -17,12 +17,19 @@ export const metadata: Metadata = {
   title: "Connectyall: voice notes that connect y'all",
   description: "Connectyall turns the voice memo you record after meeting someone into a connection you can pass along the same day. Talk it out, we handle the rest. They get your details, you remember theirs.",
   icons: { icon: '/icon.svg' },
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'Connectyall',
+    statusBarStyle: 'default',
+  },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
+  themeColor: '#7C5CFF',
 };
 
 export default function RootLayout({

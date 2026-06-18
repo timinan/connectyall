@@ -7,6 +7,7 @@ import { Avatar, getFirstName } from '../record/greeting';
 import { LuCamera, LuX, LuCheck } from 'react-icons/lu';
 import { ChannelIcon, type ChannelKind } from '../cards/[id]/channel-icons';
 import { NavToggle } from '@/components/nav-toggle';
+import { signOut } from '@/lib/auth/client';
 
 type Profile = {
   displayName: string;
@@ -102,6 +103,11 @@ export default function ProfilePage() {
       if (kind === 'telegram') return { ...p, telegramUsername: value };
       return { ...p, socials: { ...p.socials, [kind]: value } };
     });
+  }
+
+  async function handleSignOut() {
+    await signOut();
+    router.push('/');
   }
 
   async function clearChannel(kind: ProfileChannel) {
@@ -218,6 +224,13 @@ export default function ProfilePage() {
           {saving ? 'Saving…' : 'Save and start connecting'}
         </button>
       </form>
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="block mx-auto text-sm text-neutral-500 hover:text-neutral-950 transition pt-2"
+      >
+        Sign out
+      </button>
     </div>
   );
 }

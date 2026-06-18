@@ -1,7 +1,18 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { getServerSession } from '@/lib/auth/session';
+import { getById } from '@/services/UserProfileService';
 import { Logo } from '@/components/logo';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const session = await getServerSession();
+  if (session) {
+    const profile = await getById(session.user.id);
+    if (profile?.onboardedAt) redirect('/app/record');
+  }
+
   return (
     <main className="min-h-[calc(100dvh-3rem)] text-neutral-950 px-6 py-8 flex flex-col">
       <header>
