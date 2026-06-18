@@ -129,36 +129,36 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="p-6 max-w-md mx-auto space-y-6">
-      <div className="flex flex-col items-center gap-4">
-        <h1 className="text-2xl font-bold text-center">{headline()}</h1>
-        <div className="relative inline-block">
-          <Avatar
-            profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : 'loading'}
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            aria-label="Change photo"
-            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-neutral-950 text-white flex items-center justify-center shadow ring-2 ring-white"
-          >
-            <LuCamera size={16} />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
-          />
-        </div>
-      </div>
+    <div className="p-6 max-w-md mx-auto space-y-4">
       <form
         onSubmit={(e) => { e.preventDefault(); saveBasics(e.currentTarget); }}
         className="space-y-4"
       >
-        <div className="rounded-3xl bg-white border border-neutral-200 shadow-sm px-5 py-4 space-y-3">
-          <label className="text-sm text-neutral-600">Your info</label>
+        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-5 space-y-4">
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative inline-block">
+              <Avatar
+                profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : 'loading'}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Change photo"
+                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-neutral-950 text-white flex items-center justify-center shadow ring-2 ring-white"
+              >
+                <LuCamera size={16} />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
+              />
+            </div>
+            <h1 className="text-2xl font-bold text-center">{headline()}</h1>
+          </div>
+          <label className="text-sm text-neutral-700 font-medium block">Your info</label>
           <input
             name="displayName"
             placeholder="Display name (Tim Nan)"
@@ -181,8 +181,8 @@ export default function ProfilePage() {
             className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
           />
         </div>
-        <div className="rounded-3xl bg-white border border-neutral-200 shadow-sm px-5 py-4 space-y-2">
-          <label className="text-sm text-neutral-600">How people can reach you</label>
+        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-4 space-y-2">
+          <label className="text-sm text-neutral-700 font-medium block">How people can reach you</label>
           {profile && PROFILE_CHANNELS.filter((k) => {
             const v = readChannel(profile, k);
             return v !== null && v !== '';

@@ -514,7 +514,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       {/* Notes + Recap sections */}
-      <div className="rounded-3xl bg-white border border-neutral-200 shadow-sm px-5 py-4 space-y-3">
+      <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-4 space-y-3">
         {/* Private note (notes) */}
         <div className="space-y-1">
           <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">🔒 Private note</p>
@@ -540,7 +540,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
 
       {/* Inline-editable contact fields with per-row actions */}
       {contact && (
-        <div className="rounded-3xl bg-white border border-neutral-200 shadow-sm px-5 py-4 space-y-1">
+        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-4 space-y-1">
           {/* Emails */}
           {contact.emails.map((email, i) => (
             <EditableField
