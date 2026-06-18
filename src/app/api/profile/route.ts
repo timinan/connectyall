@@ -4,8 +4,9 @@ import { eq } from 'drizzle-orm';
 import { getServerSession } from '@/lib/auth/session';
 import { upsertProfile, setSocial, clearSocial, setPhotoFromBytes, getById } from '@/services/UserProfileService';
 import { db } from '@/lib/db/client';
-import { users } from '@/lib/db/schema';
+import { contacts, interactions, users } from '@/lib/db/schema';
 import { linkedinHandle, xHandle, telegramHandle } from '@/lib/social-urls';
+import { deleteObject, listObjects } from '@/lib/r2/client';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -86,4 +87,38 @@ export async function PUT(req: Request) {
   // Mark the user as onboarded the first time they save their basics
   await db().update(users).set({ onboardedAt: new Date() }).where(eq(users.id, session.user.id));
   return NextResponse.json({ user });
+}
+
+export async function DELETE() {
+  const session = await getServerSession();
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const userId = session.user.id;
+
+  // 1. Find every card PNG owned by this user (one per interaction).
+  const interactionRows = await db()
+    .select({ id: interactions.id })
+    .from(interactions)
+    .innerJoin(contacts, eq(contacts.id, interactions.contactId))
+    .where(eq(contacts.userId, userId));
+
+  // 2. Delete card PNGs from R2 (best-effort — ignore if any are already gone).
+  for (const row of interactionRows) {
+    try { await deleteObject(`cards/${row.id}.png`); } catch { /* already gone, ignore */ }
+  }
+
+  // 3. Delete the user's audio captures (everything under their user-prefixed path).
+  const audioKeys = await listObjects(`captures/${userId}/`);
+  for (const k of audioKeys) {
+    try { await deleteObject(k); } catch { /* ignore */ }
+  }
+
+  // 4. Delete the user's profile photo. Try both extensions.
+  for (const ext of ['png', 'jpg']) {
+    try { await deleteObject(`profiles/${userId}.${ext}`); } catch { /* ignore */ }
+  }
+
+  // 5. Delete the user row. Contacts → interactions → sessions cascade via FK.
+  await db().delete(users).where(eq(users.id, userId));
+
+  return NextResponse.json({ ok: true });
 }
