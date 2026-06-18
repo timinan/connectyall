@@ -89,30 +89,32 @@ export default function RecordPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8">
-      <div className="w-full max-w-sm space-y-8">
-        {state === 'idle' && <Greeting />}
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold">{state === 'recording' ? 'Recording…' : "Who'd you meet?"}</h1>
-          <p className="text-neutral-400 text-sm">{state === 'recording' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : 'Tell me about who you just met.'}</p>
+    <div className="flex-1 flex flex-col p-6 gap-4 max-w-md w-full mx-auto">
+      {state === 'idle' && (
+        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-5">
+          <Greeting />
         </div>
-        <div className="flex items-end justify-center gap-1 h-20">
+      )}
+      <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-6 flex-1 flex flex-col items-center justify-center gap-5">
+        <div className="text-center space-y-1">
+          <h1 className="text-2xl font-bold">{state === 'recording' ? 'Recording…' : "Who'd you meet?"}</h1>
+          <p className="text-neutral-600 text-sm">{state === 'recording' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : 'Tell me about who you just met.'}</p>
+        </div>
+        <div className="flex items-end justify-center gap-1 h-16">
           {levels.map((v, i) => (
-            <div key={i} style={{ height: `${Math.max(8, v * 80)}px` }} className="w-1 bg-white/70 rounded" />
+            <div key={i} style={{ height: `${Math.max(8, v * 64)}px` }} className="w-1 bg-neutral-700/70 rounded" />
           ))}
         </div>
-        <div className="flex justify-center">
-          <button
-            onClick={() => (state === 'idle' ? start() : state === 'recording' ? stop() : undefined)}
-            disabled={state === 'uploading'}
-            className={`w-24 h-24 rounded-full flex items-center justify-center font-semibold transition ${
-              state === 'recording' ? 'bg-red-500 text-white' : 'bg-white text-neutral-950'
-            } disabled:opacity-50`}
-          >
-            {state === 'idle' ? '●' : state === 'recording' ? '■' : '…'}
-          </button>
-        </div>
-        {state === 'uploading' && <p className="text-center text-neutral-400 text-sm">Connecting y&apos;all…</p>}
+        <button
+          onClick={() => (state === 'idle' ? start() : state === 'recording' ? stop() : undefined)}
+          disabled={state === 'uploading'}
+          className={`w-24 h-24 rounded-full flex items-center justify-center font-semibold transition shadow-lg ${
+            state === 'recording' ? 'bg-red-500 text-white' : 'bg-neutral-950 text-white'
+          } disabled:opacity-50`}
+        >
+          {state === 'idle' ? '●' : state === 'recording' ? '■' : '…'}
+        </button>
+        {state === 'uploading' && <p className="text-center text-neutral-600 text-sm">Connecting y&apos;all…</p>}
       </div>
     </div>
   );
