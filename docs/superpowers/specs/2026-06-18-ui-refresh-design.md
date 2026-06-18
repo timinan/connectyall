@@ -323,6 +323,169 @@ Smoke on preview:
 
 No new tests required — the changes are presentational.
 
+## Final decisions locked through mockup iterations
+
+After ~10 rounds of mockup back-and-forth on Desktop (`connectyall-ui-refresh-mockup.html`), these are the locked specifics that override anything earlier in this doc:
+
+### Tokens
+
+- **Body background:** `#F2F2F8` ("iris" — cool with a soft purple undertone, ties to brand without competing with white cards)
+- **Surface:** `#FFFFFF`
+- **Foreground:** `#0A0A0A`
+- **Muted text:** `#6B7280`
+- **Border:** `#ECEAF3` (purple-tinted light border, replaces the warm cream border earlier)
+- **Brand purple:** `#7C5CFF` (unchanged)
+
+### Typography
+
+- **Mono labels** use Geist Mono uppercase, **13px**, `letter-spacing: 0.2em`, weight 600 (bigger than initial spec). Used for greetings (`GOOD MORNING, TIM`), status indicators (`● READY`), section labels (`PRIVATE NOTE`), channel tags (`EMAIL`, `IN`), dates (`TODAY`, `MAR 12`), captions (`● TAP TO RECORD · UP TO 60S`), and meta counts (`5 PEOPLE · 5 MEMOS`).
+- **Display headlines** are **52px**, `font-weight: 800`, `line-height: 1.02`, `letter-spacing: -0.025em`, with a hard `<br/>` and the second half in `text-brand` as `display: block`. Used on every page: record, sign-in, marketing, etc.
+- **Body subtitle** is 15px, line-height 1.55, `text-neutral-600`, max-width ~280px.
+- **Inter** stays as the sans family for all non-mono text.
+
+### Page header strip
+
+Every app page leads with the same strip:
+
+- Left: small brand-purple rounded-square logo (`30px`, `rounded-lg`, `bg-brand`, white `c` glyph) + bold "Connectyall" wordmark next to it
+- Right: mono status indicator. Page-specific:
+  - Record idle: `● READY` (purple dot)
+  - Record recording: `● REC` (red)
+  - Record uploading: `● PROCESSING` (gray)
+  - Connections list: `5 PEOPLE · 5 MEMOS`
+  - Connections empty: `0 PEOPLE · 0 MEMOS`
+  - Connection detail: `4 MEETINGS` (count of interactions)
+  - Profile: `PROFILE`
+  - Sign-in email: `● SIGN IN` (purple dot)
+  - Sign-in code: `● ENTER CODE` (purple dot)
+
+### Bottom nav pill
+
+Fixed `bottom: 22px`, horizontally centered. Dark pill (`bg-[#0F0F12]`), `rounded-full`, padding 6px. Three children, all `<Link>`:
+
+- Left: Profile (`/app/profile`) — `<LuUser />`
+- Center: Record (`/app/record`) — `<LuMic />`
+- Right: Connections (`/app/connections`) — `<LuUsers />`
+
+Active tab (derived from `usePathname()`):
+- Background `bg-brand`, color `text-white`
+- Wider — icon + label text (e.g. `🎤 Record`)
+- Inactive tabs: 40×40 square (icon only), `text-zinc-500`
+
+Renders only on logged-in app pages (Record, Profile, Connections list, Connections detail). NOT on marketing, sign-in, privacy/terms, public landing.
+
+### Center-action pattern (record / sign-in / empty)
+
+Every "moment" page (record, sign-in, connections-empty) uses an identical lower-screen composition:
+
+- A centerpiece element (mic button, sign-in form, or empty-state CTA)
+- Surrounded by concentric **purple glow rings** — `300px` radial-gradient + two pseudo-element rings at decreasing inset
+- Followed by 15 thin purple waveform bars (`bg-brand/55`) — flat at 8px when idle, dynamic when recording, flat again during processing
+- Mono caption at the bottom (`● TAP TO RECORD · UP TO 60S` / `● TAP TO STOP` / `● PROCESSING…` / `● CODE ARRIVES IN 2 SECONDS` / `USE A DIFFERENT EMAIL`)
+
+Specific sizing:
+- Mic / stop button / sign-in form CTA: 150px diameter (square 150×150 for the processing spinning-logo tile, rounded-3xl)
+- Sign-in inputs: `padding: 22px`, `rounded-3xl`, soft purple-tinted shadow
+- Sign-in CTA buttons: brand purple, `padding: 20px`, big lifted purple shadow
+
+### Records page — final flow
+
+- Header pinned top
+- Mono `GOOD MORNING, TIM` greeting (computed from local hour + display name)
+- `Who did you / **just meet?**` headline
+- Body sub
+- (NO "recently met" strip — Tim explicitly dropped that idea)
+- Mic block with glow rings + waveform + caption
+- Bottom nav
+
+Recording state swaps the headline to `Listening / **closely.**`, mono label to `● RECORDING · 0:12`, mic to red square stop button, waveform to live red bars, caption to `● TAP TO STOP`.
+
+Processing state swaps headline to `Connecting / **y'all…**`, mono label to `● PROCESSING`, mic to a 150×150 brand-purple rounded tile with the white `c` doing a 3D Y-axis rotation, waveform to flat purple bars, caption to `● PROCESSING…`.
+
+### Connections list — final layout
+
+- Header (logo + `5 PEOPLE · 5 MEMOS`)
+- Top action row: `Your **network**` split-color headline on the left + circular brand-purple `+` FAB on the right (links to `/app/record`)
+- Search bar: rounded full white pill with `LuSearch` left and clear `LuX` right when populated
+- Sort dropdown moves NEXT TO the search bar (small pill, white surface)
+- Contact rows: white card, `rounded-3xl`, padding tight. Inside: bubble avatar (44px) + name bold + sub line (company · channel tag in brand purple mono) + right column with mono date + small ↗ arrow icon
+- Swipe-to-delete preserved (red trash behind the row, confirmation modal)
+- First-visit hint pill preserved (amber with mono text)
+- Bottom nav (Network tab active)
+
+### Connections empty state
+
+- Header (logo + `0 PEOPLE · 0 MEMOS`)
+- Mono `NOBODY HERE YET`
+- `Your / **network awaits.**` headline
+- Sub: "Record your first voice memo and they'll show up here automatically."
+- Purple glow rings holding a brand-purple CTA pill `🎤 Record your first` (links to `/app/record`)
+- Mono caption `● TAP TO RECORD · UP TO 60S`
+- Bottom nav (Network tab active)
+
+### Connection detail
+
+- Header (logo + `<N> MEETINGS` count)
+- **CONTACT** card: mono label + bold name with inline `LuPencil` (edit affordance)
+- **PRIVATE NOTE + WHAT WE TALKED ABOUT** card: same card, both mono labels, both text blocks with inline trailing `LuPencil` icons. Divider line between sections.
+- **Channels** card: per-row layout: `LuStar` (preferred toggle) + mono channel tag (36px wide column) + brand icon + value pill on iris bg + black `↗ Send` button. Chip row at bottom: `+ Add field` + `💾 Save <name> to contacts` (white pills with thin borders)
+- **PREVIOUS MEETINGS · N** card: mono date + recap snippet per past interaction, on iris-tinted background
+- **Save** CTA at the bottom: full-width black pill with check icon
+- Bottom nav (Network tab active)
+
+### Profile
+
+- Header (logo + `PROFILE`)
+- `Your **profile**` split-color title (matches network/list pattern)
+- Avatar with brand-purple `LuCamera` badge in bottom-right (border matches iris bg)
+- **YOUR INFO** card: TWO sections — `NAME` label + display-name + pencil, divider, `TITLE` label + tagline + pencil. **The "optional context for the AI" field is gone.**
+- **HOW PEOPLE CAN REACH YOU** card: existing channel rows but each value pill has an inline `LuPencil` icon on the right edge to signal editability + remove `LuX` button
+- **Sign out** and **Delete my account** are now **proper buttons** (full-width pills, white bg, Inter bold). Sign out has a neutral gray border + dark text. Delete account has a red border + red text.
+- Bottom nav (Profile tab active)
+
+### Sign-in (email + code)
+
+Both steps follow the record-page rhythm:
+
+- Header (logo + `● SIGN IN` or `● ENTER CODE`)
+- Mono label (`VOICE TO CONNECTION` or `CHECK YOUR INBOX`)
+- Split-color headline (`Welcome. / Sign in to start.` or `Drop the / 6-digit code.`)
+- Body sub
+- Form (white surface, big input with soft purple shadow + brand-purple CTA pill with big purple glow shadow) sits in the **same purple glow rings** as the mic on the record page
+- Mono caption at the bottom (`● CODE ARRIVES IN 2 SECONDS` / `USE A DIFFERENT EMAIL`)
+
+The code-input is a single big-letter-spaced input (text size 34px, padding 24px, center-aligned, monospace-tight).
+
+### Marketing root
+
+- Header strip (logo on left, no status)
+- Mono badge `● VOICE TO CONNECTION`
+- Three-line headline `Voice notes / that **connect** / y'all.`
+- Body sub paragraph
+- Black pill `Open the app →` CTA
+- Bottom footer (mono uppercase): `PRIVACY · TERMS · A PORTFOLIO PROJECT BY TIM NAN`
+
+### Privacy + Terms
+
+Content unchanged. Background flips to iris. Header strip on top. Body type adopts the same Inter sizes. Section labels use mono uppercase (existing `<h2>` tags become mono variants).
+
+### Public landing
+
+- Mono `FOR <name>` label
+- Sender's 116px round photo with white border
+- Sender name in brand purple
+- Tagline below in muted text
+- Italic recap quote
+- 2-column grid of channel cells (white, rounded, line icon + mono channel tag)
+- Black pill `💾 Save <name> to Contacts`
+- No bottom nav (recipient isn't logged in)
+
+### Color references for inline values & inputs
+
+- Profile inputs sit on `bg-[#F2F2F8]` (the iris bg) with `border-[#ECEAF3]` — feels nested in the card
+- Connection-detail channel values use the same iris-bg pill treatment
+- Code input on sign-in is white with strong purple shadow for the "lifted" feel
+
 ## Risks
 
 - **Visual regression on edge cases.** Some smaller surfaces (error states, empty states, alert dialogs) aren't shown in the mockups. I'll apply the same pattern (cream bg, white cards, mono meta) by default and we can iterate if something feels off.
