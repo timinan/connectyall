@@ -31,6 +31,13 @@ export async function uploadPhoto(input: {
       ContentType: input.contentType,
     })
   );
+  // Profile photos: serve via the same-origin proxy so the bucket can stay private.
+  // For other uploads (cards), keep returning the public URL — those are served
+  // via /api/cards/[id]/image, which works regardless of what's stored here.
+  if (input.key.startsWith('profiles/')) {
+    const filename = input.key.slice('profiles/'.length).split('.')[0]; // userId
+    return `/api/profile/photo/${filename}`;
+  }
   return `${e.R2_PUBLIC_URL_BASE}/${input.key}`;
 }
 
