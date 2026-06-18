@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         status: 200,
         headers: {
           'Content-Type': ext === 'png' ? 'image/png' : 'image/jpeg',
-          'Cache-Control': 'public, max-age=300, s-maxage=300',
+          'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
         },
       });
     } catch { /* try next ext */ }
