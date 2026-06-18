@@ -461,7 +461,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
   if (data.status === 'processing') {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-8 py-10 flex flex-col items-center gap-5 max-w-lg w-full">
+        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-8 py-10 flex flex-col items-center gap-5 max-w-xl w-full">
           <LogoSpinner size={64} />
           <p className="text-neutral-800 font-medium text-lg">Connecting y&apos;all…</p>
           <p className="text-neutral-600 text-sm text-center">Hang tight while we turn your voice memo into a connection.</p>
