@@ -1,24 +1,32 @@
+import Link from 'next/link';
+import { Logo } from '@/components/logo';
+
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-8 bg-neutral-950 text-white">
-      <div className="max-w-xl text-center space-y-6">
-        <h1 className="text-5xl font-bold tracking-tight">Connectyall</h1>
-        <p className="text-xl text-neutral-300">
-          Voice notes that connect y&apos;all.
+    <main className="min-h-screen bg-neutral-50 text-neutral-950 px-6 py-10 flex flex-col">
+      <header>
+        <Logo />
+      </header>
+      <div className="flex-1 flex flex-col justify-center max-w-2xl">
+        <p className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold mb-6">
+          ✨ Voice-to-Connection
         </p>
-        <p className="text-base text-neutral-400">
+        <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[1.05]">
+          Voice notes that <span className="text-brand">connect</span> y&apos;all.
+        </h1>
+        <p className="mt-6 text-lg text-neutral-700 leading-relaxed">
           Connectyall turns the voice memo you record after meeting someone into a connection you can pass along the same day. Talk it out, we handle the rest. They get your details, you remember theirs.
         </p>
-        <a
+        <Link
           href="/app"
-          className="inline-block px-6 py-3 bg-white text-neutral-950 font-semibold rounded-lg hover:bg-neutral-200 transition"
+          className="mt-8 inline-flex w-fit items-center px-6 py-3 rounded-full bg-neutral-950 text-white font-semibold hover:bg-neutral-800 transition"
         >
           Open the app →
-        </a>
-        <p className="text-sm text-neutral-500 pt-8">
-          A portfolio project by Tim Nan.
-        </p>
+        </Link>
       </div>
+      <footer className="mt-12 text-sm text-neutral-500">
+        A portfolio project by Tim Nan.
+      </footer>
     </main>
   );
 }
