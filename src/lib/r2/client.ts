@@ -36,7 +36,9 @@ export async function uploadPhoto(input: {
   // via /api/cards/[id]/image, which works regardless of what's stored here.
   if (input.key.startsWith('profiles/')) {
     const filename = input.key.slice('profiles/'.length).split('.')[0]; // userId
-    return `/api/profile/photo/${filename}`;
+    // ?v=<timestamp> busts browser + edge cache so a new upload is visible
+    // instantly. Unchanged photos still hit the 24h cache on the proxy.
+    return `/api/profile/photo/${filename}?v=${Date.now()}`;
   }
   return `${e.R2_PUBLIC_URL_BASE}/${input.key}`;
 }

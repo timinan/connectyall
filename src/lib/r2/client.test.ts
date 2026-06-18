@@ -26,7 +26,7 @@ describe('uploadPhoto', () => {
   it('uploads bytes to R2 and returns the same-origin proxy URL for profile keys', async () => {
     const bytes = new Uint8Array([1, 2, 3]);
     const url = await uploadPhoto({ key: 'profiles/123.jpg', bytes, contentType: 'image/jpeg' });
-    expect(url).toBe('/api/profile/photo/123');
+    expect(url).toMatch(/^\/api\/profile\/photo\/123\?v=\d+$/);
     expect(PutObjectCommandMock).toHaveBeenCalledWith(
       expect.objectContaining({
         Bucket: 'connectyall',

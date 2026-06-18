@@ -11,7 +11,7 @@ async function loadPhotoDataUrl(photoR2Url: string | null): Promise<string | nul
   // Photo URLs from uploadPhoto are now `/api/profile/photo/<userId>`. Parse the
   // userId, fetch the bytes via SDK, return a data: URL so satori doesn't have to
   // make a network request.
-  const match = photoR2Url.match(/^\/api\/profile\/photo\/([^/]+)$/);
+  const match = photoR2Url.match(/^\/api\/profile\/photo\/([^/?]+)(\?.*)?$/);
   if (!match) {
     // Legacy public R2 URL (pre-private-bucket). Passthrough — works while the
     // bucket is still public. Falls through to the initial-bubble once it's private.
