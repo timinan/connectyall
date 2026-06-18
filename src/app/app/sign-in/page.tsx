@@ -18,27 +18,26 @@ export default function SignInPage() {
     e.preventDefault();
     setStatus('sending');
     setErrorMsg(null);
-    try {
-      await authClient.emailOtp.sendVerificationOtp({ email, type: 'sign-in' });
-      setStep('code');
-      setStatus('idle');
-    } catch (err) {
-      setStatus('idle');
-      setErrorMsg(err instanceof Error ? err.message : 'Could not send code');
+    const { error } = await authClient.emailOtp.sendVerificationOtp({ email, type: 'sign-in' });
+    setStatus('idle');
+    if (error) {
+      setErrorMsg(error.message ?? 'Could not send code');
+      return;
     }
+    setStep('code');
   }
 
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault();
     setStatus('verifying');
     setErrorMsg(null);
-    try {
-      await signIn.emailOtp({ email, otp });
-      window.location.href = '/app';
-    } catch (err) {
+    const { error } = await signIn.emailOtp({ email, otp });
+    if (error) {
       setStatus('idle');
-      setErrorMsg(err instanceof Error ? err.message : 'Invalid code');
+      setErrorMsg(error.message ?? 'Invalid or expired code');
+      return;
     }
+    window.location.href = '/app';
   }
 
   function resetToEmail() {
