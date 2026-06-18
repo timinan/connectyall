@@ -1,11 +1,11 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { magicLink } from 'better-auth/plugins';
+import { emailOTP } from 'better-auth/plugins';
 import { randomUUID } from 'node:crypto';
 import { db } from '../db/client';
 import * as schema from '../db/schema';
 import { env } from '../env';
-import { sendMagicLinkEmail } from '../email/resend';
+import { sendOTPEmail } from '../email/resend';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let cached: any;
@@ -58,11 +58,12 @@ export function auth() {
       },
     },
     plugins: [
-      magicLink({
-        sendMagicLink: async ({ email, url }) => {
-          await sendMagicLinkEmail({ to: email, url });
+      emailOTP({
+        sendVerificationOTP: async ({ email, otp }) => {
+          await sendOTPEmail({ to: email, otp });
         },
-        expiresIn: 60 * 15, // 15 minutes
+        otpLength: 6,
+        expiresIn: 60 * 10, // 10 minutes
       }),
     ],
   });

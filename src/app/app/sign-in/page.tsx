@@ -1,25 +1,50 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from '@/lib/auth/client';
+import { signIn, authClient } from '@/lib/auth/client';
 import { Logo } from '@/components/logo';
 
+type Step = 'email' | 'code';
+type Status = 'idle' | 'sending' | 'verifying';
+
 export default function SignInPage() {
+  const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [otp, setOtp] = useState('');
+  const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  async function onSubmit(e: React.FormEvent) {
+  async function sendCode(e: React.FormEvent) {
     e.preventDefault();
     setStatus('sending');
     setErrorMsg(null);
     try {
-      await signIn.magicLink({ email, callbackURL: '/app' });
-      setStatus('sent');
+      await authClient.emailOtp.sendVerificationOtp({ email, type: 'sign-in' });
+      setStep('code');
+      setStatus('idle');
     } catch (err) {
-      setStatus('error');
-      setErrorMsg(err instanceof Error ? err.message : 'Unknown error');
+      setStatus('idle');
+      setErrorMsg(err instanceof Error ? err.message : 'Could not send code');
     }
+  }
+
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus('verifying');
+    setErrorMsg(null);
+    try {
+      await signIn.emailOtp({ email, otp });
+      window.location.href = '/app';
+    } catch (err) {
+      setStatus('idle');
+      setErrorMsg(err instanceof Error ? err.message : 'Invalid code');
+    }
+  }
+
+  function resetToEmail() {
+    setStep('email');
+    setOtp('');
+    setErrorMsg(null);
   }
 
   return (
@@ -31,14 +56,15 @@ export default function SignInPage() {
         <div className="w-full max-w-sm space-y-6">
           <div className="space-y-3 text-center">
             <p className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">
-              ✨ Magic-link sign-in
+              ✨ One-time code sign-in
             </p>
-            <h1 className="text-3xl font-bold">Voice notes that <span className="text-brand">connect</span> y&apos;all.</h1>
+            <h1 className="text-3xl font-bold">
+              Voice notes that <span className="text-brand">connect</span> y&apos;all.
+            </h1>
           </div>
-          {status === 'sent' ? (
-            <p className="text-center text-neutral-700">Magic link sent to <strong>{email}</strong>. Check your inbox.</p>
-          ) : (
-            <form onSubmit={onSubmit} className="space-y-3">
+
+          {step === 'email' && (
+            <form onSubmit={sendCode} className="space-y-3">
               <input
                 type="email"
                 required
@@ -52,11 +78,47 @@ export default function SignInPage() {
                 disabled={status === 'sending'}
                 className="w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-semibold disabled:opacity-50 hover:bg-neutral-800 transition"
               >
-                {status === 'sending' ? 'Sending…' : 'Send magic link'}
+                {status === 'sending' ? 'Sending…' : 'Send code'}
               </button>
-              {errorMsg && <p className="text-red-600 text-sm">{errorMsg}</p>}
             </form>
           )}
+
+          {step === 'code' && (
+            <form onSubmit={verifyCode} className="space-y-3">
+              <p className="text-center text-neutral-700 text-sm">
+                We sent a 6-digit code to <strong>{email}</strong>.
+              </p>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
+                maxLength={6}
+                required
+                placeholder="123456"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                autoFocus
+                className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200 text-neutral-950 placeholder:text-neutral-500 text-center text-2xl tracking-[0.4em] font-semibold"
+              />
+              <button
+                type="submit"
+                disabled={status === 'verifying' || otp.length < 6}
+                className="w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-semibold disabled:opacity-50 hover:bg-neutral-800 transition"
+              >
+                {status === 'verifying' ? 'Signing in…' : 'Sign in'}
+              </button>
+              <button
+                type="button"
+                onClick={resetToEmail}
+                className="block mx-auto text-sm text-neutral-500 hover:text-neutral-950 transition pt-2"
+              >
+                Use a different email
+              </button>
+            </form>
+          )}
+
+          {errorMsg && <p className="text-red-600 text-sm text-center">{errorMsg}</p>}
         </div>
       </div>
     </div>
