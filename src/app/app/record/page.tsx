@@ -89,13 +89,13 @@ export default function RecordPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col p-4 sm:p-6 gap-4 max-w-md w-full mx-auto">
+    <div className="flex-1 flex flex-col p-6 gap-4 max-w-md w-full mx-auto">
       {state === 'idle' && (
-        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 px-6 py-5 border border-purple-200/60 shadow-sm">
+        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-5">
           <Greeting />
         </div>
       )}
-      <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 px-6 py-6 border border-purple-200/60 shadow-sm flex-1 flex flex-col items-center justify-center gap-5">
+      <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-6 flex-1 flex flex-col items-center justify-center gap-5">
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-bold">{state === 'recording' ? 'Recording…' : "Who'd you meet?"}</h1>
           <p className="text-neutral-600 text-sm">{state === 'recording' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : 'Tell me about who you just met.'}</p>
