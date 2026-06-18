@@ -24,9 +24,6 @@ export default function Home() {
           Open the app →
         </Link>
       </div>
-      <footer className="mt-12 text-sm text-neutral-500">
-        A portfolio project by Tim Nan.
-      </footer>
     </main>
   );
 }

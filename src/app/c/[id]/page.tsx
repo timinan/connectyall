@@ -4,7 +4,6 @@ import { getById } from '@/services/UserProfileService';
 import { env } from '@/lib/env';
 import { linkedinUrl, xUrl, telegramUrl, websiteUrl, whatsappUrl, wechatUrl, lineUrl } from '@/lib/social-urls';
 import { CHANNEL_ICONS, ChannelIcon, type ChannelKind } from '@/app/app/cards/[id]/channel-icons';
-import { LogoMark } from '@/components/logo';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,9 +85,6 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
           className="block w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-semibold text-center hover:bg-neutral-800 transition"
         >
           💾 Save {profile.displayName.split(' ')[0]} to Contacts
-        </a>
-        <a href="/" className="flex items-center justify-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-950 transition">
-          <LogoMark size={16} /> made with Connectyall
         </a>
       </div>
     </main>
