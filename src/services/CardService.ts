@@ -4,6 +4,29 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Socials } from '../lib/db/schema';
 import { linkedinUrl, xUrl, telegramUrl, websiteUrl } from '../lib/social-urls';
+import { downloadObject } from '../lib/r2/client';
+
+async function loadPhotoDataUrl(photoR2Url: string | null): Promise<string | null> {
+  if (!photoR2Url) return null;
+  // Photo URLs from uploadPhoto are now `/api/profile/photo/<userId>`. Parse the
+  // userId, fetch the bytes via SDK, return a data: URL so satori doesn't have to
+  // make a network request.
+  const match = photoR2Url.match(/^\/api\/profile\/photo\/([^/?]+)(\?.*)?$/);
+  if (!match) {
+    // Legacy public R2 URL (pre-private-bucket). Passthrough — works while the
+    // bucket is still public. Falls through to the initial-bubble once it's private.
+    return photoR2Url;
+  }
+  const userId = match[1];
+  for (const ext of ['png', 'jpg'] as const) {
+    try {
+      const bytes = await downloadObject(`profiles/${userId}.${ext}`);
+      const b64 = Buffer.from(bytes).toString('base64');
+      return `data:image/${ext === 'png' ? 'png' : 'jpeg'};base64,${b64}`;
+    } catch { /* try next */ }
+  }
+  return null;
+}
 
 const CAPTION_MAX = 1024;
 
@@ -72,11 +95,13 @@ export async function renderCard(input: {
   const initial = (input.profile.displayName || '?').charAt(0).toUpperCase();
   const fallbackBg = pickBg(input.profile.displayName || initial);
 
-  const photo = input.profile.photoR2Url
+  const photoDataUrl = await loadPhotoDataUrl(input.profile.photoR2Url);
+
+  const photo = photoDataUrl
     ? {
         type: 'img',
         props: {
-          src: input.profile.photoR2Url,
+          src: photoDataUrl,
           width: PHOTO,
           height: PHOTO,
           style: { borderRadius: PHOTO / 2, objectFit: 'cover' },

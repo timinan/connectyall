@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const sender = await getById(found.contact.userId);
   const title = `Card from ${sender?.displayName ?? 'Connectyall'}`;
   const description = (found.interaction.structuredData as { recap?: string } | null)?.recap ?? '';
-  const cardUrl = `${env().R2_PUBLIC_URL_BASE}/cards/${found.interaction.id}.png`;
+  const cardUrl = `${env().BASE_URL}/api/cards/${found.interaction.id}/image`;
   return {
     title,
     description,
@@ -42,7 +42,7 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
   if (!profile) notFound();
 
   const recap = (interaction.structuredData as { recap?: string } | null)?.recap ?? '';
-  const cardUrl = `${env().R2_PUBLIC_URL_BASE}/cards/${interaction.id}.png`;
+  const cardUrl = `${env().BASE_URL}/api/cards/${interaction.id}/image`;
 
   const links: Array<{ kind: ChannelKind; href: string }> = [];
   if (profile.telegramUsername) links.push({ kind: 'telegram', href: telegramUrl(profile.telegramUsername) });

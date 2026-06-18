@@ -68,7 +68,10 @@ vi.mock('./CardService', () => ({
   buildCaption: vi.fn().mockReturnValue('caption'),
 }));
 
-vi.mock('../lib/r2/client', () => ({ uploadBytes: uploadBytesMock }));
+vi.mock('../lib/r2/client', () => ({
+  uploadBytes: uploadBytesMock,
+  downloadObject: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+}));
 
 import { processCapture } from './CaptureService';
 

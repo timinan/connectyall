@@ -8,7 +8,7 @@ import { getById } from './UserProfileService';
 import { createContact, findByNameAndCompany } from './ContactService';
 import { mintStub, markReady, markFailed } from './InteractionService';
 import { renderCard } from './CardService';
-import { uploadBytes } from '../lib/r2/client';
+import { uploadBytes, downloadObject } from '../lib/r2/client';
 
 type CaptureInput = {
   userId: string;         // users.id uuid
@@ -27,10 +27,7 @@ async function capturesInLast24h(userId: string): Promise<number> {
 }
 
 async function downloadFromR2(key: string): Promise<Uint8Array> {
-  const url = `${env().R2_PUBLIC_URL_BASE}/${key}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`R2 fetch failed: ${res.status}`);
-  return new Uint8Array(await res.arrayBuffer());
+  return downloadObject(key);
 }
 
 async function ensureContact(userId: string, c: ExtractedContact) {

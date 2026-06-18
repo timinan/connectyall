@@ -23,10 +23,10 @@ vi.mock('../env', () => ({
 import { uploadPhoto, uploadBytes } from './client';
 
 describe('uploadPhoto', () => {
-  it('uploads bytes to R2 and returns the public URL', async () => {
+  it('uploads bytes to R2 and returns the same-origin proxy URL for profile keys', async () => {
     const bytes = new Uint8Array([1, 2, 3]);
     const url = await uploadPhoto({ key: 'profiles/123.jpg', bytes, contentType: 'image/jpeg' });
-    expect(url).toBe('https://pub-test.r2.dev/profiles/123.jpg');
+    expect(url).toMatch(/^\/api\/profile\/photo\/123\?v=\d+$/);
     expect(PutObjectCommandMock).toHaveBeenCalledWith(
       expect.objectContaining({
         Bucket: 'connectyall',

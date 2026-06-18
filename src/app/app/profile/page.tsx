@@ -56,6 +56,9 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleteText, setDeleteText] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -106,6 +109,19 @@ export default function ProfilePage() {
   }
 
   async function handleSignOut() {
+    await signOut();
+    router.push('/');
+  }
+
+  async function handleDelete() {
+    if (deleteText.trim().toLowerCase() !== 'delete my account') return;
+    setDeleting(true);
+    const res = await fetch('/api/profile', { method: 'DELETE' });
+    if (!res.ok) {
+      alert('Could not delete your account. Try again.');
+      setDeleting(false);
+      return;
+    }
     await signOut();
     router.push('/');
   }
@@ -231,6 +247,50 @@ export default function ProfilePage() {
       >
         Sign out
       </button>
+      <button
+        type="button"
+        onClick={() => setShowDelete(true)}
+        className="block mx-auto text-sm text-red-600 hover:text-red-700 transition pt-1"
+      >
+        Delete my account
+      </button>
+      {showDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40">
+          <div className="rounded-3xl bg-white shadow-xl max-w-sm w-full px-6 py-6 space-y-4">
+            <p className="text-lg font-semibold text-neutral-950">Delete your account?</p>
+            <p className="text-sm text-neutral-600">
+              This removes your profile, every connection, every meeting, and every recording. You can&apos;t undo it.
+            </p>
+            <div>
+              <label className="text-xs text-neutral-600 block mb-1">
+                Type <strong>delete my account</strong> to confirm
+              </label>
+              <input
+                value={deleteText}
+                onChange={(e) => setDeleteText(e.target.value)}
+                autoFocus
+                className="w-full px-3 py-2 rounded-lg bg-white border border-neutral-200 text-sm"
+              />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => { setShowDelete(false); setDeleteText(''); }}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 rounded-full bg-white border border-neutral-200 text-neutral-950 text-sm font-semibold hover:bg-neutral-50 transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting || deleteText.trim().toLowerCase() !== 'delete my account'}
+                className="flex-1 px-4 py-2 rounded-full bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition disabled:opacity-50"
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
