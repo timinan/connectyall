@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   if (!ALLOWED_MIME.includes(baseMime)) return NextResponse.json({ error: `unsupported mime: ${file.type}` }, { status: 400 });
 
   const ext = baseMime.split('/').pop() ?? 'webm';
-  const key = `captures/${randomUUID()}.${ext}`;
+  const key = `captures/${session.user.id}/${randomUUID()}.${ext}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
   await uploadBytes({ key, bytes, contentType: baseMime });
 

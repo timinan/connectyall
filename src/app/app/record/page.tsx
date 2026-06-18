@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Greeting } from './greeting';
 import { NavToggle } from '@/components/nav-toggle';
+import { LogoSpinner } from '@/components/logo';
 
 type State = 'idle' | 'recording' | 'uploading';
 
@@ -119,27 +120,33 @@ export default function RecordPage() {
           <Greeting />
         </div>
       )}
-      <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-6 flex-1 flex flex-col items-center justify-center gap-5">
-        <div className="text-center space-y-1">
-          <h1 className="text-2xl font-bold">{state === 'recording' ? 'Recording…' : "Who'd you meet?"}</h1>
-          <p className="text-neutral-600 text-sm">{state === 'recording' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : 'Tell me about who you just met.'}</p>
+      {state === 'uploading' ? (
+        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-8 py-10 flex-1 flex flex-col items-center justify-center gap-5">
+          <LogoSpinner size={64} />
+          <p className="text-neutral-800 font-medium text-lg">Connecting y&apos;all…</p>
+          <p className="text-neutral-600 text-sm text-center">Hang tight while we turn your voice memo into a connection.</p>
         </div>
-        <div className="flex items-end justify-center gap-1 h-16">
-          {levels.map((v, i) => (
-            <div key={i} style={{ height: `${Math.max(8, v * 64)}px` }} className="w-1 bg-neutral-700/70 rounded" />
-          ))}
+      ) : (
+        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-6 flex-1 flex flex-col items-center justify-center gap-5">
+          <div className="text-center space-y-1">
+            <h1 className="text-2xl font-bold">{state === 'recording' ? 'Recording…' : "Who'd you meet?"}</h1>
+            <p className="text-neutral-600 text-sm">{state === 'recording' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : 'Tell me about who you just met.'}</p>
+          </div>
+          <div className="flex items-end justify-center gap-1 h-16">
+            {levels.map((v, i) => (
+              <div key={i} style={{ height: `${Math.max(8, v * 64)}px` }} className="w-1 bg-neutral-700/70 rounded" />
+            ))}
+          </div>
+          <button
+            onClick={() => (state === 'idle' ? start() : state === 'recording' ? stop() : undefined)}
+            className={`w-24 h-24 rounded-full flex items-center justify-center font-semibold transition shadow-lg ${
+              state === 'recording' ? 'bg-red-500 text-white' : 'bg-neutral-950 text-white'
+            }`}
+          >
+            {state === 'idle' ? '●' : '■'}
+          </button>
         </div>
-        <button
-          onClick={() => (state === 'idle' ? start() : state === 'recording' ? stop() : undefined)}
-          disabled={state === 'uploading'}
-          className={`w-24 h-24 rounded-full flex items-center justify-center font-semibold transition shadow-lg ${
-            state === 'recording' ? 'bg-red-500 text-white' : 'bg-neutral-950 text-white'
-          } disabled:opacity-50`}
-        >
-          {state === 'idle' ? '●' : state === 'recording' ? '■' : '…'}
-        </button>
-        {state === 'uploading' && <p className="text-center text-neutral-600 text-sm">Connecting y&apos;all…</p>}
-      </div>
+      )}
     </div>
   );
 }
