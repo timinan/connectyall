@@ -122,10 +122,10 @@ export default function ProfilePage() {
     const firstName = getFirstName(profile.displayName);
     if (profile.onboardedAt) {
       return firstName
-        ? `Hello, ${firstName}, please edit your profile below`
-        : 'Hello, please edit your profile below';
+        ? `Hey ${firstName}, keep your details fresh.`
+        : 'Keep your details fresh.';
     }
-    return 'Hello, please set up your profile below';
+    return "Welcome. Let's set up how people reach you.";
   }
 
   return (
@@ -179,7 +179,7 @@ export default function ProfilePage() {
           className="w-full px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-800"
         />
         <div className="space-y-2">
-          <label className="text-sm text-neutral-400">Channels (optional)</label>
+          <label className="text-sm text-neutral-400">How people can reach you</label>
           {profile && PROFILE_CHANNELS.filter((k) => {
             const v = readChannel(profile, k);
             return v !== null && v !== '';
@@ -207,7 +207,7 @@ export default function ProfilePage() {
           disabled={saving}
           className="w-full px-4 py-3 rounded-lg bg-white text-neutral-950 font-semibold disabled:opacity-50"
         >
-          {saving ? 'Saving…' : 'Done — start recording'}
+          {saving ? 'Saving…' : 'Save and start connecting'}
         </button>
       </form>
     </div>

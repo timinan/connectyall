@@ -409,7 +409,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
       payload.files = [shareFile];
     }
     if (!navigator.share) {
-      alert('This browser does not support the Web Share API. Long-press the card image to forward it.');
+      alert('This browser does not support the Web Share API. Long-press the image to share it.');
       return;
     }
     navigator.share(payload).catch(() => { /* user cancelled */ });
@@ -458,7 +458,7 @@ export default function CardPage({ params }: { params: Promise<{ id: string }> }
   if (data.status === 'processing') {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8">
-        <p className="text-neutral-400">Cooking your card…</p>
+        <p className="text-neutral-400">Connecting y&apos;all…</p>
       </div>
     );
   }

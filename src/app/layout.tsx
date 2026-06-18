@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Connectyall — networking in one voice memo',
-  description: 'Telegram bot that turns voice memos about people you met into shareable cards.',
+  title: "Connectyall: voice notes that connect y'all",
+  description: "Connectyall turns the voice memo you record after meeting someone into a connection you can pass along the same day. Talk it out, we handle the rest. They get your details, you remember theirs.",
 };
 
 export default function RootLayout({
