@@ -54,6 +54,8 @@ function Bubble({ name }: { name: string }) {
 
 const SWIPE_THRESHOLD = 80;
 const SWIPE_MAX_TRANSLATE = 120;
+const HINT_STORAGE_KEY = 'connectyall:swipe-hint-dismissed';
+const HINT_TIMEOUT_MS = 6000;
 
 type RowProps = {
   c: Connection;
@@ -190,6 +192,7 @@ export default function ConnectionsPage() {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('recent');
   const [confirm, setConfirm] = useState<Connection | null>(null);
+  const [hintVisible, setHintVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -199,6 +202,27 @@ export default function ConnectionsPage() {
       setRows(json.connections ?? []);
     })();
   }, []);
+
+  // First-visit "swipe left to delete" hint — auto-fades after a few seconds
+  // and stores a flag so it never shows again on this device.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.localStorage.getItem(HINT_STORAGE_KEY)) return;
+    if (!rows || rows.length === 0) return;
+    setHintVisible(true);
+    const timer = window.setTimeout(() => {
+      setHintVisible(false);
+      window.localStorage.setItem(HINT_STORAGE_KEY, '1');
+    }, HINT_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [rows]);
+
+  function dismissHint() {
+    setHintVisible(false);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(HINT_STORAGE_KEY, '1');
+    }
+  }
 
   const visible = useMemo(() => {
     if (!rows) return null;
@@ -278,6 +302,16 @@ export default function ConnectionsPage() {
       {visible && visible.length === 0 && rows && rows.length > 0 && (
         <p className="text-neutral-600 text-sm text-center py-6">No matches for &ldquo;{query}&rdquo;.</p>
       )}
+
+      <button
+        onClick={dismissHint}
+        aria-hidden={!hintVisible}
+        className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold hover:bg-amber-200 transition-opacity duration-500 ${hintVisible ? 'opacity-100' : 'opacity-0 pointer-events-none h-0 py-0 overflow-hidden'}`}
+      >
+        <span>✨</span>
+        <span className="flex-1 text-left">Tip: swipe left on a connection to delete it.</span>
+        <LuX size={12} />
+      </button>
 
       <ul className="space-y-3">
         {visible && visible.map((c) => (
