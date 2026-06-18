@@ -25,7 +25,7 @@ function pickBg(seed: string) {
 
 export function Avatar({ profile }: { profile: Profile | null | 'loading' }) {
   if (profile === 'loading') {
-    return <div className="w-32 h-32 rounded-full bg-neutral-800" />;
+    return <div className="w-32 h-32 rounded-full bg-neutral-200" />;
   }
   if (!profile) {
     return (
@@ -84,12 +84,12 @@ export function Greeting() {
     <div className="flex flex-col items-center gap-4">
       {profile !== 'loading' && (
         <h2 className="text-xl font-semibold text-center">
-          {firstName ? `Hello, ${firstName} 👋` : 'Hello 👋'}
+          {firstName ? <>Hello, <span className="text-brand">{firstName}</span> 👋</> : <>Hello 👋</>}
         </h2>
       )}
       <Link href="/app/profile" className="relative inline-block" aria-label="Edit profile">
         <Avatar profile={profile} />
-        <span className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white text-neutral-950 flex items-center justify-center shadow ring-2 ring-neutral-950">
+        <span className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-neutral-950 text-white flex items-center justify-center shadow ring-2 ring-white">
           <LuPencil size={16} />
         </span>
       </Link>

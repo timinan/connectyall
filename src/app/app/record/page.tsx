@@ -94,25 +94,25 @@ export default function RecordPage() {
         {state === 'idle' && <Greeting />}
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">{state === 'recording' ? 'Recording…' : "Who'd you meet?"}</h1>
-          <p className="text-neutral-400 text-sm">{state === 'recording' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : 'Tell me about who you just met.'}</p>
+          <p className="text-neutral-600 text-sm">{state === 'recording' ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : 'Tell me about who you just met.'}</p>
         </div>
         <div className="flex items-end justify-center gap-1 h-20">
           {levels.map((v, i) => (
-            <div key={i} style={{ height: `${Math.max(8, v * 80)}px` }} className="w-1 bg-white/70 rounded" />
+            <div key={i} style={{ height: `${Math.max(8, v * 80)}px` }} className="w-1 bg-neutral-700/70 rounded" />
           ))}
         </div>
         <div className="flex justify-center">
           <button
             onClick={() => (state === 'idle' ? start() : state === 'recording' ? stop() : undefined)}
             disabled={state === 'uploading'}
-            className={`w-24 h-24 rounded-full flex items-center justify-center font-semibold transition ${
-              state === 'recording' ? 'bg-red-500 text-white' : 'bg-white text-neutral-950'
+            className={`w-24 h-24 rounded-full flex items-center justify-center font-semibold transition shadow-lg ${
+              state === 'recording' ? 'bg-red-500 text-white' : 'bg-neutral-950 text-white'
             } disabled:opacity-50`}
           >
             {state === 'idle' ? '●' : state === 'recording' ? '■' : '…'}
           </button>
         </div>
-        {state === 'uploading' && <p className="text-center text-neutral-400 text-sm">Connecting y&apos;all…</p>}
+        {state === 'uploading' && <p className="text-center text-neutral-600 text-sm">Connecting y&apos;all…</p>}
       </div>
     </div>
   );
