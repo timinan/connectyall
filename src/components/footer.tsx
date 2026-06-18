@@ -11,6 +11,10 @@ export function Footer() {
         </Link>
         <span className="text-slate-500">·</span>
         <p className="text-xs text-slate-300">Voice notes that connect y&apos;all.</p>
+        <span className="text-slate-500 hidden sm:inline">·</span>
+        <a href="/privacy" className="text-xs text-slate-300 hover:text-white transition hidden sm:inline">Privacy</a>
+        <span className="text-slate-500 hidden sm:inline">·</span>
+        <a href="/terms" className="text-xs text-slate-300 hover:text-white transition hidden sm:inline">Terms</a>
       </div>
     </footer>
   );
