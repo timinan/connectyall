@@ -3,10 +3,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { APP_CONTAINER } from '../_layout-constants';
-import { Avatar, getFirstName } from '../record/greeting';
-import { LuCamera, LuX, LuCheck } from 'react-icons/lu';
+import { LuCamera, LuX, LuCheck, LuPencil } from 'react-icons/lu';
 import { ChannelIcon, type ChannelKind } from '../cards/[id]/channel-icons';
-import { NavToggle } from '@/components/nav-toggle';
+import { PageHeader } from '@/components/page-header';
+import { BottomNav } from '@/components/bottom-nav';
 import { signOut } from '@/lib/auth/client';
 
 type Profile = {
@@ -51,6 +51,33 @@ function readChannel(profile: Profile, kind: ProfileChannel): string | null {
   return profile.socials[kind] ?? null;
 }
 
+const PALETTE = ['#0E7C7B', '#3B3B6D', '#A23B72', '#D1495B', '#2E294E'];
+function pickBg(seed: string) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+
+function Avatar({ profile }: { profile: { displayName: string; photoR2Url: string | null } | null }) {
+  if (!profile) {
+    return <div className="w-24 h-24 rounded-full bg-line" />;
+  }
+  if (profile.photoR2Url) {
+    // Plain img — Next.js image optimization would require absolute URLs, not worth the complexity here
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={profile.photoR2Url} alt={profile.displayName} className="w-24 h-24 rounded-full object-cover" />;
+  }
+  const initial = (profile.displayName.trim().charAt(0) || '?').toUpperCase();
+  return (
+    <div
+      className="w-24 h-24 rounded-full flex items-center justify-center text-white text-4xl font-extrabold"
+      style={{ backgroundColor: pickBg(profile.displayName) }}
+    >
+      {initial}
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -79,7 +106,6 @@ export default function ProfilePage() {
       body: JSON.stringify({
         displayName: fd.get('displayName'),
         tagline: fd.get('tagline') || null,
-        selfIntro: fd.get('selfIntro') || null,
       }),
     });
     setSaving(false);
@@ -141,75 +167,68 @@ export default function ProfilePage() {
     });
   }
 
-  function headline(): React.ReactNode {
-    if (!profile) return 'Hello';
-    const firstName = getFirstName(profile.displayName);
-    if (profile.onboardedAt) {
-      return firstName
-        ? <>Hey <span className="text-brand">{firstName}</span>, keep your details fresh.</>
-        : 'Keep your details fresh.';
-    }
-    return <><span className="text-brand">Welcome.</span> Let&apos;s set up how people reach you.</>;
-  }
-
   return (
     <div className={APP_CONTAINER}>
-      <div className="flex justify-end">
-        <NavToggle />
+      <PageHeader status="PROFILE" />
+
+      <h1 className="text-5xl font-extrabold leading-[1.02] tracking-tight">
+        Your <span className="text-brand">profile</span>
+      </h1>
+
+      <div className="flex flex-col items-center gap-4 mt-2">
+        <div className="relative inline-block">
+          <Avatar profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : null} />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            aria-label="Change photo"
+            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-neutral-950 text-white flex items-center justify-center shadow ring-2 ring-cream"
+          >
+            <LuCamera size={16} />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
+          />
+        </div>
       </div>
+
       <form
         onSubmit={(e) => { e.preventDefault(); saveBasics(e.currentTarget); }}
         className="space-y-4"
       >
-        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-5 space-y-4">
-          <div className="flex flex-col items-center gap-3">
-            <div className="relative inline-block">
-              <Avatar
-                profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : 'loading'}
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                aria-label="Change photo"
-                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-neutral-950 text-white flex items-center justify-center shadow ring-2 ring-white"
-              >
-                <LuCamera size={16} />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
-              />
-            </div>
-            <h1 className="text-2xl font-bold text-center">{headline()}</h1>
+        <div className="rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-5 py-4">
+          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">NAME</div>
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              name="displayName"
+              placeholder="Display name (Tim Nan)"
+              required
+              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-[15px]"
+              defaultValue={profile?.displayName ?? ''}
+              key={`name-${profile?.displayName ?? ''}`}
+            />
+            <LuPencil size={14} className="text-neutral-400 flex-shrink-0" />
           </div>
-          <label className="text-sm text-neutral-700 font-medium block">Your info</label>
-          <input
-            name="displayName"
-            placeholder="Display name (Tim Nan)"
-            required
-            className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
-            defaultValue={profile?.displayName ?? ''}
-            key={`name-${profile?.displayName ?? ''}`}
-          />
-          <input
-            name="tagline"
-            placeholder="One-liner (PM building crypto products)"
-            className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
-            defaultValue={profile?.tagline ?? ''}
-            key={`tagline-${profile?.tagline ?? ''}`}
-          />
-          <textarea
-            name="selfIntro"
-            placeholder="Optional — extra context the AI uses for extraction"
-            rows={2}
-            className="w-full px-4 py-3 rounded-lg bg-white border border-neutral-200"
-          />
+          <div className="border-t border-line my-4"></div>
+          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">TITLE</div>
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              name="tagline"
+              placeholder="One-liner (PM building crypto products)"
+              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-[15px]"
+              defaultValue={profile?.tagline ?? ''}
+              key={`tagline-${profile?.tagline ?? ''}`}
+            />
+            <LuPencil size={14} className="text-neutral-400 flex-shrink-0" />
+          </div>
         </div>
-        <div className="rounded-3xl bg-gradient-to-br from-purple-100 via-purple-50 to-amber-50 border border-purple-200/60 shadow-sm px-5 py-4 space-y-2">
-          <label className="text-sm text-neutral-700 font-medium block">How people can reach you</label>
+
+        <div className="rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-5 py-4 space-y-2">
+          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold mb-2">HOW PEOPLE CAN REACH YOU</div>
           {profile && PROFILE_CHANNELS.filter((k) => {
             const v = readChannel(profile, k);
             return v !== null && v !== '';
@@ -232,28 +251,33 @@ export default function ProfilePage() {
             />
           )}
         </div>
+
         <button
           type="submit"
           disabled={saving}
-          className="w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-semibold disabled:opacity-50 hover:bg-neutral-800 transition"
+          className="w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-bold disabled:opacity-50 hover:bg-neutral-800 transition"
         >
           {saving ? 'Saving…' : 'Save and start connecting'}
         </button>
       </form>
-      <button
-        type="button"
-        onClick={handleSignOut}
-        className="block mx-auto text-sm text-neutral-500 hover:text-neutral-950 transition pt-2"
-      >
-        Sign out
-      </button>
-      <button
-        type="button"
-        onClick={() => setShowDelete(true)}
-        className="block mx-auto text-sm text-red-600 hover:text-red-700 transition pt-1"
-      >
-        Delete my account
-      </button>
+
+      <div className="flex flex-col gap-2 mt-2">
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="w-full px-5 py-3 rounded-full bg-surface border border-line text-neutral-950 font-bold text-sm hover:bg-neutral-50 transition"
+        >
+          Sign out
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowDelete(true)}
+          className="w-full px-5 py-3 rounded-full bg-surface border border-red-200 text-red-600 font-bold text-sm hover:bg-red-50 transition"
+        >
+          Delete my account
+        </button>
+      </div>
+
       {showDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40">
           <div className="rounded-3xl bg-white shadow-xl max-w-sm w-full px-6 py-6 space-y-4">
@@ -291,6 +315,8 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      <BottomNav />
     </div>
   );
 }
@@ -317,8 +343,9 @@ function ChannelRow({
         onChange={(e) => setValue(e.target.value)}
         onBlur={() => { if (value.trim() && value !== initialValue) onSave(value.trim()); }}
         placeholder={PROFILE_CHANNEL_PLACEHOLDERS[kind]}
-        className="flex-1 px-3 py-2 rounded-lg bg-white border border-neutral-200 text-sm"
+        className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-sm"
       />
+      <LuPencil size={13} className="text-neutral-400 flex-shrink-0" />
       <button
         type="button"
         onClick={onClear}
@@ -358,7 +385,7 @@ function AddChannel({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-neutral-200 bg-white text-neutral-950 text-xs"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-line bg-cream text-neutral-950 text-xs"
       >
         + Add field
       </button>
@@ -370,7 +397,7 @@ function AddChannel({
       <select
         value={selected}
         onChange={(e) => setSelected(e.target.value as ProfileChannel | '')}
-        className="bg-white border border-neutral-200 rounded px-2 py-2 text-sm text-neutral-600"
+        className="bg-cream border border-line rounded px-2 py-2 text-sm text-neutral-600"
         autoFocus
       >
         <option value="">Pick field…</option>
@@ -386,7 +413,7 @@ function AddChannel({
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
             placeholder={PROFILE_CHANNEL_PLACEHOLDERS[selected]}
-            className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-white border border-neutral-200 text-sm"
+            className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-cream border border-line text-sm"
           />
           <button
             type="button"
