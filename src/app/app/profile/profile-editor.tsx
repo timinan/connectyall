@@ -162,7 +162,7 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
       <PageHeader status="PROFILE" />
 
       <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-        <h1 className="text-5xl font-black leading-[1.02] tracking-tight">
+        <h1 className="text-4xl font-black leading-[1.02] tracking-tight">
           Your <span className="text-brand">profile</span>
         </h1>
       </div>
