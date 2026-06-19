@@ -130,6 +130,15 @@ body {
 .bnav-pin {
   view-transition-name: bnav;
 }
+
+/* Fade the bottom-nav label in after the indicator finishes sliding to its new tab. */
+@keyframes bnav-label-in {
+  from { opacity: 0; transform: translateX(-2px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-bnav-label {
+  animation: bnav-label-in 200ms ease-out 120ms both;
+}
 ::view-transition-old(bnav),
 ::view-transition-new(bnav) {
   /* Bottom nav doesn't slide with the rest — it stays in place. */
