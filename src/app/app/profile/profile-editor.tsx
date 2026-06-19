@@ -257,24 +257,24 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
         <button
           type="submit"
           disabled={saving}
-          className="w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-bold disabled:opacity-50 hover:bg-neutral-800 transition"
+          className="w-full px-4 py-4 rounded-full bg-brand text-white font-extrabold tracking-tight disabled:opacity-50 hover:opacity-90 transition shadow-[0_12px_32px_rgba(124,92,255,0.35)]"
         >
           {saving ? 'Saving…' : 'Save and start connecting'}
         </button>
       </form>
 
-      <div className="flex flex-col gap-2 mt-2">
+      <div className="flex gap-2 mt-2">
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full px-5 py-4 rounded-full bg-surface border border-line text-neutral-950 font-extrabold text-base tracking-tight hover:bg-neutral-50 transition"
+          className="flex-1 px-5 py-4 rounded-full bg-surface border border-line text-neutral-950 font-extrabold text-base tracking-tight hover:bg-neutral-50 transition"
         >
           Sign out
         </button>
         <button
           type="button"
           onClick={() => setShowDelete(true)}
-          className="w-full px-5 py-4 rounded-full bg-red-600 text-white font-extrabold text-base tracking-tight hover:bg-red-700 transition shadow-[0_8px_24px_rgba(220,38,38,0.30)]"
+          className="flex-1 px-5 py-4 rounded-full bg-red-600 text-white font-extrabold text-base tracking-tight hover:bg-red-700 transition shadow-[0_8px_24px_rgba(220,38,38,0.30)]"
         >
           Delete my account
         </button>
@@ -345,7 +345,7 @@ function ChannelRow({
         onChange={(e) => setValue(e.target.value)}
         onBlur={() => { if (value.trim() && value !== initialValue) onSave(value.trim()); }}
         placeholder={PROFILE_CHANNEL_PLACEHOLDERS[kind]}
-        className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-sm"
+        className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-[15px] font-bold tracking-tight"
       />
       <LuPencil size={13} className="text-neutral-400 flex-shrink-0" />
       <button
