@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn, authClient } from '@/lib/auth/client';
 import { PageHeader } from '@/components/page-header';
+import { LANDING_CONTAINER_FLEX } from '../_layout-constants';
 
 type Step = 'email' | 'code';
 type Status = 'idle' | 'sending' | 'verifying';
@@ -51,7 +52,7 @@ export default function SignInPage() {
     <><span className="text-brand">●</span> ENTER CODE</>;
 
   return (
-    <div className="px-6 py-6 pb-8 max-w-xl mx-auto w-full min-h-[100dvh] flex flex-col">
+    <div className={LANDING_CONTAINER_FLEX}>
       <PageHeader status={status_label} />
       <div className="flex-1 flex flex-col pt-3 gap-8">
         {step === 'email' && (
@@ -157,17 +158,17 @@ function Top({
 }) {
   return (
     <div>
-      <div className="font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">
-        {label}
-      </div>
-      <div className="mt-3 bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+      <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
         <h1 className="text-4xl font-black leading-[1.02] tracking-tight">
           {headlineFirst}
           <br />
           <span className="text-brand">{headlineAccent}</span>
         </h1>
       </div>
-      <p className="mt-4 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">{sub}</p>
+      <div className="mt-4 font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">
+        ● {label}
+      </div>
+      <p className="mt-2 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">{sub}</p>
     </div>
   );
 }
