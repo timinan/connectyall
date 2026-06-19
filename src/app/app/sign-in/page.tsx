@@ -125,7 +125,7 @@ export default function SignInPage() {
             )}
           </div>
           {step === 'email' && (
-            <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium">
+            <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium text-center">
               <span className="text-brand mr-1">●</span> CODE ARRIVES IN 2 SECONDS
             </div>
           )}
@@ -133,9 +133,9 @@ export default function SignInPage() {
             <button
               type="button"
               onClick={resetToEmail}
-              className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted hover:text-neutral-950 font-medium transition"
+              className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted hover:text-neutral-950 font-medium text-center transition"
             >
-              USE A DIFFERENT EMAIL
+              <span className="text-brand mr-1">●</span> USE A DIFFERENT EMAIL
             </button>
           )}
           {errorMsg && <p className="text-red-600 text-sm text-center max-w-[320px]">{errorMsg}</p>}
