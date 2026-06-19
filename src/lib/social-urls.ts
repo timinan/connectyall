@@ -74,7 +74,9 @@ export function lineUrl(input: string): string {
   return `https://line.me/ti/p/~${lineHandle(input)}`;
 }
 
-// Instagram — stored as bare handle, URL is instagram.com/handle (profile)
+// Instagram — stored as bare handle. Two URLs:
+//   instagramUrl       → instagram.com/<handle>     (profile)
+//   instagramDmUrl     → ig.me/m/<handle>           (opens DM directly)
 export function instagramHandle(input: string): string {
   return strip(input)
     .replace(/^https?:\/\//i, '')
@@ -82,6 +84,9 @@ export function instagramHandle(input: string): string {
 }
 export function instagramUrl(input: string): string {
   return `https://instagram.com/${instagramHandle(input)}`;
+}
+export function instagramDmUrl(input: string): string {
+  return `https://ig.me/m/${instagramHandle(input)}`;
 }
 
 // Facebook Messenger — stored as username, URL is m.me/<username> (opens chat)
