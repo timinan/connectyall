@@ -67,6 +67,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       whatsapp: nullify(contact.links?.whatsapp),
       wechat: nullify(contact.links?.wechat),
       line: nullify(contact.links?.line),
+      instagram: nullify(contact.links?.instagram),
+      messenger: nullify(contact.links?.messenger),
     },
     latestInteractionId: latest?.id ?? null,
     latestRecap,

@@ -63,6 +63,8 @@ const CHANNEL_TAG: Record<ChannelKind, string> = {
   whatsapp: 'WA',
   wechat: 'WC',
   line: 'LINE',
+  instagram: 'IG',
+  messenger: 'MSG',
 };
 
 const SWIPE_THRESHOLD = 80;
