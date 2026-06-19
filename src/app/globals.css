@@ -88,3 +88,28 @@ body {
   transform-origin: 50% 50%;
   will-change: transform, opacity;
 }
+
+/* === View Transitions API — page-swap cross-fade ===
+   Triggered by the bottom-nav (which wraps router.push in document.startViewTransition).
+   Old page fades out + lifts slightly; new page fades in from slightly below.
+   The bottom-nav itself is pinned via view-transition-name so it doesn't fade with the rest. */
+@keyframes vt-fade-out {
+  to { opacity: 0; transform: translateY(-4px); }
+}
+@keyframes vt-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+}
+::view-transition-old(root) {
+  animation: 180ms cubic-bezier(0.4, 0, 0.2, 1) both vt-fade-out;
+}
+::view-transition-new(root) {
+  animation: 240ms cubic-bezier(0.0, 0, 0.2, 1) both vt-fade-in;
+}
+.bnav-pin {
+  view-transition-name: bnav;
+}
+::view-transition-old(bnav),
+::view-transition-new(bnav) {
+  /* Bottom nav doesn't fade with the rest — it stays in place. */
+  animation: none;
+}
