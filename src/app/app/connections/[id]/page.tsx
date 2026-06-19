@@ -242,7 +242,7 @@ function EditableField({
           href={sendHref}
           target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
           rel="noopener noreferrer"
-          className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-brand text-white text-xs font-medium hover:opacity-90 transition-opacity"
+          className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition-opacity"
           title="Send via this channel"
         >
           <LuSend size={14} />
@@ -308,7 +308,7 @@ function AddField({ existing, onAdd }: AddFieldProps) {
     return (
       <button
         onClick={() => setExpanded(true)}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-line bg-surface text-neutral-950 text-xs font-semibold whitespace-nowrap"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#E9DDFF] text-brand font-mono text-[10px] tracking-[0.14em] font-bold uppercase whitespace-nowrap"
       >
         + Add field
       </button>
@@ -346,7 +346,7 @@ function AddField({ existing, onAdd }: AddFieldProps) {
             }
             className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-neutral-950 text-sm min-w-0"
           />
-          <button onClick={handleAdd} className="flex-shrink-0 text-sm px-3 py-1 rounded-full bg-brand text-white font-semibold hover:opacity-90 transition">Add</button>
+          <button onClick={handleAdd} className="flex-shrink-0 px-3 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition">Add</button>
         </>
       )}
       <button
@@ -465,7 +465,7 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
         <PageHeader />
         <div className={`${CARD_BASE} px-5 py-8 text-center space-y-3`}>
           <p className="text-neutral-700">Connection not found.</p>
-          <Link href="/app/connections" className="inline-block px-4 py-2 rounded-full bg-brand text-white text-sm font-semibold hover:opacity-90 transition">
+          <Link href="/app/connections" className="inline-block px-4 py-3 rounded-full bg-brand text-white font-mono text-[11px] tracking-[0.18em] font-bold uppercase hover:opacity-90 transition">
             Back to connections
           </Link>
         </div>
@@ -713,9 +713,9 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
             <a
               href={`/api/contacts/${contact.id}/vcard`}
               download
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-line bg-surface text-neutral-950 text-xs font-semibold whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#E9DDFF] text-brand font-mono text-[10px] tracking-[0.14em] font-bold uppercase whitespace-nowrap"
             >
-              {(() => { const first = contactName.trim().split(/\s+/)[0]; return first ? `💾 Save ${first} to phone` : '💾 Save to phone'; })()}
+              {(() => { const first = contactName.trim().split(/\s+/)[0]; return first ? `Save ${first} to phone` : 'Save to phone'; })()}
             </a>
           </div>
         </div>
@@ -734,9 +734,9 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
       )}
       <Link
         href="/app/record"
-        className="block w-full px-4 py-3 rounded-full bg-brand text-white font-semibold text-center hover:opacity-90 transition shadow-[0_12px_28px_rgba(124,92,255,0.35)]"
+        className="block w-full px-4 py-4 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase text-center hover:opacity-90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
       >
-        ✓ Save
+        Save
       </Link>
       <BottomNav />
     </div>

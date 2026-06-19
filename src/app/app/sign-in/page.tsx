@@ -90,7 +90,7 @@ export default function SignInPage() {
                 <button
                   type="submit"
                   disabled={status === 'sending'}
-                  className="w-full h-16 px-5 rounded-full bg-brand text-white font-bold text-[16px] disabled:opacity-50 hover:bg-brand/90 transition shadow-[0_12px_32px_rgba(124,92,255,0.35)]"
+                  className="w-full h-16 px-5 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase disabled:opacity-50 hover:bg-brand/90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
                 >
                   {status === 'sending' ? 'Sending…' : 'Send code'}
                 </button>
@@ -117,7 +117,7 @@ export default function SignInPage() {
                 <button
                   type="submit"
                   disabled={status === 'verifying' || otp.length < 6}
-                  className="w-full h-16 px-5 rounded-full bg-brand text-white font-bold text-[16px] disabled:opacity-50 hover:bg-brand/90 transition shadow-[0_12px_32px_rgba(124,92,255,0.35)]"
+                  className="w-full h-16 px-5 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase disabled:opacity-50 hover:bg-brand/90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
                 >
                   {status === 'verifying' ? 'Signing in…' : 'Sign in'}
                 </button>

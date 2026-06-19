@@ -198,14 +198,14 @@ function ConfirmDelete({
           <button
             onClick={onCancel}
             disabled={busy}
-            className="flex-1 px-4 py-2 rounded-full bg-white border border-line text-neutral-950 text-sm font-bold hover:bg-neutral-50 transition disabled:opacity-50"
+            className="flex-1 px-4 py-3 rounded-full bg-white border-[1.5px] border-neutral-950 text-neutral-950 font-mono text-[11px] tracking-[0.18em] font-bold uppercase hover:bg-neutral-50 transition disabled:opacity-50"
           >
             No
           </button>
           <button
             onClick={handleConfirm}
             disabled={busy}
-            className="flex-1 px-4 py-2 rounded-full bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition disabled:opacity-50"
+            className="flex-1 px-4 py-3 rounded-full bg-red-500 text-white font-mono text-[11px] tracking-[0.18em] font-bold uppercase hover:bg-red-600 transition disabled:opacity-50"
           >
             {busy ? 'Deleting…' : 'Yes, delete'}
           </button>
@@ -353,7 +353,7 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
               <GlowRings />
               <Link
                 href="/app/record"
-                className="relative z-10 inline-flex items-center gap-2 px-7 py-5 rounded-full bg-brand text-white font-bold text-base shadow-[0_14px_36px_rgba(124,92,255,0.40)]"
+                className="relative z-10 inline-flex items-center gap-2 px-7 py-5 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
               >
                 <LuMic size={20} /> Record your first
               </Link>
@@ -370,7 +370,7 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
         <button
           onClick={dismissHint}
           aria-hidden={!hintVisible}
-          className={`mt-4 w-full inline-flex items-center gap-2 px-3 py-2 rounded-full bg-amber-100 text-amber-800 font-mono text-[10px] tracking-[0.18em] uppercase font-semibold hover:bg-amber-200 transition-opacity duration-500 ${hintVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          className={`mt-4 w-full inline-flex items-center gap-2 px-3 py-2 rounded-full bg-amber-100 text-amber-800 font-mono text-[10px] tracking-[0.18em] uppercase font-bold hover:bg-amber-200 transition-opacity duration-500 ${hintVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         >
           <span>✨</span>
           <span className="flex-1 text-left">SWIPE LEFT TO DELETE</span>
