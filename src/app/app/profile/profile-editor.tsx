@@ -259,7 +259,7 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
         <button
           type="submit"
           disabled={saving}
-          className="w-full px-4 py-4 rounded-full bg-brand text-white font-extrabold tracking-tight disabled:opacity-50 hover:opacity-90 transition shadow-[0_12px_32px_rgba(124,92,255,0.35)]"
+          className="w-full px-4 py-4 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase disabled:opacity-50 hover:opacity-90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
         >
           {saving ? 'Saving…' : 'Save and start connecting'}
         </button>
@@ -270,16 +270,16 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
         <button
           type="button"
           onClick={handleSignOut}
-          className="flex-1 px-5 py-4 rounded-full bg-surface border border-line text-neutral-950 font-extrabold text-base tracking-tight hover:bg-neutral-50 transition"
+          className="flex-1 px-5 py-4 rounded-full bg-white border-[1.5px] border-neutral-950 text-neutral-950 font-mono text-[11px] tracking-[0.18em] font-bold uppercase hover:bg-neutral-50 transition"
         >
           Sign out
         </button>
         <button
           type="button"
           onClick={() => setShowDelete(true)}
-          className="flex-1 px-5 py-4 rounded-full bg-red-600 text-white font-extrabold text-base tracking-tight hover:bg-red-700 transition shadow-[0_8px_24px_rgba(220,38,38,0.30)]"
+          className="flex-1 px-5 py-4 rounded-full bg-white border-[1.5px] border-red-600 text-red-600 font-mono text-[11px] tracking-[0.18em] font-bold uppercase hover:bg-red-50 transition"
         >
-          Delete my account
+          Delete account
         </button>
       </div>
 
@@ -305,14 +305,14 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
               <button
                 onClick={() => { setShowDelete(false); setDeleteText(''); }}
                 disabled={deleting}
-                className="flex-1 px-4 py-2 rounded-full bg-white border border-neutral-200 text-neutral-950 text-sm font-semibold hover:bg-neutral-50 transition disabled:opacity-50"
+                className="flex-1 px-4 py-3 rounded-full bg-white border-[1.5px] border-neutral-950 text-neutral-950 font-mono text-[11px] tracking-[0.18em] font-bold uppercase hover:bg-neutral-50 transition disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting || deleteText.trim().toLowerCase() !== 'delete my account'}
-                className="flex-1 px-4 py-2 rounded-full bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition disabled:opacity-50"
+                className="flex-1 px-4 py-3 rounded-full bg-red-500 text-white font-mono text-[11px] tracking-[0.18em] font-bold uppercase hover:bg-red-600 transition disabled:opacity-50"
               >
                 {deleting ? 'Deleting…' : 'Delete'}
               </button>
@@ -390,7 +390,7 @@ function AddChannel({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-line bg-cream text-neutral-950 text-xs"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#E9DDFF] text-brand font-mono text-[10px] tracking-[0.14em] font-bold uppercase"
       >
         + Add field
       </button>

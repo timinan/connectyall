@@ -52,7 +52,7 @@ export default async function Home() {
           </p>
           <Link
             href="/app"
-            className="mt-6 ml-5 inline-flex w-fit items-center gap-2 px-6 py-4 rounded-full bg-brand text-white font-bold hover:opacity-90 transition shadow-[0_12px_28px_rgba(124,92,255,0.35)]"
+            className="mt-6 ml-5 inline-flex w-fit items-center gap-2 px-6 py-4 rounded-full bg-brand text-white font-mono text-[12px] tracking-[0.18em] font-bold uppercase hover:opacity-90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
           >
             Open the app →
           </Link>
