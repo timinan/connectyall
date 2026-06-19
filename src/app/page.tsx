@@ -20,7 +20,7 @@ export default async function Home() {
         <p className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-mono text-[10px] tracking-[0.2em] font-bold uppercase mb-6">
           <span className="text-brand">●</span> VOICE TO CONNECTION
         </p>
-        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight leading-[1.02]">
+        <h1 className="text-5xl sm:text-6xl font-black tracking-tight leading-[1.02]">
           Voice notes<br />
           that <span className="text-brand">connects</span><br />
           y&apos;all.

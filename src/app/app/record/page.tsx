@@ -221,7 +221,7 @@ function Top({
       <div className={`font-mono text-[13px] tracking-[0.2em] font-semibold uppercase ${labelTone === 'red' ? 'text-red-600' : 'text-muted'}`}>
         {label}
       </div>
-      <h1 className="mt-3 text-5xl font-extrabold leading-[1.02] tracking-tight">
+      <h1 className="mt-3 text-5xl font-black leading-[1.02] tracking-tight">
         {headlineFirst}
         <br />
         <span className="text-brand">{headlineAccent}</span>

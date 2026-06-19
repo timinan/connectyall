@@ -171,7 +171,7 @@ export default function ProfilePage() {
     <div className={APP_CONTAINER}>
       <PageHeader status="PROFILE" />
 
-      <h1 className="text-5xl font-extrabold leading-[1.02] tracking-tight">
+      <h1 className="text-5xl font-black leading-[1.02] tracking-tight">
         Your <span className="text-brand">profile</span>
       </h1>
 

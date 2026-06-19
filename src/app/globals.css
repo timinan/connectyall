@@ -22,6 +22,12 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Force the exact brand hex on the utility classes. Tailwind v4 routes hex
+   colors through OKLCH which was making the brand purple look washed out. */
+.text-brand { color: #7C5CFF; }
+.bg-brand { background-color: #7C5CFF; }
+.border-brand { border-color: #7C5CFF; }
+
 @keyframes logo-flip {
   0%   { transform: rotateY(0deg); }
   100% { transform: rotateY(360deg); }
