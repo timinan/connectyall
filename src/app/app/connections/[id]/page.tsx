@@ -379,10 +379,7 @@ type AddFieldProps = {
 };
 
 function AddField({ existing, onAdd }: AddFieldProps) {
-  const available = ALL_CHANNELS.filter(c => {
-    if (c === 'email' || c === 'phone') return true;
-    return !existing.includes(c);
-  });
+  const available = ALL_CHANNELS.filter(c => !existing.includes(c));
   const [expanded, setExpanded] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<PreferredChannel | ''>('');
   const [value, setValue] = useState('');
@@ -654,6 +651,9 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
   if (contact?.line) existingSingleChannels.push('line');
   if (contact?.instagram) existingSingleChannels.push('instagram');
   if (contact?.messenger) existingSingleChannels.push('messenger');
+  // Single email/phone per contact — hide from the dropdown once one exists
+  if (contact && contact.emails.length > 0) existingSingleChannels.push('email');
+  if (contact && contact.phones.length > 0) existingSingleChannels.push('phone');
 
   // Build send href for each channel
   const captionText = '';
@@ -878,23 +878,8 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
             <AddField
               existing={existingSingleChannels}
               onAdd={(channel, value) => {
-                if (channel === 'email') {
-                  const existingLower = (contact?.emails ?? []).map(e => e.toLowerCase());
-                  if (existingLower.includes(value.toLowerCase())) {
-                    alert('That email is already on the contact.');
-                    return Promise.resolve();
-                  }
-                  return putContactField({ kind: 'email-add', value });
-                }
-                if (channel === 'phone') {
-                  const digits = value.replace(/\D/g, '');
-                  const existingDigits = (contact?.phones ?? []).map(p => p.replace(/\D/g, ''));
-                  if (existingDigits.includes(digits)) {
-                    alert('That phone number is already on the contact.');
-                    return Promise.resolve();
-                  }
-                  return putContactField({ kind: 'phone-add', value });
-                }
+                if (channel === 'email') return putContactField({ kind: 'email-add', value });
+                if (channel === 'phone') return putContactField({ kind: 'phone-add', value });
                 if (channel === 'whatsapp') return putContactField({ kind: 'whatsapp', value: value.replace(/\D/g, '') });
                 if (channel === 'line') return putContactField({ kind: 'line', value: value.replace(/^[~@]/, '') });
                 return putContactField({ kind: channel, value });
