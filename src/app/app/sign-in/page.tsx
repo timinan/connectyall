@@ -85,7 +85,7 @@ export default function SignInPage() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-[22px] py-[22px] rounded-3xl bg-surface border border-line text-[17px] text-neutral-950 placeholder:text-muted shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)]"
+                  className="w-full h-16 px-5 rounded-3xl bg-surface border border-line text-[17px] text-neutral-950 placeholder:text-muted shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)]"
                 />
                 <button
                   type="submit"
@@ -112,7 +112,7 @@ export default function SignInPage() {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                   autoFocus
-                  className="w-full px-6 py-6 text-center text-[34px] font-extrabold tracking-[0.35em] rounded-3xl bg-surface border border-line text-neutral-950 placeholder:text-muted shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)]"
+                  className="w-full h-16 px-5 text-center text-[24px] font-extrabold tracking-[0.35em] rounded-3xl bg-surface border border-line text-neutral-950 placeholder:text-muted shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)]"
                 />
                 <button
                   type="submit"
@@ -165,10 +165,10 @@ function Top({
           <span className="text-brand">{headlineAccent}</span>
         </h1>
       </div>
-      <div className="mt-4 font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">
+      <div className="mt-4 pl-5 font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">
         ● {label}
       </div>
-      <p className="mt-2 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">{sub}</p>
+      <p className="mt-2 pl-5 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">{sub}</p>
     </div>
   );
 }

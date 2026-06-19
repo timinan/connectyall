@@ -44,15 +44,15 @@ export default async function Home() {
               y&apos;all.
             </h1>
           </div>
-          <div className="mt-4 font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">
+          <div className="mt-4 pl-5 font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">
             ● VOICE TO CONNECTION
           </div>
-          <p className="mt-2 text-[15px] text-neutral-700 leading-relaxed max-w-[280px]">
+          <p className="mt-2 pl-5 text-[15px] text-neutral-700 leading-relaxed max-w-[280px]">
             Connectyall turns a voice memo you record after meeting someone into a connection built in an instant. Talk it out, we handle the rest.
           </p>
           <Link
             href="/app"
-            className="mt-6 inline-flex w-fit items-center gap-2 px-6 py-4 rounded-full bg-brand text-white font-bold hover:opacity-90 transition shadow-[0_12px_28px_rgba(124,92,255,0.35)]"
+            className="mt-6 ml-5 inline-flex w-fit items-center gap-2 px-6 py-4 rounded-full bg-brand text-white font-bold hover:opacity-90 transition shadow-[0_12px_28px_rgba(124,92,255,0.35)]"
           >
             Open the app →
           </Link>
