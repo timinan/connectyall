@@ -111,23 +111,23 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
       <PageHeader status={<><span className="text-brand">●</span> SHARED WITH YOU</>} />
 
       {/* Backdrop area: glow + banner + label + avatar + recap card all sit inside
-          this relatively-positioned wrapper. overflow-hidden clips the glow at the
-          wrapper's bottom edge so it can't wash into the HOW TO REACH card below.
-          pb-2 leaves room for the FROM card's soft shadow so it isn't clipped too. */}
-      <div className="relative mt-4 overflow-hidden pb-2">
-        {/* 500px backdrop glow — centered on the avatar.
+          this relatively-positioned wrapper. The glow is z-0 and every sibling
+          section below (HOW TO REACH, CTAs, footer) is z-10, so the glow renders
+          UNDERNEATH them — extends naturally where it wants without clipping. */}
+      <div className="relative mt-4">
+        {/* 460px backdrop glow — centered on the avatar.
             Avatar y from this wrapper top ≈ banner(60) + mt-3(12) + label(18) + mt-6(24) + half-avatar(72) = ~186px.
-            Glow center must land at ~186, so top = 186 - 250 = -64px. */}
+            Glow center must land at ~186, so top = 186 - 230 = -44px. */}
         <div
           aria-hidden
-          className="glow-breathe pointer-events-none absolute left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full z-0"
+          className="glow-breathe pointer-events-none absolute left-1/2 -translate-x-1/2 w-[460px] h-[460px] rounded-full z-0"
           style={{
-            top: '-64px',
+            top: '-44px',
             background: 'radial-gradient(circle, rgba(124, 92, 255, 0.20) 0%, rgba(124, 92, 255, 0.06) 55%, rgba(124, 92, 255, 0) 78%)',
           }}
         >
-          <div className="glow-breathe-d1 absolute inset-[70px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.08)' }} />
-          <div className="glow-breathe-d2 absolute inset-[140px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.14)' }} />
+          <div className="glow-breathe-d1 absolute inset-[64px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.08)' }} />
+          <div className="glow-breathe-d2 absolute inset-[128px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.14)' }} />
         </div>
 
         {/* Headline banner — sender's name with last word accented */}
@@ -175,9 +175,10 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
         )}
       </div>
 
-      {/* HOW TO REACH card — read-only channels, sits outside the glow's radius */}
+      {/* HOW TO REACH card — read-only channels. z-10 keeps it above the glow if
+          the glow bleeds down into this region. */}
       {channels.length > 0 && (
-        <div className="bg-surface border border-line rounded-2xl px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mt-3">
+        <div className="relative z-10 bg-surface border border-line rounded-2xl px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mt-3">
           <div className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-muted font-bold">HOW TO REACH {senderUpper}</div>
           <div className="mt-2 divide-y divide-line/60">
             {channels.map((c) => {
@@ -210,7 +211,7 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
       {/* Primary CTA: save to phone via vcard download */}
       <a
         href={`/c/${interaction.id}/vcard`}
-        className="block w-full px-4 py-4 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase text-center mt-4 shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
+        className="relative z-10 block w-full px-4 py-4 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase text-center mt-4 shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
       >
         Save {firstName} to phone
       </a>
@@ -218,12 +219,12 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
       {/* Secondary CTA: invite to use the product */}
       <a
         href="/"
-        className="block w-full px-4 py-3.5 rounded-full bg-white border-[1.5px] border-neutral-950 text-neutral-950 font-mono text-[11px] tracking-[0.18em] font-bold uppercase text-center mt-2.5"
+        className="relative z-10 block w-full px-4 py-3.5 rounded-full bg-white border-[1.5px] border-neutral-950 text-neutral-950 font-mono text-[11px] tracking-[0.18em] font-bold uppercase text-center mt-2.5"
       >
         Start connecting with others
       </a>
 
-      <a href="/" className="flex items-center justify-center gap-1.5 font-mono text-[9px] tracking-[0.2em] uppercase text-muted hover:text-neutral-950 transition pt-4">
+      <a href="/" className="relative z-10 flex items-center justify-center gap-1.5 font-mono text-[9px] tracking-[0.2em] uppercase text-muted hover:text-neutral-950 transition pt-4">
         <LogoMark size={14} /> made with Connectyall
       </a>
     </main>
