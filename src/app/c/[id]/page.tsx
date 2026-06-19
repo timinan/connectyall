@@ -111,22 +111,23 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
       <PageHeader status={<><span className="text-brand">●</span> SHARED WITH YOU</>} />
 
       {/* Backdrop area: glow + banner + label + avatar + recap card all sit inside
-          this relatively-positioned wrapper so the 560px backdrop centers on the
-          avatar and washes purple behind every element above it. */}
-      <div className="relative mt-4">
-        {/* 560px backdrop glow — centered on the avatar.
+          this relatively-positioned wrapper. overflow-hidden clips the glow at the
+          wrapper's bottom edge so it can't wash into the HOW TO REACH card below.
+          pb-2 leaves room for the FROM card's soft shadow so it isn't clipped too. */}
+      <div className="relative mt-4 overflow-hidden pb-2">
+        {/* 500px backdrop glow — centered on the avatar.
             Avatar y from this wrapper top ≈ banner(60) + mt-3(12) + label(18) + mt-6(24) + half-avatar(72) = ~186px.
-            Glow center must land at ~186, so top = 186 - 280 = -94px. */}
+            Glow center must land at ~186, so top = 186 - 250 = -64px. */}
         <div
           aria-hidden
-          className="glow-breathe pointer-events-none absolute left-1/2 -translate-x-1/2 w-[560px] h-[560px] rounded-full z-0"
+          className="glow-breathe pointer-events-none absolute left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full z-0"
           style={{
-            top: '-94px',
+            top: '-64px',
             background: 'radial-gradient(circle, rgba(124, 92, 255, 0.20) 0%, rgba(124, 92, 255, 0.06) 55%, rgba(124, 92, 255, 0) 78%)',
           }}
         >
-          <div className="glow-breathe-d1 absolute inset-[80px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.08)' }} />
-          <div className="glow-breathe-d2 absolute inset-[160px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.14)' }} />
+          <div className="glow-breathe-d1 absolute inset-[70px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.08)' }} />
+          <div className="glow-breathe-d2 absolute inset-[140px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.14)' }} />
         </div>
 
         {/* Headline banner — sender's name with last word accented */}
