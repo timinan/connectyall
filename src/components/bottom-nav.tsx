@@ -62,19 +62,16 @@ export function BottomNav() {
             onClick={(e) => handleClick(e, href)}
             aria-label={label}
             className={`
-              grid items-center h-10 rounded-full overflow-hidden
+              inline-flex items-center h-10 rounded-full overflow-hidden
               transition-all duration-300 ease-out will-change-[width]
               active:scale-95
               ${expanded
                 ? 'bg-brand text-white'
                 : 'text-zinc-400 hover:text-white'}
             `}
-            style={{
-              width: expanded ? '148px' : '40px',
-              gridTemplateColumns: '40px 1fr',
-            }}
+            style={{ width: expanded ? '148px' : '40px' }}
           >
-            <span className="flex items-center justify-center">
+            <span className="w-10 h-10 flex items-center justify-center flex-shrink-0">
               <Icon size={16} />
             </span>
             <span
