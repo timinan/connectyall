@@ -4,6 +4,7 @@ import { getById } from '@/services/UserProfileService';
 import { env } from '@/lib/env';
 import { linkedinUrl, xUrl, telegramUrl, websiteUrl, whatsappUrl, wechatUrl, lineUrl } from '@/lib/social-urls';
 import { CHANNEL_ICONS, ChannelIcon, type ChannelKind } from '@/app/app/cards/[id]/channel-icons';
+import { LogoMark } from '@/components/logo';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,36 +56,47 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
   if (profile.socials.line) links.push({ kind: 'line', href: lineUrl(profile.socials.line) });
 
   return (
-    <main className="min-h-[calc(100dvh-3rem)] text-neutral-950 p-6 pb-10 flex flex-col items-center">
+    <main className="min-h-[100dvh] text-neutral-950 px-6 py-8 pb-10 flex flex-col items-center">
       <div className="max-w-md w-full space-y-6">
-        <div className="flex justify-center pt-4">
+        <p className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold text-center pt-4">FOR {contact.name.toUpperCase()}</p>
+        <div className="flex justify-center">
           <img
             src={cardUrl}
             alt={profile.displayName}
-            className="w-48 h-48 rounded-full object-cover bg-white border border-neutral-200"
+            className="w-[116px] h-[116px] rounded-full object-cover bg-white border-4 border-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
           />
         </div>
         <div className="space-y-1 text-center">
-          <p className="text-xs uppercase tracking-wide text-neutral-600">For {contact.name}</p>
-          <h1 className="text-3xl font-bold"><span className="text-brand">{profile.displayName}</span></h1>
-          {profile.tagline && <p className="text-neutral-700">{profile.tagline}</p>}
+          <h1 className="text-[30px] font-extrabold tracking-tight">
+            <span className="text-brand">{profile.displayName}</span>
+          </h1>
+          {profile.tagline && <p className="text-[13px] text-muted">{profile.tagline}</p>}
         </div>
         {recap && (
-          <p className="italic text-neutral-700 text-center">&ldquo;{recap}&rdquo;</p>
+          <p className="italic text-neutral-600 text-[13px] text-center leading-relaxed">&ldquo;{recap}&rdquo;</p>
         )}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {links.map((l) => (
-            <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" className="px-4 py-3 rounded-lg bg-white border border-neutral-200 text-neutral-950 text-center text-sm flex items-center justify-center gap-2 hover:border-neutral-400 transition">
-              <ChannelIcon kind={l.kind} size={18} />
-              <span>{CHANNEL_ICONS[l.kind].label}</span>
+            <a
+              key={l.href}
+              href={l.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white rounded-2xl px-3 py-3 flex items-center gap-2 border border-line hover:border-brand/40 transition"
+            >
+              <ChannelIcon kind={l.kind} size={16} />
+              <span className="font-mono text-[11px] tracking-[0.1em] uppercase font-bold text-neutral-950">{CHANNEL_ICONS[l.kind].label.toUpperCase()}</span>
             </a>
           ))}
         </div>
         <a
           href={`/c/${interaction.id}/vcard`}
-          className="block w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-semibold text-center hover:bg-neutral-800 transition"
+          className="block w-full px-4 py-4 rounded-full bg-neutral-950 text-white font-bold text-center hover:bg-neutral-800 transition"
         >
           💾 Save {profile.displayName.split(' ')[0]} to Contacts
+        </a>
+        <a href="/" className="flex items-center justify-center gap-1.5 font-mono text-[9px] tracking-[0.2em] uppercase text-muted hover:text-neutral-950 transition pt-2">
+          <LogoMark size={14} /> made with Connectyall
         </a>
       </div>
     </main>
