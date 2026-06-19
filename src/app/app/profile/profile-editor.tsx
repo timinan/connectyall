@@ -12,11 +12,14 @@ import { signOut } from '@/lib/auth/client';
 type Profile = {
   displayName: string;
   tagline: string | null;
+  shortBlurb: string | null;
   socials: { x?: string; linkedin?: string; email?: string; website?: string; whatsapp?: string; wechat?: string; line?: string; phone?: string; instagram?: string; messenger?: string };
   telegramUsername: string | null;
   photoR2Url: string | null;
   onboardedAt: string | null;
 };
+
+const SHORT_BLURB_MAX = 100;
 
 type ProfileChannel = 'x' | 'linkedin' | 'email' | 'website' | 'telegram' | 'whatsapp' | 'wechat' | 'line' | 'phone' | 'instagram' | 'messenger';
 
@@ -91,7 +94,7 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
   const [deleteText, setDeleteText] = useState('');
   const [deleting, setDeleting] = useState(false);
 
-  async function saveBasics(updates: { displayName?: string; tagline?: string | null }) {
+  async function saveBasics(updates: { displayName?: string; tagline?: string | null; shortBlurb?: string | null }) {
     setSaving(true);
     const res = await fetch('/api/profile', {
       method: 'PUT',
@@ -100,7 +103,12 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
     });
     setSaving(false);
     if (res.ok) {
-      setProfile((p) => p ? { ...p, ...(updates.displayName !== undefined ? { displayName: updates.displayName } : {}), ...(updates.tagline !== undefined ? { tagline: updates.tagline } : {}) } : p);
+      setProfile((p) => p ? {
+        ...p,
+        ...(updates.displayName !== undefined ? { displayName: updates.displayName } : {}),
+        ...(updates.tagline !== undefined ? { tagline: updates.tagline } : {}),
+        ...(updates.shortBlurb !== undefined ? { shortBlurb: updates.shortBlurb } : {}),
+      } : p);
     }
   }
 
@@ -223,6 +231,16 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
               value={profile?.tagline ?? ''}
               placeholder="One-liner (PM building crypto products)"
               onSave={(v) => saveBasics({ tagline: v || null })}
+            />
+          </div>
+          <div className="border-t border-line" />
+          <div className="space-y-1">
+            <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">SHORT BLURB</div>
+            <EditableBlurb
+              value={profile?.shortBlurb ?? ''}
+              placeholder="Two lines for your public page (e.g. PM building products people love. Has a beagle named Pepper.)"
+              maxLength={SHORT_BLURB_MAX}
+              onSave={(v) => saveBasics({ shortBlurb: v || null })}
             />
           </div>
         </div>
@@ -397,6 +415,94 @@ function EditableLine({
         <span className="text-neutral-700 flex-1">{value}</span>
       ) : (
         <span className="text-neutral-500 flex-1 italic">{placeholder}</span>
+      )}
+      <LuPencil size={14} className="text-neutral-400 flex-shrink-0 mt-0.5" />
+    </button>
+  );
+}
+
+function EditableBlurb({
+  value,
+  placeholder,
+  maxLength,
+  onSave,
+}: {
+  value: string;
+  placeholder: string;
+  maxLength: number;
+  onSave: (v: string) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => { setDraft(value); }, [value]);
+  useEffect(() => { if (editing) textareaRef.current?.focus(); }, [editing]);
+
+  async function commit() {
+    const next = draft.trim().slice(0, maxLength);
+    setEditing(false);
+    if (next !== value) await onSave(next);
+  }
+
+  function cancel() {
+    setDraft(value);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="space-y-1.5">
+        <div className="flex items-start gap-2">
+          <textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value.slice(0, maxLength))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commit(); }
+              if (e.key === 'Escape') cancel();
+            }}
+            placeholder={placeholder}
+            rows={2}
+            className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-sm min-w-0 resize-none leading-snug"
+          />
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={commit}
+            aria-label="Save"
+            className="flex-shrink-0 p-1.5 rounded text-brand hover:bg-brand/10 transition"
+          >
+            <LuCheck size={16} />
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={cancel}
+            aria-label="Cancel"
+            className="flex-shrink-0 p-1.5 rounded text-neutral-500 hover:bg-neutral-100 transition"
+          >
+            <LuX size={16} />
+          </button>
+        </div>
+        <div className="font-mono text-[10px] tracking-[0.16em] uppercase text-muted font-semibold text-right">
+          {draft.length} / {maxLength}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className="w-full text-left flex items-start gap-1.5 text-sm hover:text-neutral-950 transition-colors"
+      onClick={() => { setDraft(value); setEditing(true); }}
+      title="Tap to edit"
+    >
+      {value.trim() ? (
+        <span className="text-neutral-700 flex-1 leading-snug">{value}</span>
+      ) : (
+        <span className="text-neutral-500 flex-1 italic leading-snug">{placeholder}</span>
       )}
       <LuPencil size={14} className="text-neutral-400 flex-shrink-0 mt-0.5" />
     </button>

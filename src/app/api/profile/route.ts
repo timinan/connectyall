@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { getServerSession } from '@/lib/auth/session';
-import { upsertProfile, setSocial, clearSocial, setPhotoFromBytes, getById } from '@/services/UserProfileService';
+import { setSocial, clearSocial, setPhotoFromBytes, getById } from '@/services/UserProfileService';
 import { db } from '@/lib/db/client';
 import { contacts, interactions, users } from '@/lib/db/schema';
 import { linkedinHandle, xHandle, telegramHandle, instagramHandle, messengerHandle } from '@/lib/social-urls';
@@ -12,8 +12,9 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const ProfileSchema = z.object({
-  displayName: z.string().min(1).max(80),
+  displayName: z.string().min(1).max(80).optional(),
   tagline: z.string().max(140).nullable().optional(),
+  shortBlurb: z.string().max(100).nullable().optional(),
   selfIntro: z.string().max(280).nullable().optional(),
 });
 
@@ -85,9 +86,17 @@ export async function PUT(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('; ') }, { status: 400 });
   }
-  const user = await upsertProfile({ id: session.user.id, ...parsed.data });
-  // Mark the user as onboarded the first time they save their basics
-  await db().update(users).set({ onboardedAt: new Date() }).where(eq(users.id, session.user.id));
+  // Only update fields that were actually sent — supports partial tap-to-edit saves
+  const updates: Partial<typeof users.$inferInsert> = {};
+  if (parsed.data.displayName !== undefined) updates.displayName = parsed.data.displayName;
+  if (parsed.data.tagline !== undefined) updates.tagline = parsed.data.tagline;
+  if (parsed.data.shortBlurb !== undefined) updates.shortBlurb = parsed.data.shortBlurb;
+  if (parsed.data.selfIntro !== undefined) updates.selfIntro = parsed.data.selfIntro;
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'no fields to update' }, { status: 400 });
+  }
+  await db().update(users).set({ ...updates, onboardedAt: new Date() }).where(eq(users.id, session.user.id));
+  const user = await getById(session.user.id);
   return NextResponse.json({ user });
 }
 

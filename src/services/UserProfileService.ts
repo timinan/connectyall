@@ -22,7 +22,7 @@ export async function getByEmail(email: string): Promise<User | null> {
 export const getProfile = getByTelegramUserId;
 
 export type UpsertProfileInput = Pick<NewUser, 'displayName'> &
-  Partial<Pick<NewUser, 'telegramUserId' | 'telegramUsername' | 'tagline' | 'selfIntro' | 'id' | 'email'>>;
+  Partial<Pick<NewUser, 'telegramUserId' | 'telegramUsername' | 'tagline' | 'shortBlurb' | 'selfIntro' | 'id' | 'email'>>;
 
 export async function upsertProfile(input: UpsertProfileInput): Promise<User> {
   // When telegramUserId is provided, upsert on telegramUserId (bot flow).
@@ -35,6 +35,7 @@ export async function upsertProfile(input: UpsertProfileInput): Promise<User> {
         telegramUserId: input.telegramUserId,
         telegramUsername: input.telegramUsername ?? null,
         tagline: input.tagline ?? null,
+        shortBlurb: input.shortBlurb ?? null,
         selfIntro: input.selfIntro ?? null,
       })
       .onConflictDoUpdate({
@@ -43,6 +44,7 @@ export async function upsertProfile(input: UpsertProfileInput): Promise<User> {
           displayName: input.displayName,
           telegramUsername: input.telegramUsername ?? null,
           tagline: input.tagline ?? null,
+          shortBlurb: input.shortBlurb ?? null,
           selfIntro: input.selfIntro ?? null,
         },
       })
@@ -55,6 +57,7 @@ export async function upsertProfile(input: UpsertProfileInput): Promise<User> {
     .set({
       displayName: input.displayName,
       tagline: input.tagline ?? null,
+      shortBlurb: input.shortBlurb ?? null,
       selfIntro: input.selfIntro ?? null,
     })
     .where(eq(users.id, input.id))
