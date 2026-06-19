@@ -35,7 +35,7 @@ export default async function Home() {
       </div>
 
       <div className="relative z-10 flex flex-col flex-1">
-        <PageHeader status={<><span className="text-brand">●</span> VOICE TO CONNECTION</>} />
+        <PageHeader status="HOME" />
         <div className="pt-3">
           <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
             <h1 className="text-4xl font-black tracking-tight leading-[1.02]">
@@ -44,7 +44,10 @@ export default async function Home() {
               y&apos;all.
             </h1>
           </div>
-          <p className="mt-4 text-[15px] text-neutral-700 leading-relaxed max-w-[280px]">
+          <div className="mt-4 font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">
+            ● VOICE TO CONNECTION
+          </div>
+          <p className="mt-2 text-[15px] text-neutral-700 leading-relaxed max-w-[280px]">
             Connectyall turns a voice memo you record after meeting someone into a connection built in an instant. Talk it out, we handle the rest.
           </p>
           <Link
