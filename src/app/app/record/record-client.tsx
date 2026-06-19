@@ -145,40 +145,42 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
             sub="Hang tight while we turn your voice into a connection."
           />
         )}
-        <div className="relative flex-1 flex flex-col items-center justify-center">
-          {/* Mic / logo + glow — centered in the available whitespace */}
-          <div className="relative flex items-center justify-center">
-            <GlowRings tone={state === 'recording' ? 'red' : 'brand'} />
-            {state === 'idle' && (
-              <button
-                onClick={start}
-                className="relative z-10 w-[150px] h-[150px] rounded-full bg-brand text-white flex items-center justify-center shadow-[0_14px_36px_rgba(124,92,255,0.40)]"
-                aria-label="Tap to record"
-              >
-                <LuMic size={50} />
-              </button>
-            )}
-            {state === 'recording' && (
-              <button
-                onClick={stop}
-                className="relative z-10 w-[150px] h-[150px] rounded-full bg-red-500 text-white flex items-center justify-center shadow-[0_14px_36px_rgba(220,38,38,0.40)]"
-                aria-label="Tap to stop"
-              >
-                <div className="w-12 h-12 rounded bg-white" />
-              </button>
-            )}
-            {state === 'uploading' && (
-              <div
-                className="logo-spinner relative z-10 w-[150px] h-[150px] rounded-3xl bg-brand text-white flex items-center justify-center font-extrabold text-[78px] shadow-[0_14px_36px_rgba(124,92,255,0.40)]"
-                style={{ perspective: 600 }}
-                aria-hidden
-              >
-                c
-              </div>
-            )}
+        <div className="flex-1 flex flex-col">
+          {/* Mic / logo + glow — vertically centered in the whitespace ABOVE the waveform */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="relative flex items-center justify-center">
+              <GlowRings tone={state === 'recording' ? 'red' : 'brand'} />
+              {state === 'idle' && (
+                <button
+                  onClick={start}
+                  className="relative z-10 w-[150px] h-[150px] rounded-full bg-brand text-white flex items-center justify-center shadow-[0_14px_36px_rgba(124,92,255,0.40)]"
+                  aria-label="Tap to record"
+                >
+                  <LuMic size={50} />
+                </button>
+              )}
+              {state === 'recording' && (
+                <button
+                  onClick={stop}
+                  className="relative z-10 w-[150px] h-[150px] rounded-full bg-red-500 text-white flex items-center justify-center shadow-[0_14px_36px_rgba(220,38,38,0.40)]"
+                  aria-label="Tap to stop"
+                >
+                  <div className="w-12 h-12 rounded bg-white" />
+                </button>
+              )}
+              {state === 'uploading' && (
+                <div
+                  className="logo-spinner relative z-10 w-[150px] h-[150px] rounded-3xl bg-brand text-white flex items-center justify-center font-extrabold text-[78px] shadow-[0_14px_36px_rgba(124,92,255,0.40)]"
+                  style={{ perspective: 600 }}
+                  aria-hidden
+                >
+                  c
+                </div>
+              )}
+            </div>
           </div>
-          {/* Waveform + caption — out of flow so the mic stays at the true center */}
-          <div className="absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3">
+          {/* Waveform + caption — in flex flow at the bottom of the section */}
+          <div className="flex flex-col items-center gap-3 pb-2">
             <div className="flex items-end justify-center gap-1 h-14 px-4">
               {levels.map((_v, i) => {
                 if (state === 'uploading') {
