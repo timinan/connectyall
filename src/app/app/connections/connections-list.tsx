@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LuSearch, LuX, LuTrash2, LuPlus, LuMic, LuArrowUpRight } from 'react-icons/lu';
-import { APP_CONTAINER } from '../_layout-constants';
+import { APP_CONTAINER_FLEX } from '../_layout-constants';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
 import { type ChannelKind } from '../cards/[id]/channel-icons';
@@ -291,17 +291,17 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
   const status = `${rows.length} ${rows.length === 1 ? 'PERSON' : 'PEOPLE'}`;
 
   return (
-    <div className={APP_CONTAINER}>
+    <div className={APP_CONTAINER_FLEX}>
       <PageHeader status={status} />
 
-      <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+      <div className="mt-4 bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
         <h1 className="text-4xl font-black leading-[1.02] tracking-tight">
           Your <span className="text-brand">connections</span>
         </h1>
       </div>
 
       {rows.length > 0 && (
-        <div className="flex items-center gap-2">
+        <div className="mt-4 flex items-center gap-2">
           <div className="relative flex-1">
             <LuSearch size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
@@ -370,7 +370,7 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
         <button
           onClick={dismissHint}
           aria-hidden={!hintVisible}
-          className={`w-full inline-flex items-center gap-2 px-3 py-2 rounded-full bg-amber-100 text-amber-800 font-mono text-[10px] tracking-[0.18em] uppercase font-semibold hover:bg-amber-200 transition-opacity duration-500 ${hintVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          className={`mt-4 w-full inline-flex items-center gap-2 px-3 py-2 rounded-full bg-amber-100 text-amber-800 font-mono text-[10px] tracking-[0.18em] uppercase font-semibold hover:bg-amber-200 transition-opacity duration-500 ${hintVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         >
           <span>✨</span>
           <span className="flex-1 text-left">SWIPE LEFT TO DELETE</span>
@@ -379,7 +379,7 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
       )}
 
       {visible && visible.length > 0 && (
-        <ul className="space-y-2">
+        <ul className="mt-4 space-y-2">
           {visible.map((c) => (
             <ConnectionRow key={c.contactId} c={c} onAskDelete={setConfirm} />
           ))}
