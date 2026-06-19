@@ -67,17 +67,17 @@ function pickBg(seed: string) {
 
 function Avatar({ profile }: { profile: { displayName: string; photoR2Url: string | null } | null }) {
   if (!profile) {
-    return <div className="w-44 h-44 rounded-full bg-line" />;
+    return <div className="w-[150px] h-[150px] rounded-full bg-line" />;
   }
   if (profile.photoR2Url) {
     // Plain img — Next.js image optimization would require absolute URLs, not worth the complexity here
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={profile.photoR2Url} alt={profile.displayName} className="w-44 h-44 rounded-full object-cover" />;
+    return <img src={profile.photoR2Url} alt={profile.displayName} className="w-[150px] h-[150px] rounded-full object-cover" />;
   }
   const initial = (profile.displayName.trim().charAt(0) || '?').toUpperCase();
   return (
     <div
-      className="w-44 h-44 rounded-full flex items-center justify-center text-white text-5xl font-extrabold"
+      className="w-[150px] h-[150px] rounded-full flex items-center justify-center text-white text-5xl font-extrabold"
       style={{ backgroundColor: pickBg(profile.displayName) }}
     >
       {initial}
@@ -187,11 +187,11 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
           <div className="relative">
             <div
               aria-hidden
-              className="glow-breathe pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.16) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)' }}
+              className="glow-breathe pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] rounded-full"
+              style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.18) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)' }}
             >
-              <div className="glow-breathe-d1 absolute inset-[44px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
-              <div className="glow-breathe-d2 absolute inset-[88px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
+              <div className="glow-breathe-d1 absolute inset-[36px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.07)' }} />
+              <div className="glow-breathe-d2 absolute inset-[70px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.14)' }} />
             </div>
             <div className="relative z-10 inline-block">
               <Avatar profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : null} />

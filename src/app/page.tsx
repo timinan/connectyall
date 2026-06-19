@@ -63,7 +63,7 @@ export default async function Home() {
           <span className="mx-2 text-neutral-300">·</span>
           <Link href="/terms" className="hover:text-neutral-950 transition">TERMS</Link>
           <span className="mx-2 text-neutral-300">·</span>
-          A PORTFOLIO PROJECT BY TIM NAN
+          A PROJECT BY TIM NAN
         </footer>
       </div>
     </main>
