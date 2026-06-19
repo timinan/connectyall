@@ -11,26 +11,42 @@ const TABS = [
   { href: '/app/connections', icon: LuUsers, label: 'Connections', match: '/app/connections' },
 ] as const;
 
+// Geometry — fixed so the indicator can be positioned by index without DOM measurement.
+const COLLAPSED = 40;
+const EXPANDED = 148;
+const GAP = 4;
+const PADDING = 6;
+
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  // Tracks which tab the user just tapped — visible "pressed" state until the new route commits.
+  // Optimistic "the user just tapped this tab" — drives the indicator before the route commits.
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
-  // Clear pending state once the pathname actually changes to the new route.
   useEffect(() => {
     if (pendingHref && pathname.startsWith(pendingHref)) setPendingHref(null);
   }, [pathname, pendingHref]);
 
+  // Which tab the indicator + label should snap to right now (pending wins so the slide
+  // starts the moment the user taps, before the new page has finished rendering).
+  const targetHref =
+    pendingHref ??
+    TABS.find((t) => pathname.startsWith(t.match))?.href ??
+    TABS[1].href;
+  const targetIndex = Math.max(0, TABS.findIndex((t) => t.href === targetHref));
+
+  // Indicator slides between tab positions. All collapsed tabs are COLLAPSED wide; the
+  // active one expands to EXPANDED. We compute the active tab's left by summing the
+  // widths of the inactive tabs before it.
+  const indicatorLeft = PADDING + targetIndex * (COLLAPSED + GAP);
+
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
     if (pathname.startsWith(href)) return;
-    const currentIndex = TABS.findIndex(t => pathname.startsWith(t.match));
-    const nextIndex = TABS.findIndex(t => t.href === href);
+    const currentIndex = TABS.findIndex((t) => pathname.startsWith(t.match));
+    const nextIndex = TABS.findIndex((t) => t.href === href);
     const direction: 'left' | 'right' = nextIndex > currentIndex ? 'right' : 'left';
     setPendingHref(href);
 
-    // Use the View Transitions API when available — animates the page swap.
-    // The direction class drives a directional slide via CSS in globals.css.
     const supportsVT = typeof document !== 'undefined' && 'startViewTransition' in document;
     if (supportsVT) {
       e.preventDefault();
@@ -39,21 +55,30 @@ export function BottomNav() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const transition = (document as any).startViewTransition(() => router.push(href));
       transition.finished.finally(() => {
-        root.classList.remove(`vt-slide-left`);
-        root.classList.remove(`vt-slide-right`);
+        root.classList.remove('vt-slide-left');
+        root.classList.remove('vt-slide-right');
       });
     }
-    // If unsupported, let the Link handle navigation normally (no preventDefault).
   }
 
   return (
     <nav
-      className="bnav-pin fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-[#0F0F12] text-white rounded-full p-1.5 flex gap-1 items-center shadow-[0_6px_20px_rgba(0,0,0,0.25)]"
+      className="bnav-pin fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-[#0F0F12] rounded-full flex items-center shadow-[0_6px_20px_rgba(0,0,0,0.25)] relative"
+      style={{ padding: `${PADDING}px`, gap: `${GAP}px` }}
     >
-      {TABS.map(({ href, icon: Icon, label, match }) => {
-        const active = pathname.startsWith(match);
-        const isPending = pendingHref === href;
-        const expanded = active || isPending;
+      {/* Single sliding indicator behind the active tab — animates left + width together */}
+      <span
+        aria-hidden
+        className="absolute bg-brand rounded-full transition-[left,width] duration-300 ease-out pointer-events-none"
+        style={{
+          left: `${indicatorLeft}px`,
+          width: `${EXPANDED}px`,
+          top: `${PADDING}px`,
+          height: '40px',
+        }}
+      />
+      {TABS.map(({ href, icon: Icon, label }, i) => {
+        const isTarget = i === targetIndex;
         return (
           <Link
             key={href}
@@ -62,23 +87,19 @@ export function BottomNav() {
             onClick={(e) => handleClick(e, href)}
             aria-label={label}
             className={`
-              inline-flex items-center h-10 rounded-full overflow-hidden
-              transition-all duration-300 ease-out will-change-[width]
+              relative z-10 inline-flex items-center h-10 rounded-full pl-3 gap-1.5 overflow-hidden
+              transition-[width,color] duration-300 ease-out will-change-[width]
               active:scale-95
-              ${expanded
-                ? 'bg-brand text-white'
-                : 'text-zinc-400 hover:text-white'}
+              ${isTarget ? 'text-white' : 'text-zinc-400 hover:text-white'}
             `}
-            style={{ width: expanded ? '148px' : '40px' }}
+            style={{ width: isTarget ? `${EXPANDED}px` : `${COLLAPSED}px` }}
           >
-            <span className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-              <Icon size={16} />
-            </span>
+            <Icon size={16} className="flex-shrink-0" />
             <span
               className={`
-                text-sm font-semibold whitespace-nowrap pr-4 -ml-1
+                text-sm font-semibold whitespace-nowrap
                 transition-opacity duration-200
-                ${expanded ? 'opacity-100 delay-100' : 'opacity-0 pointer-events-none'}
+                ${isTarget ? 'opacity-100 delay-100' : 'opacity-0 pointer-events-none'}
               `}
             >
               {label}
