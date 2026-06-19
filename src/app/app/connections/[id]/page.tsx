@@ -85,19 +85,27 @@ function EditableHeading({ value, onSave }: EditableHeadingProps) {
           if (e.key === 'Enter') commit();
           if (e.key === 'Escape') { setDraft(value); setEditing(false); }
         }}
-        className="text-[30px] font-extrabold tracking-tight w-full px-2 py-1 rounded-lg bg-cream border border-line text-neutral-950"
+        className="w-full bg-transparent text-neutral-950 outline-none border-b-2 border-brand"
+        style={{ font: 'inherit', letterSpacing: 'inherit' }}
       />
     );
   }
 
+  const parts = value.trim().split(/\s+/);
+  const first = parts[0] ?? value;
+  const rest = parts.slice(1).join(' ');
+
   return (
     <button
-      className="text-left text-neutral-950 hover:text-neutral-700 transition-colors flex items-center gap-2"
+      className="text-left text-neutral-950 hover:opacity-80 transition-opacity flex items-baseline gap-3 w-full"
       onClick={() => { setDraft(value); setEditing(true); }}
       title="Tap to edit name"
     >
-      <span>{value}</span>
-      <LuPencil size={16} className="text-neutral-400" />
+      <span className="flex-1 min-w-0">
+        {first}
+        {rest && <> <span className="text-brand">{rest}</span></>}
+      </span>
+      <LuPencil size={18} className="text-neutral-400 flex-shrink-0 self-center" />
     </button>
   );
 }
@@ -234,7 +242,7 @@ function EditableField({
           href={sendHref}
           target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
           rel="noopener noreferrer"
-          className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-neutral-950 text-white text-xs font-medium hover:bg-neutral-800 transition-colors"
+          className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-brand text-white text-xs font-medium hover:opacity-90 transition-opacity"
           title="Send via this channel"
         >
           <LuSend size={14} />
@@ -338,7 +346,7 @@ function AddField({ existing, onAdd }: AddFieldProps) {
             }
             className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-neutral-950 text-sm min-w-0"
           />
-          <button onClick={handleAdd} className="flex-shrink-0 text-sm px-3 py-1 rounded-full bg-neutral-950 text-white font-semibold hover:bg-neutral-800 transition">Add</button>
+          <button onClick={handleAdd} className="flex-shrink-0 text-sm px-3 py-1 rounded-full bg-brand text-white font-semibold hover:opacity-90 transition">Add</button>
         </>
       )}
       <button
@@ -457,7 +465,7 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
         <PageHeader />
         <div className={`${CARD_BASE} px-5 py-8 text-center space-y-3`}>
           <p className="text-neutral-700">Connection not found.</p>
-          <Link href="/app/connections" className="inline-block px-4 py-2 rounded-full bg-neutral-950 text-white text-sm font-semibold hover:bg-neutral-800 transition">
+          <Link href="/app/connections" className="inline-block px-4 py-2 rounded-full bg-brand text-white text-sm font-semibold hover:opacity-90 transition">
             Back to connections
           </Link>
         </div>
@@ -522,12 +530,11 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
     <div className={APP_CONTAINER}>
       <PageHeader status={`${meetingsCount} MEETINGS`} />
 
-      {/* Editable heading: contact name */}
-      <div className={`${CARD_BASE} px-5 py-5`}>
-        <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">CONTACT</div>
-        <div className="mt-1 text-[30px] font-extrabold tracking-tight">
+      {/* Headline banner — editable contact name, matches every other page's banner */}
+      <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+        <h1 className="text-4xl font-black leading-[1.02] tracking-tight">
           <EditableHeading value={contactName} onSave={saveName} />
-        </div>
+        </h1>
       </div>
 
       {/* Notes + Recap sections */}
@@ -708,7 +715,7 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
               download
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-line bg-surface text-neutral-950 text-xs font-semibold whitespace-nowrap"
             >
-              {(() => { const first = contactName.trim().split(/\s+/)[0]; return first ? `💾 Save ${first} to contacts` : '💾 Save to contacts'; })()}
+              {(() => { const first = contactName.trim().split(/\s+/)[0]; return first ? `💾 Save ${first} to phone` : '💾 Save to phone'; })()}
             </a>
           </div>
         </div>
@@ -727,7 +734,7 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
       )}
       <Link
         href="/app/record"
-        className="block w-full px-4 py-3 rounded-full bg-neutral-950 text-white font-semibold text-center hover:bg-neutral-800 transition"
+        className="block w-full px-4 py-3 rounded-full bg-brand text-white font-semibold text-center hover:opacity-90 transition shadow-[0_12px_28px_rgba(124,92,255,0.35)]"
       >
         ✓ Save
       </Link>
