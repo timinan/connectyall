@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LuSearch, LuX, LuTrash2, LuPlus, LuMic, LuArrowUpRight } from 'react-icons/lu';
+import { LuSearch, LuX, LuTrash2, LuPlus, LuMic } from 'react-icons/lu';
 import { APP_CONTAINER_FLEX } from '../_layout-constants';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
@@ -21,15 +21,19 @@ type Connection = {
 
 type SortKey = 'recent' | 'first' | 'last';
 
-const PALETTE: Array<{ bg: string; text: string }> = [
-  { bg: '#7C5CFF', text: '#FFFFFF' },  // brand purple, white letter
-  { bg: '#0A0A0A', text: '#FFFFFF' },  // black, white letter
-  { bg: '#E9D5FF', text: '#7C5CFF' },  // soft lavender, purple letter
-];
-function pickPalette(seed: string) {
+// Initials colors — alternating brand purple / black, deterministic per name
+const INITIALS_COLORS = ['#7C5CFF', '#0A0A0A'];
+function pickInitialsColor(seed: string): string {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return PALETTE[h % PALETTE.length];
+  return INITIALS_COLORS[h % INITIALS_COLORS.length];
+}
+function makeInitials(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return '?';
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
 function firstNameKey(name: string): string {
@@ -61,19 +65,6 @@ const CHANNEL_TAG: Record<ChannelKind, string> = {
   line: 'LINE',
 };
 
-function Bubble({ name }: { name: string }) {
-  const letter = (name.trim().charAt(0) || '?').toUpperCase();
-  const { bg, text } = pickPalette(name);
-  return (
-    <div
-      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-extrabold flex-shrink-0"
-      style={{ backgroundColor: bg, color: text }}
-    >
-      {letter}
-    </div>
-  );
-}
-
 const SWIPE_THRESHOLD = 80;
 const SWIPE_MAX_TRANSLATE = 120;
 const HINT_STORAGE_KEY = 'connectyall:swipe-hint-dismissed';
@@ -91,10 +82,12 @@ function ConnectionRow({ c, onAskDelete }: RowProps) {
   const startY = useRef<number | null>(null);
   const intercepted = useRef(false);
   const subParts: string[] = [];
-  if (c.company) subParts.push(c.company);
   if (c.role) subParts.push(c.role);
+  if (c.company) subParts.push(c.company);
   const subText = subParts.join(' · ');
   const tag = c.preferredChannel ? CHANNEL_TAG[c.preferredChannel] : null;
+  const initials = makeInitials(c.name);
+  const initialsColor = pickInitialsColor(c.name);
 
   function onTouchStart(e: React.TouchEvent) {
     startX.current = e.touches[0].clientX;
@@ -138,7 +131,7 @@ function ConnectionRow({ c, onAskDelete }: RowProps) {
   return (
     <li className="relative">
       <div
-        className="absolute inset-0 rounded-3xl bg-red-500 flex items-center justify-end pr-6 pointer-events-none"
+        className="absolute inset-0 rounded-r-2xl bg-red-500 flex items-center justify-end pr-6 pointer-events-none"
         style={{ opacity: Math.min(1, Math.abs(translateX) / SWIPE_THRESHOLD) }}
       >
         <LuTrash2 size={22} className="text-white" />
@@ -153,22 +146,29 @@ function ConnectionRow({ c, onAskDelete }: RowProps) {
           transform: `translateX(${translateX}px)`,
           transition: animating ? 'transform 0.2s ease-out' : 'none',
         }}
-        className="relative flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:border-brand/40 transition"
+        className="relative flex items-center gap-4 pl-4 pr-4 py-4 rounded-r-2xl bg-white border-l-4 border-brand shadow-[0_8px_24px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.08)] transition-shadow"
       >
-        <Bubble name={c.name} />
+        <div
+          className="text-[30px] font-black tracking-tight leading-none min-w-[52px] flex-shrink-0"
+          style={{ color: initialsColor }}
+        >
+          {initials}
+        </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-[14px] text-neutral-950 truncate">{c.name}</p>
-          {(subText || tag) && (
-            <p className="text-[11px] text-muted truncate mt-0.5">
+          <p className="font-bold text-[15px] text-neutral-950 truncate">{c.name}</p>
+          {subText && (
+            <p className="font-mono text-[10px] tracking-[0.12em] text-muted font-semibold uppercase truncate mt-1">
               {subText}
-              {subText && tag && <span className="mx-1">·</span>}
-              {tag && <span className="font-mono text-brand tracking-[0.1em] font-bold">{tag}</span>}
             </p>
           )}
         </div>
-        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <span className="font-mono text-[10px] tracking-[0.15em] text-muted font-medium">{relativeDateMono(c.lastTouchedAt)}</span>
-          <LuArrowUpRight size={14} className="text-neutral-400" />
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <span className="font-mono text-[10px] tracking-[0.18em] text-neutral-400 font-semibold uppercase">{relativeDateMono(c.lastTouchedAt)}</span>
+          {tag && (
+            <span className="font-mono text-[9.5px] tracking-[0.14em] text-brand font-bold uppercase bg-[#E9DDFF] px-2 py-1 rounded">
+              {tag}
+            </span>
+          )}
         </div>
       </Link>
     </li>
