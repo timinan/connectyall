@@ -211,7 +211,7 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
               name="displayName"
               placeholder="Display name (Tim Nan)"
               required
-              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-[17px] font-bold tracking-tight"
+              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-sm"
               defaultValue={profile?.displayName ?? ''}
               key={`name-${profile?.displayName ?? ''}`}
             />
@@ -223,7 +223,7 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
             <input
               name="tagline"
               placeholder="One-liner (PM building crypto products)"
-              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-[17px] font-bold tracking-tight"
+              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-sm"
               defaultValue={profile?.tagline ?? ''}
               key={`tagline-${profile?.tagline ?? ''}`}
             />
@@ -348,7 +348,7 @@ function ChannelRow({
         onChange={(e) => setValue(e.target.value)}
         onBlur={() => { if (value.trim() && value !== initialValue) onSave(value.trim()); }}
         placeholder={PROFILE_CHANNEL_PLACEHOLDERS[kind]}
-        className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-[15px] font-bold tracking-tight"
+        className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-sm"
       />
       <LuPencil size={13} className="text-neutral-400 flex-shrink-0" />
       <button
