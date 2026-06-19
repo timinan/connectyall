@@ -3,8 +3,8 @@ import { Resvg } from '@resvg/resvg-js';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Socials } from '../lib/db/schema';
-import { linkedinUrl, xUrl, telegramUrl, websiteUrl } from '../lib/social-urls';
 import { downloadObject } from '../lib/r2/client';
+import { buildShareMessage } from '../lib/share-message';
 
 async function loadPhotoDataUrl(photoR2Url: string | null): Promise<string | null> {
   if (!photoR2Url) return null;
@@ -37,33 +37,36 @@ export type CardProfile = {
   socials: Socials;
 };
 
-function socialsBlock(profile: CardProfile): string {
-  const lines: string[] = [];
-  if (profile.telegramUsername) lines.push(`📱 ${telegramUrl(profile.telegramUsername)}`);
-  if (profile.socials.x) lines.push(`🐦 ${xUrl(profile.socials.x)}`);
-  if (profile.socials.linkedin) lines.push(`💼 ${linkedinUrl(profile.socials.linkedin)}`);
-  if (profile.socials.email) lines.push(`📧 ${profile.socials.email}`);
-  if (profile.socials.website) lines.push(`🌐 ${websiteUrl(profile.socials.website)}`);
-  return lines.join('\n');
-}
-
+// Server-side wrapper around buildShareMessage that enforces the SMS/caption
+// length cap. The new template only embeds a single share URL, not a full
+// socials block — the public landing at shareUrl already lists every channel,
+// so we don't have to cram them all into the message.
 export function buildCaption(input: {
-  profile: CardProfile;
   contactName: string;
   recap: string;
+  shareUrl: string | null;
 }): string {
-  const { profile, contactName, recap } = input;
-  const socials = socialsBlock(profile);
-  const build = (r: string) =>
-    `Hey ${contactName}, great meeting you today.\n\nQuick recap: ${r}\n\nConnect with me:\n${socials}`;
-
-  let caption = build(recap);
-  if (caption.length <= CAPTION_MAX) return caption;
-
-  // Truncate recap to fit. Reserve room for the rest of the template.
-  const overhead = caption.length - recap.length;
-  const allowedRecap = Math.max(0, CAPTION_MAX - overhead - 3); // 3 for "..."
-  return build(recap.slice(0, allowedRecap).trimEnd() + '...');
+  const { contactName, shareUrl } = input;
+  // Shrink the recap iteratively until the rendered message fits. Realistic
+  // recaps clear the cap in one shot; this loop is the durable safety net.
+  // Use the unicode ellipsis (…) — buildShareMessage's trailing-punct strip
+  // matches /[.!?]+$/ and would eat plain "..." otherwise.
+  let recap = input.recap;
+  let truncated = false;
+  for (let i = 0; i < 8; i++) {
+    const draft = truncated ? recap + '…' : recap;
+    const msg = buildShareMessage({ contactName, recap: draft, shareUrl });
+    if (msg.length <= CAPTION_MAX) return msg;
+    const over = msg.length - CAPTION_MAX;
+    if (over >= recap.length) {
+      recap = '';
+    } else {
+      recap = recap.slice(0, recap.length - over).trimEnd();
+    }
+    truncated = true;
+  }
+  // Final fallback — pathological inputs (e.g. shareUrl alone over cap).
+  return buildShareMessage({ contactName, recap: '', shareUrl });
 }
 
 // 512×512 — sized to read well as a chat-thread image without dominating.
