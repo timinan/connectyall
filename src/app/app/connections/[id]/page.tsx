@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { use, useEffect, useRef, useState } from 'react';
 import { LuStar, LuPencil, LuX as LuXIcon, LuCheck } from 'react-icons/lu';
 import {
@@ -530,6 +531,7 @@ function PastMeeting({ occurredAt, recap }: { occurredAt: string; recap: string 
 // ---------------------------------------------------------------------------
 export default function ConnectionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const [data, setData] = useState<Data | null>(null);
   const [notFound, setNotFound] = useState(false);
 
@@ -910,12 +912,19 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
           </ul>
         </div>
       )}
-      <Link
-        href="/app/record"
+      <button
+        type="button"
+        onClick={() => {
+          // Invalidate the connections list router cache so the new/updated
+          // contact shows up immediately when we land on /app/connections
+          // instead of stale-prefetched data.
+          router.refresh();
+          router.push('/app/connections');
+        }}
         className="block w-full px-4 py-4 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase text-center hover:opacity-90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
       >
         Save
-      </Link>
+      </button>
       <BottomNav />
     </div>
   );

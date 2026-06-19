@@ -102,6 +102,10 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
         return;
       }
       if (payload.status === 'ready') {
+        // Invalidate the connections-list router cache now that a new contact
+        // exists, so taps on the Connections tab from anywhere show it without
+        // a manual refresh.
+        router.refresh();
         router.push(`/app/connections/${payload.contact.id}`);
         return;
       }
