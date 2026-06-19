@@ -21,8 +21,12 @@ type Connection = {
 
 type SortKey = 'recent' | 'first' | 'last';
 
-const PALETTE = ['#0E7C7B', '#3B3B6D', '#A23B72', '#D1495B', '#2E294E'];
-function pickBg(seed: string) {
+const PALETTE: Array<{ bg: string; text: string }> = [
+  { bg: '#7C5CFF', text: '#FFFFFF' },  // brand purple, white letter
+  { bg: '#0A0A0A', text: '#FFFFFF' },  // black, white letter
+  { bg: '#E9D5FF', text: '#7C5CFF' },  // soft lavender, purple letter
+];
+function pickPalette(seed: string) {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
   return PALETTE[h % PALETTE.length];
@@ -59,10 +63,11 @@ const CHANNEL_TAG: Record<ChannelKind, string> = {
 
 function Bubble({ name }: { name: string }) {
   const letter = (name.trim().charAt(0) || '?').toUpperCase();
+  const { bg, text } = pickPalette(name);
   return (
     <div
-      className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-      style={{ backgroundColor: pickBg(name) }}
+      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-extrabold flex-shrink-0"
+      style={{ backgroundColor: bg, color: text }}
     >
       {letter}
     </div>
@@ -148,7 +153,7 @@ function ConnectionRow({ c, onAskDelete }: RowProps) {
           transform: `translateX(${translateX}px)`,
           transition: animating ? 'transform 0.2s ease-out' : 'none',
         }}
-        className="relative flex items-center gap-3 px-3.5 py-3 rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:border-brand/40 transition"
+        className="relative flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:border-brand/40 transition"
       >
         <Bubble name={c.name} />
         <div className="flex-1 min-w-0">
@@ -290,19 +295,10 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
     <div className={APP_CONTAINER}>
       <PageHeader status={status} />
 
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-          <h1 className="text-5xl font-black leading-[1.02] tracking-tight">
-            Your <span className="text-brand">network</span>
-          </h1>
-        </div>
-        <Link
-          href="/app/record"
-          aria-label="Record a new connection"
-          className="flex-shrink-0 w-11 h-11 mt-2 rounded-full bg-brand text-white flex items-center justify-center shadow-[0_6px_16px_rgba(124,92,255,0.35)] hover:opacity-90 transition"
-        >
-          <LuPlus size={22} />
-        </Link>
+      <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+        <h1 className="text-4xl font-black leading-[1.02] tracking-tight">
+          Your <span className="text-brand">connections</span>
+        </h1>
       </div>
 
       {rows.length > 0 && (
@@ -385,7 +381,7 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
       )}
 
       {visible && visible.length > 0 && (
-        <ul className="space-y-3">
+        <ul className="space-y-2">
           {visible.map((c) => (
             <ConnectionRow key={c.contactId} c={c} onAskDelete={setConfirm} />
           ))}
