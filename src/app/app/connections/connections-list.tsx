@@ -348,8 +348,8 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
               Record your first voice memo and they&apos;ll show up here automatically.
             </p>
           </div>
-          <div className="flex-1 flex flex-col items-center justify-end pb-16">
-            <div className="relative flex items-center justify-center py-6">
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <div className="relative flex items-center justify-center">
               <GlowRings />
               <Link
                 href="/app/record"
