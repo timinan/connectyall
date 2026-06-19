@@ -39,11 +39,11 @@ export function ChannelIcon({ kind, size = 18 }: { kind: ChannelKind; size?: num
 //
 // Notes on the trickier ones:
 //   - Instagram: `ig.me/m/<handle>` opens DM directly (official Meta deep link)
+//   - WeChat:    `weixin://dl/chat?<id>` opens a chat with that WeChat ID
 //   - Telegram:  `t.me/<handle>` only opens the profile; Telegram has no public
 //     URL scheme for "compose a message to <handle>" for regular users.
 //   - X (Twitter): DM compose requires a numeric user ID, which we don't have
 //     from the handle, so we can only link to the profile.
-//   - WeChat: no usable web URL scheme; meaningful action is to copy the ID.
 export function channelAction(kind: ChannelKind): 'send' | 'visit' | 'copy' {
   switch (kind) {
     case 'email':
@@ -52,13 +52,12 @@ export function channelAction(kind: ChannelKind): 'send' | 'visit' | 'copy' {
     case 'line':
     case 'messenger':
     case 'instagram':
+    case 'wechat':
       return 'send';
     case 'telegram':
     case 'x':
     case 'linkedin':
     case 'website':
       return 'visit';
-    case 'wechat':
-      return 'copy';
   }
 }
