@@ -2,51 +2,46 @@ import { describe, it, expect } from 'vitest';
 import { buildCaption } from './CardService';
 
 describe('buildCaption', () => {
-  it('includes recap and all set socials', () => {
+  it('uses the chatting-about template with the public share URL footer', () => {
     const caption = buildCaption({
-      profile: {
-        displayName: 'Tim Nan',
-        tagline: 'PM building crypto products',
-        telegramUsername: 'timnan',
-        socials: { x: 'timnan', linkedin: 'in/timnan', email: 'tim@example.com', website: 'tim.dev' },
-      },
       contactName: 'Sarah',
-      recap: 'we talked about USDC replacing bank rails',
+      recap: 'her startup pivot from B2B to consumer',
+      shareUrl: 'https://connectyall.vercel.app/c/abc',
     });
-
-    expect(caption).toContain('Hey Sarah');
-    expect(caption).toContain('USDC replacing bank rails');
-    expect(caption).toContain('t.me/timnan');
-    expect(caption).toContain('x.com/timnan');
-    expect(caption).toContain('in/timnan');
-    expect(caption).toContain('tim@example.com');
-    expect(caption).toContain('tim.dev');
+    expect(caption).toContain('Hey Sarah, it was great meeting and chatting about her startup pivot from B2B to consumer with you!');
+    expect(caption).toContain('Connect with me: https://connectyall.vercel.app/c/abc');
   });
 
-  it('omits socials that are not set', () => {
+  it('strips trailing punctuation from the recap so it lands cleanly in the sentence', () => {
     const caption = buildCaption({
-      profile: { displayName: 'Tim Nan', tagline: null, telegramUsername: 'timnan', socials: {} },
       contactName: 'Sarah',
-      recap: 'short recap',
+      recap: 'her PhD research on protein folding.',
+      shareUrl: 'https://x/y',
     });
-    expect(caption).toContain('t.me/timnan');
-    expect(caption).not.toContain('x.com');
-    expect(caption).not.toContain('linkedin');
+    expect(caption).toContain('protein folding with you!');
+    expect(caption).not.toContain('folding. with you');
   });
 
-  it('truncates recap when caption would exceed 1024 chars', () => {
-    const longRecap = 'we talked '.repeat(200);
+  it('falls back to a plain greeting when there is no recap', () => {
     const caption = buildCaption({
-      profile: {
-        displayName: 'Tim', tagline: null, telegramUsername: 'timnan',
-        socials: { x: 'timnan', linkedin: 'in/timnan', email: 'tim@example.com' },
-      },
+      contactName: 'Sarah',
+      recap: '',
+      shareUrl: 'https://x/y',
+    });
+    expect(caption).toContain('Hey Sarah, it was great meeting you!');
+  });
+
+  it('truncates the recap when the message would exceed 1024 chars', () => {
+    const longRecap = 'a really long topic '.repeat(80);
+    const caption = buildCaption({
       contactName: 'Sarah',
       recap: longRecap,
+      shareUrl: 'https://connectyall.vercel.app/c/abc',
     });
     expect(caption.length).toBeLessThanOrEqual(1024);
-    expect(caption).toContain('t.me/timnan');
-    expect(caption).toContain('x.com/timnan');
-    expect(caption).toContain('tim@example.com');
+    // Footer is still intact after truncation
+    expect(caption).toContain('Connect with me: https://connectyall.vercel.app/c/abc');
+    // Recap got the elision marker (unicode ellipsis, not three periods)
+    expect(caption).toContain('…');
   });
 });
