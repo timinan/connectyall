@@ -161,23 +161,24 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
     <div className={APP_CONTAINER}>
       <PageHeader status="PROFILE" />
 
-      <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-        <h1 className="text-4xl font-black leading-[1.02] tracking-tight">
-          Your <span className="text-brand">profile</span>
-        </h1>
-      </div>
+      <div className="relative">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-16 w-[380px] h-[380px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.16) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)' }}
+        >
+          <div className="absolute inset-[50px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
+          <div className="absolute inset-[100px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
+        </div>
 
-      <div className="flex flex-col items-center mt-2 pt-2 pb-10">
-        <div className="relative flex items-center justify-center">
-          <div
-            aria-hidden
-            className="absolute w-[220px] h-[220px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.14) 0%, rgba(124, 92, 255, 0.04) 60%, rgba(124, 92, 255, 0) 80%)' }}
-          >
-            <div className="absolute inset-[24px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
-            <div className="absolute inset-[48px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
-          </div>
-          <div className="relative inline-block z-10">
+        <div className="relative z-10 bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <h1 className="text-4xl font-black leading-[1.02] tracking-tight">
+            Your <span className="text-brand">profile</span>
+          </h1>
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center mt-2 pt-2 pb-10">
+          <div className="relative inline-block">
             <Avatar profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : null} />
             <button
               type="button"
@@ -196,11 +197,10 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
             />
           </div>
         </div>
-      </div>
 
       <form
         onSubmit={(e) => { e.preventDefault(); saveBasics(e.currentTarget); }}
-        className="space-y-4"
+        className="relative z-10 space-y-4"
       >
         <div className="rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-5 py-4">
           <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">NAME</div>
@@ -262,6 +262,7 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
           {saving ? 'Saving…' : 'Save and start connecting'}
         </button>
       </form>
+      </div>
 
       <div className="flex gap-2 mt-2">
         <button
