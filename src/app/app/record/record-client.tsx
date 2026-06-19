@@ -130,7 +130,7 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
         )}
         {state === 'recording' && (
           <Top
-            label={<><span className="text-red-600">●</span> RECORDING · {fmtTime(elapsed)}</>}
+            label={<>RECORDING · {fmtTime(elapsed)}</>}
             labelTone="red"
             headlineFirst="Listening"
             headlineAccent="closely."
@@ -139,7 +139,7 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
         )}
         {state === 'uploading' && (
           <Top
-            label={<>● PROCESSING</>}
+            label="PROCESSING"
             headlineFirst="Connecting"
             headlineAccent="y'all…"
             sub="Hang tight while we turn your voice into a connection."
@@ -227,7 +227,7 @@ function Top({
         </h1>
       </div>
       <div className={`mt-4 pl-5 font-mono text-[13px] tracking-[0.2em] font-semibold uppercase ${labelTone === 'red' ? 'text-red-600' : 'text-muted'}`}>
-        {label}
+        ● {label}
       </div>
       <p className="mt-2 pl-5 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">{sub}</p>
     </div>
@@ -239,13 +239,13 @@ function GlowRings({ tone }: { tone: 'brand' | 'red' }) {
   return (
     <div
       aria-hidden
-      className="absolute w-[300px] h-[300px] rounded-full"
+      className="glow-breathe absolute w-[400px] h-[400px] rounded-full pointer-events-none"
       style={{
-        background: `radial-gradient(circle, rgba(${rgb}, 0.14) 0%, rgba(${rgb}, 0.04) 60%, rgba(${rgb}, 0) 80%)`,
+        background: `radial-gradient(circle, rgba(${rgb}, 0.18) 0%, rgba(${rgb}, 0.05) 60%, rgba(${rgb}, 0) 80%)`,
       }}
     >
-      <div className="absolute inset-[30px] rounded-full" style={{ background: `rgba(${rgb}, 0.06)` }} />
-      <div className="absolute inset-[60px] rounded-full" style={{ background: `rgba(${rgb}, 0.12)` }} />
+      <div className="absolute inset-[44px] rounded-full" style={{ background: `rgba(${rgb}, 0.07)` }} />
+      <div className="absolute inset-[88px] rounded-full" style={{ background: `rgba(${rgb}, 0.14)` }} />
     </div>
   );
 }
