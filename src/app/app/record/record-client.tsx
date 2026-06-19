@@ -226,10 +226,10 @@ function Top({
           <span className="text-brand">{headlineAccent}</span>
         </h1>
       </div>
-      <div className={`mt-4 font-mono text-[13px] tracking-[0.2em] font-semibold uppercase ${labelTone === 'red' ? 'text-red-600' : 'text-muted'}`}>
+      <div className={`mt-4 pl-5 font-mono text-[13px] tracking-[0.2em] font-semibold uppercase ${labelTone === 'red' ? 'text-red-600' : 'text-muted'}`}>
         {label}
       </div>
-      <p className="mt-2 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">{sub}</p>
+      <p className="mt-2 pl-5 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">{sub}</p>
     </div>
   );
 }
