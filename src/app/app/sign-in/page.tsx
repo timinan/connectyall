@@ -90,7 +90,7 @@ export default function SignInPage() {
                 <button
                   type="submit"
                   disabled={status === 'sending'}
-                  className="w-full px-5 py-5 rounded-full bg-brand text-white font-bold text-[16px] disabled:opacity-50 hover:bg-brand/90 transition shadow-[0_12px_32px_rgba(124,92,255,0.35)]"
+                  className="w-full h-16 px-5 rounded-full bg-brand text-white font-bold text-[16px] disabled:opacity-50 hover:bg-brand/90 transition shadow-[0_12px_32px_rgba(124,92,255,0.35)]"
                 >
                   {status === 'sending' ? 'Sending…' : 'Send code'}
                 </button>
@@ -117,7 +117,7 @@ export default function SignInPage() {
                 <button
                   type="submit"
                   disabled={status === 'verifying' || otp.length < 6}
-                  className="w-full px-5 py-5 rounded-full bg-brand text-white font-bold text-[16px] disabled:opacity-50 hover:bg-brand/90 transition shadow-[0_12px_32px_rgba(124,92,255,0.35)]"
+                  className="w-full h-16 px-5 rounded-full bg-brand text-white font-bold text-[16px] disabled:opacity-50 hover:bg-brand/90 transition shadow-[0_12px_32px_rgba(124,92,255,0.35)]"
                 >
                   {status === 'verifying' ? 'Signing in…' : 'Sign in'}
                 </button>
@@ -157,7 +157,9 @@ function Top({
   sub: React.ReactNode;
 }) {
   return (
-    <div>
+    // Fixed min-height so the form below lands at the same y-position
+    // regardless of how many lines the sub paragraph wraps to.
+    <div className="min-h-[220px]">
       <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
         <h1 className="text-4xl font-black leading-[1.02] tracking-tight">
           {headlineFirst}
