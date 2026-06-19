@@ -168,33 +168,35 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
           </h1>
         </div>
 
-        <div className="relative flex flex-col items-center mt-2 pt-2 pb-10">
-          {/* Glow centered on the avatar — extends behind banner above + first card below */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.16) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)' }}
-          >
-            <div className="absolute inset-[44px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
-            <div className="absolute inset-[88px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
-          </div>
-          <div className="relative z-10 inline-block">
-            <Avatar profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : null} />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Change photo"
-              className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-neutral-950 text-white flex items-center justify-center shadow ring-2 ring-cream"
+        <div className="flex flex-col items-center mt-2 pt-2 pb-10">
+          {/* Inner wrapper is exactly avatar-sized so the glow centers ON THE AVATAR, not the block */}
+          <div className="relative">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] rounded-full"
+              style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.16) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)' }}
             >
-              <LuCamera size={18} />
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
-            />
+              <div className="absolute inset-[44px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
+              <div className="absolute inset-[88px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
+            </div>
+            <div className="relative z-10 inline-block">
+              <Avatar profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : null} />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Change photo"
+                className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-neutral-950 text-white flex items-center justify-center shadow ring-2 ring-cream"
+              >
+                <LuCamera size={18} />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
+              />
+            </div>
           </div>
         </div>
 
