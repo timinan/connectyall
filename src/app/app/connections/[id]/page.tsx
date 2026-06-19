@@ -139,9 +139,9 @@ function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps)
   }, [editing]);
 
   async function commit() {
-    setEditing(false);
     const trimmed = draft.trim();
     const next = trimmed || null;
+    setEditing(false);
     if (next !== value) await onSave(next);
   }
 
@@ -167,6 +167,7 @@ function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps)
         />
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={commit}
           aria-label="Save"
           className="flex-shrink-0 p-1.5 rounded text-brand hover:bg-brand/10 transition mt-0.5"
@@ -175,6 +176,7 @@ function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps)
         </button>
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={cancel}
           aria-label="Cancel"
           className="flex-shrink-0 p-1.5 rounded text-neutral-500 hover:bg-neutral-100 transition mt-0.5"
@@ -225,8 +227,9 @@ function EditableField({
   useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
 
   async function commit() {
+    const next = draft;
     setEditing(false);
-    if (draft !== value) await onSave(draft);
+    if (next !== value) await onSave(next);
   }
 
   return (
@@ -261,6 +264,7 @@ function EditableField({
           />
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={commit}
             aria-label="Save"
             className="flex-shrink-0 p-1.5 rounded text-brand hover:bg-brand/10 transition"
@@ -269,6 +273,7 @@ function EditableField({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => { setDraft(value); setEditing(false); }}
             aria-label="Cancel"
             className="flex-shrink-0 p-1.5 rounded text-neutral-500 hover:bg-neutral-100 transition"
@@ -345,6 +350,12 @@ function AddField({ existing, onAdd }: AddFieldProps) {
   const [expanded, setExpanded] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<PreferredChannel | ''>('');
   const [value, setValue] = useState('');
+  const valueInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus the value input the moment a channel is picked
+  useEffect(() => {
+    if (selectedChannel) valueInputRef.current?.focus();
+  }, [selectedChannel]);
 
   if (available.length === 0) return null;
 
@@ -354,6 +365,25 @@ function AddField({ existing, onAdd }: AddFieldProps) {
     setSelectedChannel('');
     setValue('');
     setExpanded(false);
+  }
+
+  function reset() {
+    setSelectedChannel('');
+    setValue('');
+    setExpanded(false);
+  }
+
+  function placeholderFor(c: PreferredChannel): string {
+    if (c === 'telegram') return 'handle (no @)';
+    if (c === 'email') return 'email@example.com';
+    if (c === 'phone') return '+1 555 1234';
+    if (c === 'whatsapp') return 'phone digits (e.g. 14155551234)';
+    if (c === 'wechat') return 'WeChat ID';
+    if (c === 'line') return 'Line ID (no @)';
+    if (c === 'x') return 'x handle';
+    if (c === 'linkedin') return 'linkedin handle';
+    if (c === 'website') return 'website.com';
+    return '';
   }
 
   if (!expanded) {
@@ -367,46 +397,71 @@ function AddField({ existing, onAdd }: AddFieldProps) {
     );
   }
 
+  // A channel is picked — render a full channel row (star + icon + input + ADD + X)
+  if (selectedChannel) {
+    return (
+      <div className="flex items-center gap-1 py-1">
+        <button
+          type="button"
+          className="flex-shrink-0 w-7 h-7 flex items-center justify-center opacity-60"
+          aria-label="Preferred (set after adding)"
+          disabled
+        >
+          <LuStar size={16} fill="none" color="#737373" />
+        </button>
+        <span className="w-6 flex items-center justify-center flex-shrink-0">
+          <ChannelIcon kind={selectedChannel as ChannelKind} size={18} />
+        </span>
+        <input
+          ref={valueInputRef}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleAdd();
+            if (e.key === 'Escape') reset();
+          }}
+          placeholder={placeholderFor(selectedChannel)}
+          className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-neutral-950 text-sm min-w-0"
+        />
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={handleAdd}
+          className="flex-shrink-0 px-3 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition"
+        >
+          Add
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={reset}
+          aria-label="Cancel"
+          className="flex-shrink-0 p-1.5 rounded text-neutral-500 hover:bg-neutral-100 transition"
+        >
+          <LuXIcon size={16} />
+        </button>
+      </div>
+    );
+  }
+
+  // No channel picked yet — show the dropdown
   return (
-    <div className="flex items-center gap-2 flex-wrap w-full">
+    <div className="flex items-center gap-2 w-full">
       <select
         value={selectedChannel}
         onChange={(e) => setSelectedChannel(e.target.value as PreferredChannel | '')}
-        className="bg-cream border border-line rounded-lg px-2 py-1 text-sm text-neutral-700 flex-shrink-0"
+        className="flex-1 bg-cream border border-line rounded-lg px-2 py-1.5 text-sm text-neutral-700"
         autoFocus
       >
         <option value="">Pick field…</option>
         {available.map(c => <option key={c} value={c}>{CHANNEL_LABELS[c]}</option>)}
       </select>
-      {selectedChannel && (
-        <>
-          <span className="flex items-center justify-center flex-shrink-0">
-            <ChannelIcon kind={selectedChannel as ChannelKind} size={18} />
-          </span>
-          <input
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
-            placeholder={
-              selectedChannel === 'telegram' ? 'handle (no @)'
-              : selectedChannel === 'email' ? 'email@example.com'
-              : selectedChannel === 'phone' ? '+1 555 1234'
-              : selectedChannel === 'whatsapp' ? 'phone digits (e.g. 14155551234)'
-              : selectedChannel === 'wechat' ? 'WeChat ID'
-              : selectedChannel === 'line' ? 'Line ID (no @)'
-              : ''
-            }
-            className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-neutral-950 text-sm min-w-0"
-          />
-          <button onClick={handleAdd} className="flex-shrink-0 px-3 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition">Add</button>
-        </>
-      )}
       <button
-        onClick={() => { setExpanded(false); setSelectedChannel(''); setValue(''); }}
-        className="flex-shrink-0 text-neutral-400 hover:text-neutral-700"
-        title="Cancel"
+        onClick={reset}
+        className="flex-shrink-0 p-1.5 rounded text-neutral-500 hover:bg-neutral-100 transition"
+        aria-label="Cancel"
       >
-        <LuXIcon size={14} />
+        <LuXIcon size={16} />
       </button>
     </div>
   );
