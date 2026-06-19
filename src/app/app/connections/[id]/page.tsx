@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { use, useEffect, useRef, useState } from 'react';
-import { LuSend, LuStar, LuPencil, LuX as LuXIcon, LuCheck } from 'react-icons/lu';
+import { LuStar, LuPencil, LuX as LuXIcon, LuCheck } from 'react-icons/lu';
 import {
   linkedinUrl, linkedinHandle, xUrl, xHandle, telegramUrl, telegramHandle,
-  whatsappUrl, wechatUrl, lineUrl,
+  whatsappUrl, wechatUrl, lineUrl, instagramUrl, messengerUrl,
 } from '@/lib/social-urls';
-import { ChannelIcon, type ChannelKind } from '../../cards/[id]/channel-icons';
+import { ChannelIcon, channelAction, type ChannelKind } from '../../cards/[id]/channel-icons';
 import { APP_CONTAINER } from '../../_layout-constants';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
@@ -22,9 +22,11 @@ const socialUrl = {
   whatsapp: whatsappUrl,
   wechat: wechatUrl,
   line: lineUrl,
+  instagram: instagramUrl,
+  messenger: messengerUrl,
 };
 
-type PreferredChannel = 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line';
+type PreferredChannel = 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line' | 'instagram' | 'messenger';
 
 type Data = {
   contact: {
@@ -40,6 +42,8 @@ type Data = {
     whatsapp: string | null;
     wechat: string | null;
     line: string | null;
+    instagram: string | null;
+    messenger: string | null;
     emails: string[];
     phones: string[];
     preferredChannel: PreferredChannel | null;
@@ -291,17 +295,16 @@ function EditableField({
             <LuPencil size={12} className="text-neutral-400 flex-shrink-0 ml-auto" />
           </button>
 
-          {/* Send: labeled button (display state only) */}
-          {sendHref && (
+          {/* Send / Visit: labeled text-only button (display state only) */}
+          {sendHref && channelAction(kind) && (
             <a
               href={sendHref}
               target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
               rel="noopener noreferrer"
-              className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition-opacity"
-              title="Send via this channel"
+              className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition-opacity"
+              title={channelAction(kind) === 'send' ? 'Send a message via this channel' : 'Open this profile'}
             >
-              <LuSend size={14} />
-              <span>Send</span>
+              {channelAction(kind) === 'send' ? 'Send' : 'Visit'}
             </a>
           )}
 
@@ -324,7 +327,7 @@ function EditableField({
 // ---------------------------------------------------------------------------
 // Add-field row
 // ---------------------------------------------------------------------------
-const ALL_CHANNELS: PreferredChannel[] = ['email', 'phone', 'telegram', 'x', 'linkedin', 'website', 'whatsapp', 'wechat', 'line'];
+const ALL_CHANNELS: PreferredChannel[] = ['email', 'phone', 'telegram', 'x', 'linkedin', 'website', 'whatsapp', 'wechat', 'line', 'instagram', 'messenger'];
 const CHANNEL_LABELS: Record<PreferredChannel, string> = {
   email: 'Email',
   phone: 'Phone',
@@ -335,6 +338,8 @@ const CHANNEL_LABELS: Record<PreferredChannel, string> = {
   whatsapp: 'WhatsApp',
   wechat: 'WeChat',
   line: 'Line',
+  instagram: 'Instagram',
+  messenger: 'Messenger',
 };
 
 type AddFieldProps = {
@@ -383,6 +388,8 @@ function AddField({ existing, onAdd }: AddFieldProps) {
     if (c === 'x') return 'x handle';
     if (c === 'linkedin') return 'linkedin handle';
     if (c === 'website') return 'website.com';
+    if (c === 'instagram') return 'instagram handle';
+    if (c === 'messenger') return 'username (m.me/...)';
     return '';
   }
 
@@ -614,6 +621,8 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
   if (contact?.whatsapp) existingSingleChannels.push('whatsapp');
   if (contact?.wechat) existingSingleChannels.push('wechat');
   if (contact?.line) existingSingleChannels.push('line');
+  if (contact?.instagram) existingSingleChannels.push('instagram');
+  if (contact?.messenger) existingSingleChannels.push('messenger');
 
   // Build send href for each channel
   const captionText = '';
@@ -802,6 +811,34 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
               onSave={(v) => putContactField({ kind: 'line', value: v.replace(/^[~@]/, '') })}
               onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'line' ? null : 'line' })}
               onRemove={() => putContactField({ kind: 'line-clear' })}
+            />
+          )}
+
+          {/* Instagram */}
+          {contact.instagram && (
+            <EditableField
+              kind="instagram"
+              value={contact.instagram}
+              placeholder="instagram handle"
+              isPreferred={contact.preferredChannel === 'instagram'}
+              sendHref={socialUrl.instagram(contact.instagram)}
+              onSave={(v) => putContactField({ kind: 'instagram', value: v.replace(/^@/, '') })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'instagram' ? null : 'instagram' })}
+              onRemove={() => putContactField({ kind: 'instagram-clear' })}
+            />
+          )}
+
+          {/* Messenger */}
+          {contact.messenger && (
+            <EditableField
+              kind="messenger"
+              value={contact.messenger}
+              placeholder="messenger username"
+              isPreferred={contact.preferredChannel === 'messenger'}
+              sendHref={socialUrl.messenger(contact.messenger)}
+              onSave={(v) => putContactField({ kind: 'messenger', value: v })}
+              onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'messenger' ? null : 'messenger' })}
+              onRemove={() => putContactField({ kind: 'messenger-clear' })}
             />
           )}
 

@@ -21,7 +21,7 @@ const Body = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('phone'), index: z.number().int().min(0), value: z.string().min(4).max(40) }),
   z.object({ kind: z.literal('phone-add'), value: z.string().min(4).max(40) }),
   z.object({ kind: z.literal('phone-remove'), index: z.number().int().min(0) }),
-  z.object({ kind: z.literal('preferred'), value: z.enum(['telegram', 'email', 'phone', 'x', 'linkedin', 'website', 'whatsapp', 'wechat', 'line']).nullable() }),
+  z.object({ kind: z.literal('preferred'), value: z.enum(['telegram', 'email', 'phone', 'x', 'linkedin', 'website', 'whatsapp', 'wechat', 'line', 'instagram', 'messenger']).nullable() }),
   z.object({ kind: z.literal('notes'), value: z.string().max(500).nullable() }),
   z.object({ kind: z.literal('telegram-clear') }),
   z.object({ kind: z.literal('x-clear') }),
@@ -30,9 +30,13 @@ const Body = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('whatsapp'), value: z.string().min(4).max(20) }),
   z.object({ kind: z.literal('wechat'), value: z.string().min(3).max(40) }),
   z.object({ kind: z.literal('line'), value: z.string().min(3).max(40) }),
+  z.object({ kind: z.literal('instagram'), value: z.string().min(1).max(40) }),
+  z.object({ kind: z.literal('messenger'), value: z.string().min(1).max(60) }),
   z.object({ kind: z.literal('whatsapp-clear') }),
   z.object({ kind: z.literal('wechat-clear') }),
   z.object({ kind: z.literal('line-clear') }),
+  z.object({ kind: z.literal('instagram-clear') }),
+  z.object({ kind: z.literal('messenger-clear') }),
 ]);
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {

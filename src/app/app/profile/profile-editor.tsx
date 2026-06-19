@@ -12,15 +12,15 @@ import { signOut } from '@/lib/auth/client';
 type Profile = {
   displayName: string;
   tagline: string | null;
-  socials: { x?: string; linkedin?: string; email?: string; website?: string; whatsapp?: string; wechat?: string; line?: string; phone?: string };
+  socials: { x?: string; linkedin?: string; email?: string; website?: string; whatsapp?: string; wechat?: string; line?: string; phone?: string; instagram?: string; messenger?: string };
   telegramUsername: string | null;
   photoR2Url: string | null;
   onboardedAt: string | null;
 };
 
-type ProfileChannel = 'x' | 'linkedin' | 'email' | 'website' | 'telegram' | 'whatsapp' | 'wechat' | 'line' | 'phone';
+type ProfileChannel = 'x' | 'linkedin' | 'email' | 'website' | 'telegram' | 'whatsapp' | 'wechat' | 'line' | 'phone' | 'instagram' | 'messenger';
 
-const PROFILE_CHANNELS: ProfileChannel[] = ['email', 'phone', 'telegram', 'x', 'linkedin', 'website', 'whatsapp', 'wechat', 'line'];
+const PROFILE_CHANNELS: ProfileChannel[] = ['email', 'phone', 'telegram', 'x', 'linkedin', 'website', 'whatsapp', 'wechat', 'line', 'instagram', 'messenger'];
 
 const PROFILE_CHANNEL_LABELS: Record<ProfileChannel, string> = {
   email: 'Email',
@@ -32,6 +32,8 @@ const PROFILE_CHANNEL_LABELS: Record<ProfileChannel, string> = {
   whatsapp: 'WhatsApp',
   wechat: 'WeChat',
   line: 'Line',
+  instagram: 'Instagram',
+  messenger: 'Messenger',
 };
 
 const PROFILE_CHANNEL_PLACEHOLDERS: Record<ProfileChannel, string> = {
@@ -44,6 +46,8 @@ const PROFILE_CHANNEL_PLACEHOLDERS: Record<ProfileChannel, string> = {
   whatsapp: 'phone digits (e.g. 14155551234)',
   wechat: 'WeChat ID',
   line: 'Line ID',
+  instagram: 'instagram handle',
+  messenger: 'messenger username',
 };
 
 function readChannel(profile: Profile, kind: ProfileChannel): string | null {
