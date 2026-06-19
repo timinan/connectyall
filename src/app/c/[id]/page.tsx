@@ -113,21 +113,22 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
       {/* Backdrop area: glow + banner + label + avatar + recap card all sit inside
           this relatively-positioned wrapper. The glow is z-0 and every sibling
           section below (HOW TO REACH, CTAs, footer) is z-10, so the glow renders
-          UNDERNEATH them — extends naturally where it wants without clipping. */}
+          UNDERNEATH them. */}
       <div className="relative mt-4">
-        {/* 460px backdrop glow — centered on the avatar.
-            Avatar y from this wrapper top ≈ banner(60) + mt-3(12) + label(18) + mt-6(24) + half-avatar(72) = ~186px.
-            Glow center must land at ~186, so top = 186 - 230 = -44px. */}
+        {/* 320px glow — matches the record page's mic glow exactly. Centered on
+            the avatar. Avatar y from this wrapper top ≈ banner(60) + mt-3(12)
+            + label(18) + mt-6(24) + half-avatar(75) = ~189px. Glow center =
+            top + 160, so top = 189 - 160 = 29px. */}
         <div
           aria-hidden
-          className="glow-breathe pointer-events-none absolute left-1/2 -translate-x-1/2 w-[460px] h-[460px] rounded-full z-0"
+          className="glow-breathe pointer-events-none absolute left-1/2 -translate-x-1/2 w-[320px] h-[320px] rounded-full z-0"
           style={{
-            top: '-44px',
-            background: 'radial-gradient(circle, rgba(124, 92, 255, 0.20) 0%, rgba(124, 92, 255, 0.06) 55%, rgba(124, 92, 255, 0) 78%)',
+            top: '29px',
+            background: 'radial-gradient(circle, rgba(124, 92, 255, 0.18) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)',
           }}
         >
-          <div className="glow-breathe-d1 absolute inset-[64px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.08)' }} />
-          <div className="glow-breathe-d2 absolute inset-[128px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.14)' }} />
+          <div className="glow-breathe-d1 absolute inset-[36px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.07)' }} />
+          <div className="glow-breathe-d2 absolute inset-[70px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.14)' }} />
         </div>
 
         {/* Headline banner — sender's name with last word accented */}
@@ -149,11 +150,11 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
             <img
               src={profile.photoR2Url}
               alt={profile.displayName}
-              className="w-36 h-36 rounded-full object-cover shadow-[0_8px_24px_rgba(124,92,255,0.22)]"
+              className="w-[150px] h-[150px] rounded-full object-cover shadow-[0_8px_24px_rgba(124,92,255,0.22)]"
             />
           ) : (
             <div
-              className="w-36 h-36 rounded-full flex items-center justify-center text-white text-5xl font-extrabold shadow-[0_8px_24px_rgba(124,92,255,0.22)]"
+              className="w-[150px] h-[150px] rounded-full flex items-center justify-center text-white text-5xl font-extrabold shadow-[0_8px_24px_rgba(124,92,255,0.22)]"
               style={{ backgroundColor: pickBg(profile.displayName) }}
             >
               {avatarInitial}
