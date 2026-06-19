@@ -19,6 +19,7 @@ export const users = pgTable('users', {
   telegramUsername: text('telegram_username'),
   displayName: text('display_name').notNull(),
   tagline: text('tagline'),
+  shortBlurb: text('short_blurb'),
   photoR2Url: text('photo_r2_url'),
   selfIntro: text('self_intro'),
   socials: jsonb('socials').$type<Socials>().default({}).notNull(),
