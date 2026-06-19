@@ -19,19 +19,19 @@ export default async function Home() {
       {/* Glow rings fill the empty space below the banner */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-32 top-[320px] w-[440px] h-[440px] rounded-full"
+        className="glow-breathe pointer-events-none absolute -right-32 top-[320px] w-[440px] h-[440px] rounded-full"
         style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.18) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)' }}
       >
-        <div className="absolute inset-[60px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
-        <div className="absolute inset-[120px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.10)' }} />
+        <div className="glow-breathe-d1 absolute inset-[60px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
+        <div className="glow-breathe-d2 absolute inset-[120px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.10)' }} />
       </div>
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-28 bottom-20 w-[320px] h-[320px] rounded-full"
+        className="glow-breathe-d1 pointer-events-none absolute -left-28 bottom-20 w-[320px] h-[320px] rounded-full"
         style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.16) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)' }}
       >
-        <div className="absolute inset-[44px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.07)' }} />
-        <div className="absolute inset-[88px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.13)' }} />
+        <div className="glow-breathe-d2 absolute inset-[44px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.07)' }} />
+        <div className="glow-breathe absolute inset-[88px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.13)' }} />
       </div>
 
       <div className="relative z-10 flex flex-col flex-1">

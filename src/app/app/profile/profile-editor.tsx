@@ -173,11 +173,11 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
           <div className="relative">
             <div
               aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] rounded-full"
+              className="glow-breathe pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] rounded-full"
               style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.16) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)' }}
             >
-              <div className="absolute inset-[44px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
-              <div className="absolute inset-[88px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
+              <div className="glow-breathe-d1 absolute inset-[44px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
+              <div className="glow-breathe-d2 absolute inset-[88px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
             </div>
             <div className="relative z-10 inline-block">
               <Avatar profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : null} />
