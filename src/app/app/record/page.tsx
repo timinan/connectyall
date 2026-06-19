@@ -221,11 +221,13 @@ function Top({
       <div className={`font-mono text-[13px] tracking-[0.2em] font-semibold uppercase ${labelTone === 'red' ? 'text-red-600' : 'text-muted'}`}>
         {label}
       </div>
-      <h1 className="mt-3 text-5xl font-black leading-[1.02] tracking-tight">
-        {headlineFirst}
-        <br />
-        <span className="text-brand">{headlineAccent}</span>
-      </h1>
+      <div className="mt-3 bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+        <h1 className="text-5xl font-black leading-[1.02] tracking-tight">
+          {headlineFirst}
+          <br />
+          <span className="text-brand">{headlineAccent}</span>
+        </h1>
+      </div>
       <p className="mt-4 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">{sub}</p>
     </div>
   );
