@@ -60,17 +60,17 @@ function pickBg(seed: string) {
 
 function Avatar({ profile }: { profile: { displayName: string; photoR2Url: string | null } | null }) {
   if (!profile) {
-    return <div className="w-24 h-24 rounded-full bg-line" />;
+    return <div className="w-32 h-32 rounded-full bg-line" />;
   }
   if (profile.photoR2Url) {
     // Plain img — Next.js image optimization would require absolute URLs, not worth the complexity here
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={profile.photoR2Url} alt={profile.displayName} className="w-24 h-24 rounded-full object-cover" />;
+    return <img src={profile.photoR2Url} alt={profile.displayName} className="w-32 h-32 rounded-full object-cover" />;
   }
   const initial = (profile.displayName.trim().charAt(0) || '?').toUpperCase();
   return (
     <div
-      className="w-24 h-24 rounded-full flex items-center justify-center text-white text-4xl font-extrabold"
+      className="w-32 h-32 rounded-full flex items-center justify-center text-white text-4xl font-extrabold"
       style={{ backgroundColor: pickBg(profile.displayName) }}
     >
       {initial}
@@ -175,24 +175,34 @@ export default function ProfilePage() {
         Your <span className="text-brand">profile</span>
       </h1>
 
-      <div className="flex flex-col items-center gap-4 mt-2">
-        <div className="relative inline-block">
-          <Avatar profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : null} />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            aria-label="Change photo"
-            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-neutral-950 text-white flex items-center justify-center shadow ring-2 ring-cream"
+      <div className="flex flex-col items-center mt-2 py-4">
+        <div className="relative flex items-center justify-center">
+          <div
+            aria-hidden
+            className="absolute w-[280px] h-[280px] rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.14) 0%, rgba(124, 92, 255, 0.04) 60%, rgba(124, 92, 255, 0) 80%)' }}
           >
-            <LuCamera size={16} />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
-          />
+            <div className="absolute inset-[30px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
+            <div className="absolute inset-[60px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
+          </div>
+          <div className="relative inline-block z-10">
+            <Avatar profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : null} />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Change photo"
+              className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-neutral-950 text-white flex items-center justify-center shadow ring-2 ring-cream"
+            >
+              <LuCamera size={18} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
+            />
+          </div>
         </div>
       </div>
 
@@ -207,7 +217,7 @@ export default function ProfilePage() {
               name="displayName"
               placeholder="Display name (Tim Nan)"
               required
-              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-[15px]"
+              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-[17px] font-bold tracking-tight"
               defaultValue={profile?.displayName ?? ''}
               key={`name-${profile?.displayName ?? ''}`}
             />
@@ -219,7 +229,7 @@ export default function ProfilePage() {
             <input
               name="tagline"
               placeholder="One-liner (PM building crypto products)"
-              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-[15px]"
+              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-[17px] font-bold tracking-tight"
               defaultValue={profile?.tagline ?? ''}
               key={`tagline-${profile?.tagline ?? ''}`}
             />
@@ -265,14 +275,14 @@ export default function ProfilePage() {
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full px-5 py-3 rounded-full bg-surface border border-line text-neutral-950 font-bold text-sm hover:bg-neutral-50 transition"
+          className="w-full px-5 py-4 rounded-full bg-surface border border-line text-neutral-950 font-extrabold text-base tracking-tight hover:bg-neutral-50 transition"
         >
           Sign out
         </button>
         <button
           type="button"
           onClick={() => setShowDelete(true)}
-          className="w-full px-5 py-3 rounded-full bg-surface border border-red-200 text-red-600 font-bold text-sm hover:bg-red-50 transition"
+          className="w-full px-5 py-4 rounded-full bg-red-600 text-white font-extrabold text-base tracking-tight hover:bg-red-700 transition shadow-[0_8px_24px_rgba(220,38,38,0.30)]"
         >
           Delete my account
         </button>

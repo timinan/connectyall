@@ -22,11 +22,11 @@ export default async function Home() {
         </p>
         <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight leading-[1.02]">
           Voice notes<br />
-          that <span className="text-brand">connect</span><br />
+          that <span className="text-brand">connects</span><br />
           y&apos;all.
         </h1>
         <p className="mt-6 text-[15px] text-neutral-700 leading-relaxed max-w-[400px]">
-          Connectyall turns the voice memo you record after meeting someone into a connection you can pass along the same day. Talk it out, we handle the rest.
+          Connectyall turns a voice memo you record after meeting someone into a connection built in an instant. Talk it out, we handle the rest.
         </p>
         <Link
           href="/app"
