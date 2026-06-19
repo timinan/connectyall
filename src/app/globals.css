@@ -28,18 +28,30 @@ body {
 .bg-brand { background-color: #7C5CFF; }
 .border-brand { border-color: #7C5CFF; }
 
-/* Spin clockwise with a quick anticipation bounce on either side of each turn */
+/* Rotate 90° at a time, with a bouncy overshoot + recoil + brief settle
+   between each quarter turn. Repeats 4 times per full rotation. */
 @keyframes logo-spin-bounce {
-  0%   { transform: rotate(0deg) scale(1); }
-  6%   { transform: rotate(-12deg) scale(0.94); }  /* windup */
-  10%  { transform: rotate(0deg)   scale(1.06); }  /* recoil before spin */
-  78%  { transform: rotate(372deg) scale(1); }     /* overshoot at the end */
-  86%  { transform: rotate(355deg) scale(1); }     /* small bounce back */
-  100% { transform: rotate(360deg) scale(1); }     /* settle */
+  0%   { transform: rotate(0deg); }
+  /* first 90 */
+  18%  { transform: rotate(100deg); }
+  22%  { transform: rotate(86deg); }
+  25%  { transform: rotate(90deg); }
+  /* second 90 */
+  43%  { transform: rotate(190deg); }
+  47%  { transform: rotate(176deg); }
+  50%  { transform: rotate(180deg); }
+  /* third 90 */
+  68%  { transform: rotate(280deg); }
+  72%  { transform: rotate(266deg); }
+  75%  { transform: rotate(270deg); }
+  /* fourth 90 — full rotation */
+  93%  { transform: rotate(370deg); }
+  97%  { transform: rotate(356deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .logo-spinner {
-  animation: logo-spin-bounce 1.7s cubic-bezier(0.5, 0.05, 0.3, 1) infinite;
+  animation: logo-spin-bounce 2.4s linear infinite;
   transform-origin: 50% 50%;
 }
 
