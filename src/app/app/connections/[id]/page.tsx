@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { use, useEffect, useRef, useState } from 'react';
-import { LuSend, LuStar, LuPencil, LuX as LuXIcon } from 'react-icons/lu';
+import { LuSend, LuStar, LuPencil, LuX as LuXIcon, LuCheck } from 'react-icons/lu';
 import {
   linkedinUrl, linkedinHandle, xUrl, xHandle, telegramUrl, telegramHandle,
   whatsappUrl, wechatUrl, lineUrl,
@@ -119,13 +119,24 @@ type EditableTextAreaProps = {
   onSave: (v: string | null) => Promise<void>;
 };
 
+function autoGrow(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
+}
+
 function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => { setDraft(value ?? ''); }, [value]);
-  useEffect(() => { if (editing) textareaRef.current?.focus(); }, [editing]);
+  useEffect(() => {
+    if (editing) {
+      textareaRef.current?.focus();
+      autoGrow(textareaRef.current);
+    }
+  }, [editing]);
 
   async function commit() {
     setEditing(false);
@@ -134,21 +145,43 @@ function EditableTextArea({ value, placeholder, onSave }: EditableTextAreaProps)
     if (next !== value) await onSave(next);
   }
 
+  function cancel() {
+    setDraft(value ?? '');
+    setEditing(false);
+  }
+
   const displayValue = value?.trim();
 
   if (editing) {
     return (
-      <textarea
-        ref={textareaRef}
-        value={draft}
-        rows={3}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') { setDraft(value ?? ''); setEditing(false); }
-        }}
-        className="w-full px-2 py-1 rounded-lg bg-cream border border-line text-neutral-700 text-sm resize-none"
-      />
+      <div className="flex items-start gap-2">
+        <textarea
+          ref={textareaRef}
+          value={draft}
+          rows={1}
+          onChange={(e) => { setDraft(e.target.value); autoGrow(e.target); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') { cancel(); }
+          }}
+          className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-neutral-700 text-sm resize-none overflow-hidden leading-snug"
+        />
+        <button
+          type="button"
+          onClick={commit}
+          aria-label="Save"
+          className="flex-shrink-0 p-1.5 rounded text-brand hover:bg-brand/10 transition mt-0.5"
+        >
+          <LuCheck size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={cancel}
+          aria-label="Cancel"
+          className="flex-shrink-0 p-1.5 rounded text-neutral-500 hover:bg-neutral-100 transition mt-0.5"
+        >
+          <LuXIcon size={16} />
+        </button>
+      </div>
     );
   }
 
@@ -215,50 +248,69 @@ function EditableField({
         <ChannelIcon kind={kind} size={18} />
       </span>
       {editing ? (
-        <input
-          ref={inputRef}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commit();
-            if (e.key === 'Escape') { setDraft(value); setEditing(false); }
-          }}
-          className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-neutral-950 text-sm min-w-0"
-        />
+        <>
+          <input
+            ref={inputRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commit();
+              if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+            }}
+            className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-neutral-950 text-sm min-w-0"
+          />
+          <button
+            type="button"
+            onClick={commit}
+            aria-label="Save"
+            className="flex-shrink-0 p-1.5 rounded text-brand hover:bg-brand/10 transition"
+          >
+            <LuCheck size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setDraft(value); setEditing(false); }}
+            aria-label="Cancel"
+            className="flex-shrink-0 p-1.5 rounded text-neutral-500 hover:bg-neutral-100 transition"
+          >
+            <LuXIcon size={16} />
+          </button>
+        </>
       ) : (
-        <button
-          className="flex-1 text-left text-sm text-neutral-950 truncate hover:text-neutral-700 min-w-0 flex items-center gap-1 px-2 py-1 rounded-lg bg-cream border border-line"
-          onClick={() => { setDraft(value); setEditing(true); }}
-        >
-          <span className="truncate">{value || <span className="text-neutral-500">{placeholder}</span>}</span>
-          <LuPencil size={12} className="text-neutral-400 flex-shrink-0 ml-auto" />
-        </button>
-      )}
+        <>
+          <button
+            className="flex-1 text-left text-sm text-neutral-950 truncate hover:text-neutral-700 min-w-0 flex items-center gap-1 px-2 py-1 rounded-lg bg-cream border border-line"
+            onClick={() => { setDraft(value); setEditing(true); }}
+          >
+            <span className="truncate">{value || <span className="text-neutral-500">{placeholder}</span>}</span>
+            <LuPencil size={12} className="text-neutral-400 flex-shrink-0 ml-auto" />
+          </button>
 
-      {/* Send: labeled button */}
-      {sendHref && (
-        <a
-          href={sendHref}
-          target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
-          rel="noopener noreferrer"
-          className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition-opacity"
-          title="Send via this channel"
-        >
-          <LuSend size={14} />
-          <span>Send</span>
-        </a>
-      )}
+          {/* Send: labeled button (display state only) */}
+          {sendHref && (
+            <a
+              href={sendHref}
+              target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
+              rel="noopener noreferrer"
+              className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition-opacity"
+              title="Send via this channel"
+            >
+              <LuSend size={14} />
+              <span>Send</span>
+            </a>
+          )}
 
-      {/* Delete */}
-      {onRemove && (
-        <button
-          className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-red-400"
-          onClick={onRemove}
-          title="Remove"
-        >
-          <LuXIcon size={14} />
-        </button>
+          {/* Delete (display state only) */}
+          {onRemove && (
+            <button
+              className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-red-400"
+              onClick={onRemove}
+              title="Remove"
+            >
+              <LuXIcon size={14} />
+            </button>
+          )}
+        </>
       )}
     </div>
   );
