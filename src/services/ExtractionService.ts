@@ -42,26 +42,35 @@ Rules:
 - "was_live_recording" is true if the audio clearly contains the contact's own voice in the recording (a live conversation), false if it's just the user speaking notes after the fact.
 - If you cannot identify a person, return an empty contacts array.
 
-RECAP RULES (be strict — the recap is shown directly to the recipient in the share preview, so it must read like a clean takeaway, not a stream of notes):
+RECAP RULES (be strict — the recap is dropped INTO this sentence template before it's shown to the contact:
 
-The "recap" is a complete sentence describing the SUBSTANCE of the conversation. Strip conversational framing — keep only the topic itself.
+  "Hey {first_name}, it was great meeting and chatting about {RECAP} with you!"
 
-Drop these opening phrases when they appear at the start of the recap:
-- "We talked about", "We discussed", "We touched on", "We chatted about"
-- "She mentioned", "He mentioned", "They mentioned"
-- "I asked her about", "I asked him about", "She told me", "He told me"
-- "We covered", "We went over", "We got into"
+So the recap MUST grammatically fit between "chatting about" and "with you". That means a noun phrase — not a full sentence with its own subject and verb. Test it: read it back in the template and it should sound like one natural English sentence.
 
-Examples (input → recap):
-- "We talked about how USDC could replace bank rails." → "USDC could replace bank rails."
-- "We discussed her startup's pivot from B2B to consumer." → "Her startup's pivot from B2B to consumer."
-- "She mentioned she's hiring senior backend engineers next quarter." → "She's hiring senior backend engineers next quarter."
-- "I asked her about her PhD research on protein folding." → "Her PhD research on protein folding."
-- "We covered the Series B he's raising and his go-to-market plan." → "His Series B raise and go-to-market plan."
+CONCRETE RULES:
+- Output a noun phrase, not a sentence.
+- Lowercase the first word UNLESS it's a proper noun (people, companies, products, acronyms — USDC, Google, Series B, San Francisco all stay capitalized).
+- No trailing period, exclamation, or question mark.
+- One short phrase (8-15 words is the sweet spot). If multiple topics, fold them into one phrase with "and".
+- Lead with the contact's own possessive ("her", "his", "their") when the topic is something the contact owns / is doing — it slots in cleanly.
 
-Keep the recap to ONE sentence when possible, two MAX. If multiple topics were discussed, combine into one clean sentence rather than enumerating.
+Examples (input → recap → sentence preview):
+- "We talked about how USDC could replace bank rails." → "USDC potentially replacing bank rails" → "...chatting about USDC potentially replacing bank rails with you!"
+- "We discussed her startup's pivot from B2B to consumer." → "her startup's pivot from B2B to consumer" → "...chatting about her startup's pivot from B2B to consumer with you!"
+- "She mentioned she's hiring senior backend engineers next quarter." → "her backend hiring plans for next quarter" → "...chatting about her backend hiring plans for next quarter with you!"
+- "I asked her about her PhD research on protein folding." → "her PhD research on protein folding" → "...chatting about her PhD research on protein folding with you!"
+- "We covered the Series B he's raising and his go-to-market plan." → "his Series B raise and go-to-market plan" → "...chatting about his Series B raise and go-to-market plan with you!"
+- "He told me about a side project he's building with Rust and AI agents." → "his side project building with Rust and AI agents" → "...chatting about his side project building with Rust and AI agents with you!"
+- "We talked about Hong Kong's startup scene." → "Hong Kong's startup scene" → "...chatting about Hong Kong's startup scene with you!"
 
-If the original phrasing already has no leading filler, leave it alone — do not paraphrase aggressively just for the sake of it.
+ANTI-EXAMPLES (don't do these):
+- ❌ "She's hiring senior backend engineers next quarter." — full sentence, doesn't fit the template
+- ❌ "We talked about her PhD research." — leading filler
+- ❌ "Her PhD research on protein folding." — trailing period
+- ❌ "The conversation covered her startup pivot." — meta-narration
+
+If the original phrasing already reads as a clean noun phrase, leave it alone — don't paraphrase aggressively just for the sake of it.
 
 LINKS EXTRACTION (be aggressive about this — these are the most valuable field):
 

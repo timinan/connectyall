@@ -44,15 +44,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     | { recap?: string; links?: { telegram?: string; x?: string; linkedin?: string; website?: string; whatsapp?: string; wechat?: string; line?: string }; emails?: string[] }
     | null;
   const recap = structured?.recap ?? '';
+  const shareUrl = `${env().BASE_URL}/c/${interaction.id}`;
   const caption = buildCaption({
-    profile: {
-      displayName: profile.displayName,
-      tagline: profile.tagline,
-      telegramUsername: profile.telegramUsername,
-      socials: profile.socials,
-    },
     contactName: contact.name,
     recap,
+    shareUrl,
   });
 
   return NextResponse.json({
@@ -76,6 +72,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     cardUrl: `/api/cards/${interaction.id}/image`, // same-origin proxy
     cardUrlExternal: `${env().R2_PUBLIC_URL_BASE}/cards/${interaction.id}.png`,
     caption: caption ?? '',
-    shareUrl: `${env().BASE_URL}/c/${interaction.id}`,
+    shareUrl,
   });
 }

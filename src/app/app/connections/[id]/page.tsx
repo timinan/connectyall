@@ -12,6 +12,7 @@ import { ChannelIcon, channelAction, type ChannelKind } from '../../cards/[id]/c
 import { APP_CONTAINER } from '../../_layout-constants';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
+import { buildShareMessage } from '@/lib/share-message';
 
 const socialUrl = {
   linkedin: linkedinUrl,
@@ -660,22 +661,26 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
   if (contact && contact.emails.length > 0) existingSingleChannels.push('email');
   if (contact && contact.phones.length > 0) existingSingleChannels.push('phone');
 
-  // Build send href for each channel
-  const captionText = '';
+  // The full share message — same string for every channel — built from the
+  // current contact name, the latest recap, and the public landing URL. Reuses
+  // the canonical buildShareMessage helper so the card API + every send link
+  // produce identical output.
+  const shareMessage = buildShareMessage({
+    contactName: contactName,
+    recap: localRecap ?? data?.latestRecap ?? '',
+    shareUrl: data?.shareUrl ?? null,
+  });
 
   function emailSendHref(email: string) {
-    const body = `${captionText}\n\n${data?.shareUrl ?? ''}`;
-    return `mailto:${email}?subject=${encodeURIComponent('Following up')}&body=${encodeURIComponent(body)}`;
+    return `mailto:${email}?subject=${encodeURIComponent('Great meeting you')}&body=${encodeURIComponent(shareMessage)}`;
   }
 
   function phoneSendHref(phone: string) {
-    const body = `${captionText}\n\n${data?.shareUrl ?? ''}`;
-    return `sms:${phone.replace(/[^+0-9]/g, '')}?body=${encodeURIComponent(body)}`;
+    return `sms:${phone.replace(/[^+0-9]/g, '')}?body=${encodeURIComponent(shareMessage)}`;
   }
 
   function whatsappSendHref(value: string) {
-    const base = socialUrl.whatsapp(value);
-    return captionText ? `${base}?text=${encodeURIComponent(captionText)}` : base;
+    return `${socialUrl.whatsapp(value)}?text=${encodeURIComponent(shareMessage)}`;
   }
 
   return (
