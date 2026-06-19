@@ -171,19 +171,21 @@ export default function ProfilePage() {
     <div className={APP_CONTAINER}>
       <PageHeader status="PROFILE" />
 
-      <h1 className="text-5xl font-black leading-[1.02] tracking-tight">
-        Your <span className="text-brand">profile</span>
-      </h1>
+      <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+        <h1 className="text-5xl font-black leading-[1.02] tracking-tight">
+          Your <span className="text-brand">profile</span>
+        </h1>
+      </div>
 
-      <div className="flex flex-col items-center mt-2 py-4">
+      <div className="flex flex-col items-center mt-2 pt-2 pb-10">
         <div className="relative flex items-center justify-center">
           <div
             aria-hidden
-            className="absolute w-[280px] h-[280px] rounded-full"
+            className="absolute w-[220px] h-[220px] rounded-full"
             style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.14) 0%, rgba(124, 92, 255, 0.04) 60%, rgba(124, 92, 255, 0) 80%)' }}
           >
-            <div className="absolute inset-[30px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
-            <div className="absolute inset-[60px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
+            <div className="absolute inset-[24px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
+            <div className="absolute inset-[48px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
           </div>
           <div className="relative inline-block z-10">
             <Avatar profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : null} />
