@@ -8,7 +8,7 @@ import { LuMic, LuUser, LuUsers } from 'react-icons/lu';
 const TABS = [
   { href: '/app/profile', icon: LuUser, label: 'Profile', match: '/app/profile' },
   { href: '/app/record', icon: LuMic, label: 'Record', match: '/app/record' },
-  { href: '/app/connections', icon: LuUsers, label: 'Network', match: '/app/connections' },
+  { href: '/app/connections', icon: LuUsers, label: 'Connections', match: '/app/connections' },
 ] as const;
 
 export function BottomNav() {
@@ -62,21 +62,24 @@ export function BottomNav() {
             onClick={(e) => handleClick(e, href)}
             aria-label={label}
             className={`
-              relative inline-flex items-center h-10 rounded-full overflow-hidden
+              grid items-center h-10 rounded-full overflow-hidden
               transition-all duration-300 ease-out will-change-[width]
               active:scale-95
               ${expanded
-                ? 'bg-brand text-white pl-3 pr-4'
-                : 'pl-0 pr-0 text-zinc-400 hover:text-white'}
+                ? 'bg-brand text-white'
+                : 'text-zinc-400 hover:text-white'}
             `}
-            style={{ width: expanded ? '108px' : '40px' }}
+            style={{
+              width: expanded ? '148px' : '40px',
+              gridTemplateColumns: '40px 1fr',
+            }}
           >
-            <span className="w-10 flex items-center justify-center flex-shrink-0">
+            <span className="flex items-center justify-center">
               <Icon size={16} />
             </span>
             <span
               className={`
-                text-sm font-semibold whitespace-nowrap
+                text-sm font-semibold whitespace-nowrap pr-4 -ml-1
                 transition-opacity duration-200
                 ${expanded ? 'opacity-100 delay-100' : 'opacity-0 pointer-events-none'}
               `}
