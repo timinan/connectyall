@@ -21,7 +21,7 @@ export default async function Home() {
           <span className="text-brand">●</span> VOICE TO CONNECTION
         </p>
         <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-          <h1 className="text-5xl sm:text-6xl font-black tracking-tight leading-[1.02]">
+          <h1 className="text-4xl font-black tracking-tight leading-[1.02]">
             Voice notes<br />
             that <span className="text-brand">connects</span><br />
             y&apos;all.
