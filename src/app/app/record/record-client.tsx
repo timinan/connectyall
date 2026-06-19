@@ -7,6 +7,7 @@ import { LuMic } from 'react-icons/lu';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
 import { getGreetingLabel } from '@/lib/greeting';
+import { APP_CONTAINER_FLEX } from '../_layout-constants';
 
 type State = 'idle' | 'recording' | 'uploading';
 
@@ -116,7 +117,7 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
   const greeting = getGreetingLabel(displayName);
 
   return (
-    <div className="px-6 py-6 pb-28 max-w-xl mx-auto w-full min-h-[100dvh] flex flex-col">
+    <div className={APP_CONTAINER_FLEX}>
       <PageHeader status={status} />
       <div className="flex-1 flex flex-col pt-3 gap-8">
         {state === 'idle' && (
