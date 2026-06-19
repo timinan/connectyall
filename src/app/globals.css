@@ -89,27 +89,49 @@ body {
   will-change: transform, opacity;
 }
 
-/* === View Transitions API — page-swap cross-fade ===
-   Triggered by the bottom-nav (which wraps router.push in document.startViewTransition).
-   Old page fades out + lifts slightly; new page fades in from slightly below.
-   The bottom-nav itself is pinned via view-transition-name so it doesn't fade with the rest. */
-@keyframes vt-fade-out {
-  to { opacity: 0; transform: translateY(-4px); }
+/* === View Transitions API — directional page slide ===
+   Triggered by the bottom-nav, which adds a vt-slide-left or vt-slide-right
+   class to <html> before calling document.startViewTransition. The direction
+   matches the tab order (Profile → Record → Network), so the new page slides
+   in from whichever side feels natural.
+   The bottom-nav itself is pinned via view-transition-name so it doesn't
+   slide with the rest of the page — it stays put. */
+
+@keyframes vt-slide-out-left {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(-32px); opacity: 0; }
 }
-@keyframes vt-fade-in {
-  from { opacity: 0; transform: translateY(4px); }
+@keyframes vt-slide-in-right {
+  from { transform: translateX(32px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
 }
-::view-transition-old(root) {
-  animation: 180ms cubic-bezier(0.4, 0, 0.2, 1) both vt-fade-out;
+@keyframes vt-slide-out-right {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(32px); opacity: 0; }
 }
-::view-transition-new(root) {
-  animation: 240ms cubic-bezier(0.0, 0, 0.2, 1) both vt-fade-in;
+@keyframes vt-slide-in-left {
+  from { transform: translateX(-32px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
 }
+
+.vt-slide-right::view-transition-old(root) {
+  animation: 220ms cubic-bezier(0.4, 0, 0.2, 1) both vt-slide-out-left;
+}
+.vt-slide-right::view-transition-new(root) {
+  animation: 260ms cubic-bezier(0.0, 0, 0.2, 1) both vt-slide-in-right;
+}
+.vt-slide-left::view-transition-old(root) {
+  animation: 220ms cubic-bezier(0.4, 0, 0.2, 1) both vt-slide-out-right;
+}
+.vt-slide-left::view-transition-new(root) {
+  animation: 260ms cubic-bezier(0.0, 0, 0.2, 1) both vt-slide-in-left;
+}
+
 .bnav-pin {
   view-transition-name: bnav;
 }
 ::view-transition-old(bnav),
 ::view-transition-new(bnav) {
-  /* Bottom nav doesn't fade with the rest — it stays in place. */
+  /* Bottom nav doesn't slide with the rest — it stays in place. */
   animation: none;
 }
