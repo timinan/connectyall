@@ -174,7 +174,7 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
         {/* FROM card — recap quote */}
         {recap && (
           <div className="relative z-10 bg-surface border border-line rounded-2xl px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mt-3">
-            <div className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-muted font-bold">FROM {senderUpper}</div>
+            <div className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-muted font-bold">WHAT WE CHATTED ABOUT</div>
             <p className="text-[13.5px] text-neutral-950 mt-1.5 leading-relaxed italic">&ldquo;{recap}&rdquo;</p>
           </div>
         )}

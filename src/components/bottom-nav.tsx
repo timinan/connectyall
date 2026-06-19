@@ -7,7 +7,7 @@ import { LuMic, LuUser, LuUsers } from 'react-icons/lu';
 
 const TABS = [
   { href: '/app/profile', icon: LuUser, label: 'Profile', match: '/app/profile' },
-  { href: '/app/record', icon: LuMic, label: 'Record', match: '/app/record' },
+  { href: '/app/record', icon: LuMic, label: 'Connect', match: '/app/record' },
   { href: '/app/connections', icon: LuUsers, label: 'Connections', match: '/app/connections' },
 ] as const;
 
