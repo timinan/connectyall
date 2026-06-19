@@ -304,7 +304,7 @@ export default function ConnectionsPage() {
 
       {rows && (
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-5xl font-extrabold leading-[1.02] tracking-tight">
+          <h1 className="text-5xl font-black leading-[1.02] tracking-tight">
             Your <span className="text-brand">network</span>
           </h1>
           <Link
@@ -353,7 +353,7 @@ export default function ConnectionsPage() {
         <div className="flex-1 flex flex-col gap-8 pt-3">
           <div>
             <div className="font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">NOBODY HERE YET</div>
-            <h2 className="mt-3 text-5xl font-extrabold leading-[1.02] tracking-tight">
+            <h2 className="mt-3 text-5xl font-black leading-[1.02] tracking-tight">
               Your<br />
               <span className="text-brand">network awaits.</span>
             </h2>
