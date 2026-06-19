@@ -324,11 +324,14 @@ function EditableField({
               return <CopyButton text={value} />;
             }
             if (sendHref) {
+              // Only http(s) URLs should open a new tab. Protocol handlers
+              // (mailto:, sms:, weixin://, tg://, etc.) should stay in-place.
+              const opensNewTab = sendHref.startsWith('http');
               return (
                 <a
                   href={sendHref}
-                  target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
-                  rel="noopener noreferrer"
+                  target={opensNewTab ? '_blank' : undefined}
+                  rel={opensNewTab ? 'noopener noreferrer' : undefined}
                   className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition-opacity"
                   title={action === 'send' ? 'Send a message via this channel' : 'Open this profile'}
                 >
