@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { APP_CONTAINER } from '../_layout-constants';
-import { LuCamera, LuX, LuCheck, LuPencil } from 'react-icons/lu';
+import { LuCamera, LuX, LuCheck, LuPencil, LuStar } from 'react-icons/lu';
 import { ChannelIcon, type ChannelKind } from '../cards/[id]/channel-icons';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
@@ -336,8 +336,8 @@ function EditableLine({
   useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
 
   async function commit() {
-    setEditing(false);
     const next = draft.trim();
+    setEditing(false);
     if (next !== value) await onSave(next);
   }
 
@@ -362,6 +362,7 @@ function EditableLine({
         />
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={commit}
           aria-label="Save"
           className="flex-shrink-0 p-1.5 rounded text-brand hover:bg-brand/10 transition"
@@ -370,6 +371,7 @@ function EditableLine({
         </button>
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={cancel}
           aria-label="Cancel"
           className="flex-shrink-0 p-1.5 rounded text-neutral-500 hover:bg-neutral-100 transition"
@@ -445,12 +447,23 @@ function AddChannel({
   const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState<ProfileChannel | ''>('');
   const [value, setValue] = useState('');
+  const valueInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (selected) valueInputRef.current?.focus();
+  }, [selected]);
 
   if (available.length === 0) return null;
 
   async function handleAdd() {
     if (!selected || !value.trim()) return;
     await onAdd(selected, value.trim());
+    setSelected('');
+    setValue('');
+    setExpanded(false);
+  }
+
+  function reset() {
     setSelected('');
     setValue('');
     setExpanded(false);
@@ -468,39 +481,73 @@ function AddChannel({
     );
   }
 
+  // Channel selected — show full channel row (star + icon + input + ADD + X)
+  if (selected) {
+    return (
+      <div className="flex items-center gap-1 py-1">
+        <button
+          type="button"
+          disabled
+          aria-label="Preferred (sets after adding)"
+          className="flex-shrink-0 w-7 h-7 flex items-center justify-center opacity-60"
+        >
+          <LuStar size={16} fill="none" color="#737373" />
+        </button>
+        <span className="w-6 flex items-center justify-center flex-shrink-0">
+          <ChannelIcon kind={selected as ChannelKind} size={18} />
+        </span>
+        <input
+          ref={valueInputRef}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleAdd();
+            if (e.key === 'Escape') reset();
+          }}
+          placeholder={PROFILE_CHANNEL_PLACEHOLDERS[selected]}
+          className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-neutral-950 text-sm min-w-0"
+        />
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={handleAdd}
+          className="flex-shrink-0 px-3 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition"
+        >
+          Add
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={reset}
+          aria-label="Cancel"
+          className="flex-shrink-0 p-1.5 rounded text-neutral-500 hover:bg-neutral-100 transition"
+        >
+          <LuX size={16} />
+        </button>
+      </div>
+    );
+  }
+
+  // No channel picked yet — show the dropdown
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-2 w-full">
       <select
         value={selected}
         onChange={(e) => setSelected(e.target.value as ProfileChannel | '')}
-        className="bg-cream border border-line rounded px-2 py-2 text-sm text-neutral-600"
+        className="flex-1 bg-cream border border-line rounded-lg px-2 py-1.5 text-sm text-neutral-700"
         autoFocus
       >
         <option value="">Pick field…</option>
         {available.map((c) => <option key={c} value={c}>{PROFILE_CHANNEL_LABELS[c]}</option>)}
       </select>
-      {selected && (
-        <>
-          <span className="flex items-center justify-center flex-shrink-0">
-            <ChannelIcon kind={selected as ChannelKind} size={18} />
-          </span>
-          <input
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
-            placeholder={PROFILE_CHANNEL_PLACEHOLDERS[selected]}
-            className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-cream border border-line text-sm"
-          />
-          <button
-            type="button"
-            onClick={handleAdd}
-            aria-label="Save"
-            className="p-2 text-neutral-950"
-          >
-            <LuCheck size={18} />
-          </button>
-        </>
-      )}
+      <button
+        type="button"
+        onClick={reset}
+        className="flex-shrink-0 p-1.5 rounded text-neutral-500 hover:bg-neutral-100 transition"
+        aria-label="Cancel"
+      >
+        <LuX size={16} />
+      </button>
     </div>
   );
 }
