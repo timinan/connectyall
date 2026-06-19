@@ -60,17 +60,17 @@ function pickBg(seed: string) {
 
 function Avatar({ profile }: { profile: { displayName: string; photoR2Url: string | null } | null }) {
   if (!profile) {
-    return <div className="w-32 h-32 rounded-full bg-line" />;
+    return <div className="w-44 h-44 rounded-full bg-line" />;
   }
   if (profile.photoR2Url) {
     // Plain img — Next.js image optimization would require absolute URLs, not worth the complexity here
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={profile.photoR2Url} alt={profile.displayName} className="w-32 h-32 rounded-full object-cover" />;
+    return <img src={profile.photoR2Url} alt={profile.displayName} className="w-44 h-44 rounded-full object-cover" />;
   }
   const initial = (profile.displayName.trim().charAt(0) || '?').toUpperCase();
   return (
     <div
-      className="w-32 h-32 rounded-full flex items-center justify-center text-white text-4xl font-extrabold"
+      className="w-44 h-44 rounded-full flex items-center justify-center text-white text-5xl font-extrabold"
       style={{ backgroundColor: pickBg(profile.displayName) }}
     >
       {initial}
