@@ -24,15 +24,24 @@ export function BottomNav() {
 
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
     if (pathname.startsWith(href)) return;
+    const currentIndex = TABS.findIndex(t => pathname.startsWith(t.match));
+    const nextIndex = TABS.findIndex(t => t.href === href);
+    const direction: 'left' | 'right' = nextIndex > currentIndex ? 'right' : 'left';
     setPendingHref(href);
 
     // Use the View Transitions API when available — animates the page swap.
-    // Falls back to Next.js's normal client navigation otherwise.
+    // The direction class drives a directional slide via CSS in globals.css.
     const supportsVT = typeof document !== 'undefined' && 'startViewTransition' in document;
     if (supportsVT) {
       e.preventDefault();
+      const root = document.documentElement;
+      root.classList.add(`vt-slide-${direction}`);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (document as any).startViewTransition(() => router.push(href));
+      const transition = (document as any).startViewTransition(() => router.push(href));
+      transition.finished.finally(() => {
+        root.classList.remove(`vt-slide-left`);
+        root.classList.remove(`vt-slide-right`);
+      });
     }
     // If unsupported, let the Link handle navigation normally (no preventDefault).
   }
@@ -44,7 +53,7 @@ export function BottomNav() {
       {TABS.map(({ href, icon: Icon, label, match }) => {
         const active = pathname.startsWith(match);
         const isPending = pendingHref === href;
-        const showLabel = active || isPending;
+        const expanded = active || isPending;
         return (
           <Link
             key={href}
@@ -52,14 +61,28 @@ export function BottomNav() {
             prefetch
             onClick={(e) => handleClick(e, href)}
             aria-label={label}
-            className={
-              showLabel
-                ? `inline-flex items-center gap-1.5 px-4 h-10 rounded-full bg-brand text-white text-sm font-semibold transition-transform active:scale-95 ${isPending ? 'opacity-80' : ''}`
-                : `w-10 h-10 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-all active:scale-90 active:bg-white/10 ${isPending ? 'opacity-70' : ''}`
-            }
+            className={`
+              relative inline-flex items-center h-10 rounded-full overflow-hidden
+              transition-all duration-300 ease-out will-change-[width]
+              active:scale-95
+              ${expanded
+                ? 'bg-brand text-white pl-3 pr-4'
+                : 'pl-0 pr-0 text-zinc-400 hover:text-white'}
+            `}
+            style={{ width: expanded ? '108px' : '40px' }}
           >
-            <Icon size={16} />
-            {showLabel && <span>{label}</span>}
+            <span className="w-10 flex items-center justify-center flex-shrink-0">
+              <Icon size={16} />
+            </span>
+            <span
+              className={`
+                text-sm font-semibold whitespace-nowrap
+                transition-opacity duration-200
+                ${expanded ? 'opacity-100 delay-100' : 'opacity-0 pointer-events-none'}
+              `}
+            >
+              {label}
+            </span>
           </Link>
         );
       })}
