@@ -276,7 +276,7 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
           disabled={saving}
           className="w-full px-4 py-4 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase disabled:opacity-50 hover:opacity-90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
         >
-          {saving ? 'Saving…' : 'Start connecting'}
+          {saving ? 'Saving…' : 'Save'}
         </button>
       </div>
       </div>

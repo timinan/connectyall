@@ -114,13 +114,14 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
           this relatively-positioned wrapper so the 560px backdrop centers on the
           avatar and washes purple behind every element above it. */}
       <div className="relative mt-4">
-        {/* 560px backdrop glow — centered on avatar (~245px from top of this wrapper).
-            Uses the same .glow-breathe rhythm as every other glow in the app. */}
+        {/* 560px backdrop glow — centered on the avatar.
+            Avatar y from this wrapper top ≈ banner(60) + mt-3(12) + label(18) + mt-6(24) + half-avatar(72) = ~186px.
+            Glow center must land at ~186, so top = 186 - 280 = -94px. */}
         <div
           aria-hidden
           className="glow-breathe pointer-events-none absolute left-1/2 -translate-x-1/2 w-[560px] h-[560px] rounded-full z-0"
           style={{
-            top: '-35px',
+            top: '-94px',
             background: 'radial-gradient(circle, rgba(124, 92, 255, 0.20) 0%, rgba(124, 92, 255, 0.06) 55%, rgba(124, 92, 255, 0) 78%)',
           }}
         >
