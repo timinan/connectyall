@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { APP_CONTAINER } from '../_layout-constants';
 import { LuCamera, LuX, LuCheck, LuPencil } from 'react-icons/lu';
@@ -87,19 +87,21 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
   const [deleteText, setDeleteText] = useState('');
   const [deleting, setDeleting] = useState(false);
 
-  async function saveBasics(form: HTMLFormElement) {
+  async function saveBasics(updates: { displayName?: string; tagline?: string | null }) {
     setSaving(true);
-    const fd = new FormData(form);
     const res = await fetch('/api/profile', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        displayName: fd.get('displayName'),
-        tagline: fd.get('tagline') || null,
-      }),
+      body: JSON.stringify(updates),
     });
     setSaving(false);
-    if (res.ok) router.push('/app/record');
+    if (res.ok) {
+      setProfile((p) => p ? { ...p, ...(updates.displayName !== undefined ? { displayName: updates.displayName } : {}), ...(updates.tagline !== undefined ? { tagline: updates.tagline } : {}) } : p);
+    }
+  }
+
+  async function continueToRecord() {
+    router.push('/app/record');
   }
 
   async function uploadPhoto(file: File) {
@@ -200,34 +202,24 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
           </div>
         </div>
 
-      <form
-        onSubmit={(e) => { e.preventDefault(); saveBasics(e.currentTarget); }}
-        className="relative z-10 space-y-4"
-      >
-        <div className="rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-5 py-4">
-          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">NAME</div>
-          <div className="mt-2 flex items-center gap-2">
-            <input
-              name="displayName"
+      <div className="relative z-10 space-y-4">
+        <div className="rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-5 py-4 space-y-3">
+          <div className="space-y-1">
+            <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">NAME</div>
+            <EditableLine
+              value={profile?.displayName ?? ''}
               placeholder="Display name (Tim Nan)"
-              required
-              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-sm"
-              defaultValue={profile?.displayName ?? ''}
-              key={`name-${profile?.displayName ?? ''}`}
+              onSave={(v) => saveBasics({ displayName: v })}
             />
-            <LuPencil size={14} className="text-neutral-400 flex-shrink-0" />
           </div>
-          <div className="border-t border-line my-4"></div>
-          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">TITLE</div>
-          <div className="mt-2 flex items-center gap-2">
-            <input
-              name="tagline"
+          <div className="border-t border-line" />
+          <div className="space-y-1">
+            <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">TITLE</div>
+            <EditableLine
+              value={profile?.tagline ?? ''}
               placeholder="One-liner (PM building crypto products)"
-              className="flex-1 px-3 py-2 rounded-lg bg-cream border border-line text-sm"
-              defaultValue={profile?.tagline ?? ''}
-              key={`tagline-${profile?.tagline ?? ''}`}
+              onSave={(v) => saveBasics({ tagline: v || null })}
             />
-            <LuPencil size={14} className="text-neutral-400 flex-shrink-0" />
           </div>
         </div>
 
@@ -257,13 +249,14 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
         </div>
 
         <button
-          type="submit"
+          type="button"
+          onClick={continueToRecord}
           disabled={saving}
           className="w-full px-4 py-4 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase disabled:opacity-50 hover:opacity-90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
         >
-          {saving ? 'Saving…' : 'Save and start connecting'}
+          {saving ? 'Saving…' : 'Start connecting'}
         </button>
-      </form>
+      </div>
       </div>
 
       <div className="flex gap-2 mt-2">
@@ -323,6 +316,84 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
 
       <BottomNav />
     </div>
+  );
+}
+
+function EditableLine({
+  value,
+  placeholder,
+  onSave,
+}: {
+  value: string;
+  placeholder: string;
+  onSave: (v: string) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setDraft(value); }, [value]);
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+
+  async function commit() {
+    setEditing(false);
+    const next = draft.trim();
+    if (next !== value) await onSave(next);
+  }
+
+  function cancel() {
+    setDraft(value);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit();
+            if (e.key === 'Escape') cancel();
+          }}
+          placeholder={placeholder}
+          className="flex-1 px-2 py-1 rounded-lg bg-cream border border-line text-sm min-w-0"
+        />
+        <button
+          type="button"
+          onClick={commit}
+          aria-label="Save"
+          className="flex-shrink-0 p-1.5 rounded text-brand hover:bg-brand/10 transition"
+        >
+          <LuCheck size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={cancel}
+          aria-label="Cancel"
+          className="flex-shrink-0 p-1.5 rounded text-neutral-500 hover:bg-neutral-100 transition"
+        >
+          <LuX size={16} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className="w-full text-left flex items-start gap-1.5 text-sm hover:text-neutral-950 transition-colors"
+      onClick={() => { setDraft(value); setEditing(true); }}
+      title="Tap to edit"
+    >
+      {value.trim() ? (
+        <span className="text-neutral-700 flex-1">{value}</span>
+      ) : (
+        <span className="text-neutral-500 flex-1 italic">{placeholder}</span>
+      )}
+      <LuPencil size={14} className="text-neutral-400 flex-shrink-0 mt-0.5" />
+    </button>
   );
 }
 
