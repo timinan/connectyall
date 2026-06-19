@@ -20,11 +20,13 @@ export default async function Home() {
         <p className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-mono text-[10px] tracking-[0.2em] font-bold uppercase mb-6">
           <span className="text-brand">●</span> VOICE TO CONNECTION
         </p>
-        <h1 className="text-5xl sm:text-6xl font-black tracking-tight leading-[1.02]">
-          Voice notes<br />
-          that <span className="text-brand">connects</span><br />
-          y&apos;all.
-        </h1>
+        <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <h1 className="text-5xl sm:text-6xl font-black tracking-tight leading-[1.02]">
+            Voice notes<br />
+            that <span className="text-brand">connects</span><br />
+            y&apos;all.
+          </h1>
+        </div>
         <p className="mt-6 text-[15px] text-neutral-700 leading-relaxed max-w-[400px]">
           Connectyall turns a voice memo you record after meeting someone into a connection built in an instant. Talk it out, we handle the rest.
         </p>

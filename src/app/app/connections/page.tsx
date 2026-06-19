@@ -355,10 +355,12 @@ export default function ConnectionsPage() {
         <div className="flex-1 flex flex-col gap-8 pt-3">
           <div>
             <div className="font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">NOBODY HERE YET</div>
-            <h2 className="mt-3 text-5xl font-black leading-[1.02] tracking-tight">
-              Your<br />
-              <span className="text-brand">network awaits.</span>
-            </h2>
+            <div className="mt-3 bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+              <h2 className="text-5xl font-black leading-[1.02] tracking-tight">
+                Your<br />
+                <span className="text-brand">network awaits.</span>
+              </h2>
+            </div>
             <p className="mt-4 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">
               Record your first voice memo and they&apos;ll show up here automatically.
             </p>
