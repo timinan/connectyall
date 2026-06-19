@@ -121,7 +121,7 @@ export default function RecordPage() {
 
   const status: ReactNode =
     state === 'recording' ? <span className="text-red-600">● REC</span> :
-    state === 'uploading' ? <span>● PROCESSING</span> :
+    state === 'uploading' ? <span><span className="text-brand">●</span> THINKING</span> :
     <span><span className="text-brand">●</span> READY</span>;
 
   const greeting = getGreetingLabel(displayName);
@@ -187,13 +187,24 @@ export default function RecordPage() {
             )}
           </div>
           <div className="flex items-end justify-center gap-1 h-14 px-4">
-            {levels.map((v, i) => (
-              <div
-                key={i}
-                style={{ height: `${Math.max(8, v * 56)}px` }}
-                className={`w-1 ${state === 'recording' ? 'bg-red-500/55' : 'bg-brand/55'} rounded`}
-              />
-            ))}
+            {levels.map((_v, i) => {
+              if (state === 'uploading') {
+                return (
+                  <div
+                    key={i}
+                    className="w-1 bg-brand/55 rounded wave-bar"
+                    style={{ animationDelay: `${i * 0.07}s` }}
+                  />
+                );
+              }
+              return (
+                <div
+                  key={i}
+                  style={{ height: `${Math.max(8, _v * 56)}px` }}
+                  className={`w-1 ${state === 'recording' ? 'bg-red-500/55' : 'bg-brand/55'} rounded`}
+                />
+              );
+            })}
           </div>
           <Caption state={state} />
         </div>

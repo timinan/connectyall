@@ -28,12 +28,26 @@ body {
 .bg-brand { background-color: #7C5CFF; }
 .border-brand { border-color: #7C5CFF; }
 
-@keyframes logo-flip {
-  0%   { transform: rotateY(0deg); }
-  100% { transform: rotateY(360deg); }
+/* Spin clockwise with a quick anticipation bounce on either side of each turn */
+@keyframes logo-spin-bounce {
+  0%   { transform: rotate(0deg) scale(1); }
+  6%   { transform: rotate(-12deg) scale(0.94); }  /* windup */
+  10%  { transform: rotate(0deg)   scale(1.06); }  /* recoil before spin */
+  78%  { transform: rotate(372deg) scale(1); }     /* overshoot at the end */
+  86%  { transform: rotate(355deg) scale(1); }     /* small bounce back */
+  100% { transform: rotate(360deg) scale(1); }     /* settle */
 }
 
 .logo-spinner {
-  animation: logo-flip 1.6s linear infinite;
-  transform-style: preserve-3d;
+  animation: logo-spin-bounce 1.7s cubic-bezier(0.5, 0.05, 0.3, 1) infinite;
+  transform-origin: 50% 50%;
+}
+
+/* Processing wave — animates the 15 thin bars in a rolling pattern */
+@keyframes wave-pulse {
+  0%, 100% { height: 8px; }
+  50%      { height: 38px; }
+}
+.wave-bar {
+  animation: wave-pulse 1.1s ease-in-out infinite;
 }
