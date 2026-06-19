@@ -304,13 +304,15 @@ export default function ConnectionsPage() {
 
       {rows && (
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-5xl font-black leading-[1.02] tracking-tight">
-            Your <span className="text-brand">network</span>
-          </h1>
+          <div className="flex-1 bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <h1 className="text-5xl font-black leading-[1.02] tracking-tight">
+              Your <span className="text-brand">network</span>
+            </h1>
+          </div>
           <Link
             href="/app/record"
             aria-label="Record a new connection"
-            className="flex-shrink-0 w-11 h-11 rounded-full bg-brand text-white flex items-center justify-center shadow-[0_6px_16px_rgba(124,92,255,0.35)] hover:opacity-90 transition"
+            className="flex-shrink-0 w-11 h-11 mt-2 rounded-full bg-brand text-white flex items-center justify-center shadow-[0_6px_16px_rgba(124,92,255,0.35)] hover:opacity-90 transition"
           >
             <LuPlus size={22} />
           </Link>
