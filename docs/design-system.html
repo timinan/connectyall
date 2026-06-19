@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Connectyall — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #7C5CFF;
+    --brand-soft: #E9DDFF;
+    --cream: #F2F2F8;
+    --surface: #FFFFFF;
+    --line: #ECEAF3;
+    --neutral-950: #0A0A0A;
+    --neutral-700: #4B5563;
+    --neutral-500: #6B7280;
+    --neutral-400: #9CA3AF;
+    --red: #DC2626;
+    --doc-bg: #fafaf7;
+    --doc-ink: #1a1a1c;
+    --doc-muted: #555;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Sora', -apple-system, system-ui, sans-serif;
+    color: var(--doc-ink);
+    background: var(--doc-bg);
+    line-height: 1.55;
+    font-size: 15px;
+  }
+
+  /* === LAYOUT === */
+  .wrap { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  aside.toc {
+    position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+    background: #fff; border-right: 1px solid #e7e3d7; padding: 28px 22px;
+  }
+  aside.toc .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; }
+  aside.toc .brand .logo { width: 28px; height: 28px; border-radius: 7px; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; font-family: Inter; }
+  aside.toc .brand .name { font-size: 14px; font-weight: 700; }
+  aside.toc h3 { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--doc-muted); margin: 20px 0 8px; font-weight: 600; }
+  aside.toc a { display: block; padding: 5px 0; color: var(--doc-ink); text-decoration: none; font-size: 13.5px; }
+  aside.toc a:hover { color: var(--brand); }
+
+  main { padding: 40px 56px 80px; max-width: 1100px; }
+  section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  h1 { font-family: Inter; font-size: 36px; font-weight: 900; letter-spacing: -0.02em; margin: 0 0 8px; }
+  h1 .accent { color: var(--brand); }
+  h2 { font-family: Inter; font-size: 24px; font-weight: 800; letter-spacing: -0.015em; margin: 0 0 14px; padding-top: 8px; }
+  h3 { font-size: 17px; font-weight: 700; margin: 24px 0 10px; }
+  h4 { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--doc-muted); font-weight: 600; margin: 18px 0 8px; }
+  p { margin: 0 0 12px; max-width: 720px; }
+  ul, ol { padding-left: 22px; max-width: 720px; }
+  li { margin-bottom: 4px; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; background: #f0eee5; padding: 1px 6px; border-radius: 4px; }
+  pre { background: var(--doc-ink); color: #f0eee5; padding: 14px 18px; border-radius: 8px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.6; max-width: 880px; }
+  pre code { background: none; padding: 0; color: inherit; font-size: 12.5px; }
+  blockquote { border-left: 3px solid var(--brand); margin: 14px 0; padding: 8px 16px; background: #fff; border-radius: 0 6px 6px 0; font-size: 13.5px; color: var(--doc-muted); }
+  blockquote strong { color: var(--doc-ink); }
+  hr { border: 0; border-top: 1px solid #e7e3d7; margin: 32px 0; }
+
+  /* Specimen cards (visual examples) */
+  .specimen { background: #fff; border-radius: 12px; padding: 24px; margin: 12px 0; border: 1px solid #e7e3d7; }
+  .specimen-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+  .specimen-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--doc-muted); }
+
+  /* Token chips */
+  .swatch { display: inline-flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #e7e3d7; padding: 12px 14px; border-radius: 10px; margin: 6px 8px 6px 0; }
+  .swatch .chip { width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05); }
+  .swatch .meta { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .swatch .meta .name { font-weight: 700; font-size: 13px; font-family: Sora; }
+
+  /* Type specimens */
+  .type-row { display: grid; grid-template-columns: 200px 1fr; gap: 24px; align-items: baseline; padding: 12px 0; border-bottom: 1px dashed #e7e3d7; }
+  .type-row:last-child { border-bottom: 0; }
+  .type-row .meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--doc-muted); letter-spacing: 0.08em; line-height: 1.4; }
+
+  /* Buttons in design system */
+  .btn-cta { display: inline-flex; align-items: center; gap: 8px; padding: 14px 22px; border-radius: 999px; background: var(--brand); color: #fff; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; border: 0; box-shadow: 0 16px 36px rgba(124, 92, 255, 0.42), 0 2px 6px rgba(124, 92, 255, 0.20); cursor: pointer; }
+  .btn-send { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px; background: var(--brand); color: #fff; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; border: 0; }
+  .btn-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; }
+  .btn-footer { padding: 12px 20px; border-radius: 999px; background: #fff; border: 1.5px solid var(--neutral-950); color: var(--neutral-950); font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; }
+  .btn-footer.danger { border-color: var(--red); color: var(--red); }
+
+  /* Phone frame mockup */
+  .phone-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin: 16px 0; }
+  .frame { border-radius: 32px; overflow: hidden; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.08); border: 7px solid var(--doc-ink); }
+  .frame-label { background: var(--doc-ink); color: #fff; padding: 8px 12px; font-size: 10px; font-weight: 700; display: flex; justify-content: space-between; }
+  .frame-label .pill { background: var(--brand); color: #fff; padding: 2px 7px; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 8px; }
+  .phone { height: 640px; padding: 18px 18px 0; background: var(--cream); display: flex; flex-direction: column; position: relative; overflow: hidden; }
+
+  /* ===== App chrome inside mockups ===== */
+  .ph-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
+  .ph-logo { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; }
+  .ph-logo .mark { width: 24px; height: 24px; border-radius: 6px; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; font-family: Inter; }
+  .ph-status { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: var(--neutral-500); font-weight: 600; text-transform: uppercase; }
+  .ph-status .dot { color: var(--brand); }
+  .ph-headline { background: var(--surface); border-left: 4px solid var(--brand); border-radius: 0 12px 12px 0; padding: 10px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .ph-headline h2 { font-family: Inter; font-size: 26px; font-weight: 900; line-height: 1.02; letter-spacing: -0.025em; margin: 0; }
+  .ph-headline h2 .accent { color: var(--brand); }
+  .ph-mono-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--neutral-500); font-weight: 600; text-transform: uppercase; margin-top: 10px; padding-left: 18px; }
+  .ph-sub { font-size: 12px; color: var(--neutral-700); margin-top: 6px; padding-left: 18px; line-height: 1.5; max-width: 240px; }
+  .ph-card { background: var(--surface); border-radius: 14px; padding: 12px 14px; border: 1px solid rgba(231, 227, 215, 0.7); margin-top: 10px; }
+  .ph-card .lbl { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: var(--neutral-500); font-weight: 600; text-transform: uppercase; }
+  .ph-card .val { font-size: 12px; color: var(--neutral-950); margin-top: 4px; display: flex; gap: 6px; align-items: flex-start; }
+  .ph-card .val .pencil { width: 11px; height: 11px; color: var(--neutral-400); flex-shrink: 0; }
+  .ph-card .divider { border-top: 1px solid var(--line); margin: 10px 0; }
+  .ph-channel { display: flex; align-items: center; gap: 6px; padding: 5px 0; }
+  .ph-channel svg { width: 13px; height: 13px; }
+  .ph-channel .star { color: #d1d5db; flex-shrink: 0; }
+  .ph-channel .star.active { color: #FACC15; fill: #FACC15; }
+  .ph-channel .ch-tag { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--brand); font-weight: 700; flex-shrink: 0; width: 30px; text-transform: uppercase; }
+  .ph-channel .ch-value { flex: 1; min-width: 0; font-size: 11px; color: var(--neutral-950); padding: 4px 7px; background: var(--cream); border-radius: 5px; border: 1px solid var(--line); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ph-channel .send { background: var(--brand); color: #fff; padding: 3px 8px; border-radius: 999px; font-size: 9px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.12em; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
+  .ph-cta { display: block; width: 100%; padding: 11px; border-radius: 999px; background: var(--brand); color: #fff; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; font-weight: 700; text-transform: uppercase; margin-top: 12px; box-shadow: 0 12px 28px rgba(124, 92, 255, 0.36); }
+  .ph-nav { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: #0F0F12; color: #fff; border-radius: 999px; padding: 4px; display: flex; gap: 3px; align-items: center; box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
+  .ph-nav .tab { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #71717a; }
+  .ph-nav .tab.active { background: var(--brand); color: #fff; width: auto; padding: 0 12px; height: 32px; border-radius: 999px; gap: 5px; font-size: 11px; font-weight: 700; font-family: Inter; }
+  .ph-nav .tab svg { width: 13px; height: 13px; }
+
+  /* Glow rings for mockups */
+  .glow { position: absolute; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(124, 92, 255, 0.16) 0%, rgba(124, 92, 255, 0.04) 60%, rgba(124, 92, 255, 0) 80%); pointer-events: none; }
+  .glow::before { content:""; position: absolute; inset: 30px; border-radius: 50%; background: rgba(124, 92, 255, 0.07); }
+  .glow::after { content:""; position: absolute; inset: 60px; border-radius: 50%; background: rgba(124, 92, 255, 0.13); }
+
+  /* ===== DO / DON'T cards ===== */
+  .do-dont { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0; }
+  .do-dont .col { background: #fff; padding: 16px 18px; border-radius: 10px; border-left: 4px solid var(--brand); }
+  .do-dont .col.no { border-left-color: var(--red); }
+  .do-dont h4 { margin-top: 0; }
+  .do-dont .col.no h4 { color: var(--red); }
+
+  /* ===== Pill badge ===== */
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+  .badge.brand { background: var(--brand-soft); color: var(--brand); }
+  .badge.gray { background: #f0eee5; color: var(--doc-muted); }
+  .badge.green { background: #DCFCE7; color: #166534; }
+  .badge.red { background: #FEE2E2; color: var(--red); }
+
+  /* anchor offsets for sticky nav */
+  :target { scroll-margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position: absolute;">
+  <defs>
+    <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+    </symbol>
+    <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+    </symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </symbol>
+    <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<aside class="toc">
+  <div class="brand">
+    <div class="logo">c</div>
+    <div class="name">Connectyall<br /><span style="font-size: 10px; font-weight: 500; color: var(--doc-muted); letter-spacing: 0.1em;">DESIGN SYSTEM</span></div>
+  </div>
+
+  <h3>Foundations</h3>
+  <a href="#principles">Core principles</a>
+  <a href="#brand">Brand voice</a>
+  <a href="#colors">Colors</a>
+  <a href="#type">Typography</a>
+  <a href="#spacing">Spacing & layout</a>
+  <a href="#shadows">Shadows</a>
+
+  <h3>Layout</h3>
+  <a href="#containers">Container constants</a>
+  <a href="#alignment">Alignment rules</a>
+
+  <h3>Components</h3>
+  <a href="#banner">Headline banner</a>
+  <a href="#header">Page header</a>
+  <a href="#bottom-nav">Bottom nav</a>
+  <a href="#buttons">Buttons</a>
+  <a href="#cards">Cards</a>
+  <a href="#editing">Tap-to-edit</a>
+  <a href="#channels">Channel rows</a>
+  <a href="#glows">Glow rings</a>
+
+  <h3>Patterns</h3>
+  <a href="#animations">Animations</a>
+  <a href="#transitions">Page transitions</a>
+  <a href="#editorial">Editorial voice</a>
+
+  <h3>Screens</h3>
+  <a href="#screen-marketing">Marketing</a>
+  <a href="#screen-signin">Sign-in</a>
+  <a href="#screen-profile">Profile</a>
+  <a href="#screen-record">Record</a>
+  <a href="#screen-connections">Connections list</a>
+  <a href="#screen-detail">Connection detail</a>
+
+  <h3>Reference</h3>
+  <a href="#donts">Anti-patterns</a>
+  <a href="#files">File map</a>
+</aside>
+
+<main>
+
+<header>
+  <h1>Connectyall <span class="accent">Design System</span></h1>
+  <p style="font-size: 15px; color: var(--doc-muted); margin-top: 4px;">A reference for everything visual in the app. Update this when you change the system; check this before you add new UI.</p>
+  <p style="font-size: 13px; color: var(--doc-muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em;">Maintained alongside the codebase at <code>docs/design-system.html</code>. Open in a browser to view.</p>
+</header>
+
+<hr />
+
+<!-- ============================================================ -->
+<!-- PRINCIPLES                                                   -->
+<!-- ============================================================ -->
+<section id="principles">
+<h2>Core principles</h2>
+<p>Five rules that govern the whole product. If a change breaks one of these, it's the wrong change.</p>
+
+<ol>
+  <li><strong>Voice in, connection out.</strong> Every screen exists in service of the voice → connection pipeline. Decoration that distracts from that loses.</li>
+  <li><strong>Warm content, engineered chrome.</strong> Conversational text (names, notes, recaps) reads in Sora — warm and human. Labels, tags, dates, buttons read in JetBrains Mono uppercase — engineered and precise. Two voices, distinct slots.</li>
+  <li><strong>Every page is aligned to every other.</strong> Logo, status pill, and headline banner sit at the same x/y on every page. Tab through marketing → sign-in → profile → record → connections to verify before shipping.</li>
+  <li><strong>Tap-to-edit, not always-editing.</strong> Profile + connection detail show values as text + pencil. Tap a value → it becomes an input with check + X. No persistent form fields.</li>
+  <li><strong>Brand purple is the single accent.</strong> One brand color (<code>#7C5CFF</code>) used everywhere a thing is interactive, important, or branded. Black is structural. Red is for destructive only.</li>
+</ol>
+</section>
+
+<!-- ============================================================ -->
+<!-- BRAND                                                        -->
+<!-- ============================================================ -->
+<section id="brand">
+<h2>Brand voice</h2>
+<p>Connectyall is "the voice note that turns into a connection." The brand is warm, casual, and conversational — never enterprise, never cold. We use first person ("we"), contractions, and short sentences.</p>
+
+<h3>Tagline</h3>
+<blockquote><strong>Voice notes that connects y'all.</strong> Talk it out. We pull the name, the channels, the gist. Built in an instant. Shared in a tap.</blockquote>
+
+<h3>Tonal rules</h3>
+<ul>
+  <li><strong>Lead positive.</strong> "Tap to record" not "Don't waste time typing."</li>
+  <li><strong>Conversational.</strong> "Hang tight while we turn your voice into a connection." Not "Processing audio for entity extraction."</li>
+  <li><strong>No corporate jargon.</strong> Never: <em>leverage, utilize, robust, streamline, cutting-edge, harness, unlock</em>.</li>
+  <li><strong>No em-dashes in product copy.</strong> Use periods or "—" only sparingly.</li>
+  <li><strong>Mono labels are ALL CAPS with leading <code>●</code>.</strong> Examples: <code>● GOOD EVENING, TIM</code> · <code>● MET TODAY · 2 MEETINGS</code> · <code>● NO PASSWORD NEEDED</code></li>
+</ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- COLORS                                                       -->
+<!-- ============================================================ -->
+<section id="colors">
+<h2>Colors</h2>
+<p>Three roles: brand (purple), structural (black/iris/white), and signal (red for danger, yellow for stars). No other colors should appear in the UI without a documented reason.</p>
+
+<div class="specimen">
+<h4>Brand</h4>
+<div class="swatch"><div class="chip" style="background:#7C5CFF;"></div><div class="meta"><div class="name">Brand purple</div>#7C5CFF</div></div>
+<div class="swatch"><div class="chip" style="background:#E9DDFF;"></div><div class="meta"><div class="name">Brand soft</div>#E9DDFF</div></div>
+<p style="font-size: 13px; color: var(--doc-muted); margin-top: 10px; max-width: 720px;"><strong>Critical:</strong> Tailwind v4 routes hex through OKLCH at build time and washes brand purple out. Keep the explicit overrides in <code>globals.css</code>: <code>.text-brand { color: #7C5CFF; }</code> / <code>.bg-brand { background-color: #7C5CFF; }</code> / <code>.border-brand { border-color: #7C5CFF; }</code>. Don't delete them.</p>
+</div>
+
+<div class="specimen">
+<h4>Structural</h4>
+<div class="swatch"><div class="chip" style="background:#0A0A0A;"></div><div class="meta"><div class="name">Black</div>#0A0A0A</div></div>
+<div class="swatch"><div class="chip" style="background:#FFFFFF; border-color: #ddd;"></div><div class="meta"><div class="name">Surface white</div>#FFFFFF</div></div>
+<div class="swatch"><div class="chip" style="background:#F2F2F8;"></div><div class="meta"><div class="name">Iris cream</div>#F2F2F8</div></div>
+<div class="swatch"><div class="chip" style="background:#ECEAF3;"></div><div class="meta"><div class="name">Line</div>#ECEAF3</div></div>
+<div class="swatch"><div class="chip" style="background:#6B7280;"></div><div class="meta"><div class="name">Muted</div>#6B7280</div></div>
+</div>
+
+<div class="specimen">
+<h4>Signal</h4>
+<div class="swatch"><div class="chip" style="background:#DC2626;"></div><div class="meta"><div class="name">Danger red</div>#DC2626 — destructive only</div></div>
+<div class="swatch"><div class="chip" style="background:#FACC15;"></div><div class="meta"><div class="name">Preferred yellow</div>#FACC15 — channel star only</div></div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- TYPOGRAPHY                                                   -->
+<!-- ============================================================ -->
+<section id="type">
+<h2>Typography</h2>
+<p>Two type families. Sora for conversational text; JetBrains Mono uppercase for engineered text. Headlines stay Inter Black <em>only if</em> Sora's 800 weight doesn't read heavy enough — currently Sora 800 is used and works.</p>
+
+<h3>Font roles</h3>
+<div class="specimen">
+  <div class="type-row">
+    <div>
+      <div class="meta">SORA · 800<br />Conversational</div>
+    </div>
+    <div style="font-family: Sora; font-weight: 800; font-size: 26px; letter-spacing: -0.02em;">Sarah Chen</div>
+  </div>
+  <div class="type-row">
+    <div>
+      <div class="meta">SORA · 400<br />Body text</div>
+    </div>
+    <div style="font-family: Sora; font-weight: 400; font-size: 14px;">Tap to record. We'll pull a name, channels, and the gist — no typing.</div>
+  </div>
+  <div class="type-row">
+    <div>
+      <div class="meta">JETBRAINS MONO · 600<br />Mono label (banner)</div>
+    </div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--neutral-500);">● MET TODAY · 2 MEETINGS</div>
+  </div>
+  <div class="type-row">
+    <div>
+      <div class="meta">JETBRAINS MONO · 700<br />Card label</div>
+    </div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--neutral-500);">PRIVATE NOTE</div>
+  </div>
+  <div class="type-row">
+    <div>
+      <div class="meta">JETBRAINS MONO · 700<br />Primary CTA</div>
+    </div>
+    <div><span class="btn-cta">Save and connect</span></div>
+  </div>
+  <div class="type-row">
+    <div>
+      <div class="meta">JETBRAINS MONO · 700<br />Channel tag / chip</div>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--brand); font-weight: 700; text-transform: uppercase;">MAIL</span>
+      <span class="btn-chip">+ Add channel</span>
+    </div>
+  </div>
+</div>
+
+<h3>Loaders</h3>
+<pre><code>// src/app/layout.tsx
+import { Sora, JetBrains_Mono } from "next/font/google";
+
+const sora = Sora({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});</code></pre>
+<p style="font-size: 13px; color: var(--doc-muted);">Variable names <code>--font-geist-sans</code> / <code>--font-geist-mono</code> are retained from the original Geist setup so every reference in <code>globals.css</code> and Tailwind theme tokens picks up the new fonts without a rewrite.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SPACING                                                      -->
+<!-- ============================================================ -->
+<section id="spacing">
+<h2>Spacing & layout</h2>
+<p>We use Tailwind's default 4px-based scale. The most important numbers to know by heart:</p>
+<ul>
+  <li><code>px-4</code> (16px) → horizontal padding on mobile</li>
+  <li><code>sm:px-6</code> (24px) → horizontal padding on tablet+</li>
+  <li><code>sm:max-w-xl</code> (576px) → max width of logged-in pages</li>
+  <li><code>pb-28</code> (112px) → bottom padding on app pages to clear the floating nav</li>
+  <li><code>pl-5</code> (20px) → indent for body text + mono labels so they line up with where the headline text starts inside the banner card (4px border + 16px padding = 20px)</li>
+  <li><code>gap-4</code> (16px) → vertical rhythm between cards</li>
+  <li><code>gap-1.5</code> (6px) → tight horizontal gaps inside compound buttons (icon + label)</li>
+</ul>
+
+<h3>Border radius</h3>
+<ul>
+  <li><code>rounded-full</code> → pills, circles, CTAs (every action surface)</li>
+  <li><code>rounded-r-2xl</code> (16px right corners) → headline-banner cards (purple left edge stays flat)</li>
+  <li><code>rounded-3xl</code> (24px) → modal containers, sign-in input boxes</li>
+  <li><code>rounded-2xl</code> (16px) → content cards (profile, connection detail)</li>
+  <li><code>rounded-lg</code> (8px) → cream value-input boxes</li>
+</ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- SHADOWS                                                      -->
+<!-- ============================================================ -->
+<section id="shadows">
+<h2>Shadows</h2>
+<p>Three tiers. Each is purpose-bound — don't invent new ones.</p>
+
+<div class="specimen">
+  <h4>Card lift · subtle</h4>
+  <code>shadow-[0_2px_8px_rgba(0,0,0,0.04)]</code>
+  <p style="font-size: 13px; color: var(--doc-muted); margin-top: 6px;">Headline banners, content cards, navigation pills. Quiet — the card looks like it sits on the page.</p>
+</div>
+<div class="specimen">
+  <h4>Floating · row card</h4>
+  <code>shadow-[0_8px_24px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.04)]</code>
+  <p style="font-size: 13px; color: var(--doc-muted); margin-top: 6px;">Connection list rows — the "tap me, I'm pressable" weight without competing with the headline.</p>
+</div>
+<div class="specimen">
+  <h4>Brand glow · primary CTA</h4>
+  <code>shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]</code>
+  <p style="font-size: 13px; color: var(--doc-muted); margin-top: 6px;">Every brand-purple primary CTA. Communicates "this is THE action." Do not use on secondary buttons.</p>
+</div>
+</section>
+
+<hr />
+
+<!-- ============================================================ -->
+<!-- CONTAINERS                                                   -->
+<!-- ============================================================ -->
+<section id="containers">
+<h2>Container constants</h2>
+<p>Every page MUST use one of three exported constants from <code>src/app/app/_layout-constants.ts</code>. Never hand-roll <code>px-*</code> or <code>max-w-*</code> on the outer page wrapper.</p>
+
+<pre><code>// Logged-in stacking pages (profile, connections list)
+APP_CONTAINER       = 'px-4 py-6 pb-28 sm:px-6 sm:max-w-xl sm:mx-auto space-y-4 w-full';
+
+// Logged-in vertical-flex pages (record / processing — mic centers in dvh)
+APP_CONTAINER_FLEX  = 'px-4 py-6 pb-28 sm:px-6 sm:max-w-xl sm:mx-auto w-full min-h-[100dvh] flex flex-col';
+
+// Public / auth pages (marketing root, sign-in) — no bottom-nav clearance
+LANDING_CONTAINER_FLEX = 'px-4 py-6 pb-8 sm:px-6 sm:max-w-xl sm:mx-auto w-full min-h-[100dvh] flex flex-col';</code></pre>
+
+<p>Picking the wrong container drifts the logo + status pill 8px between tabs. Tim flagged this twice during the UI refresh; the fix both times was to stop hand-rolling padding and use the shared constant.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- ALIGNMENT                                                    -->
+<!-- ============================================================ -->
+<section id="alignment">
+<h2>Alignment rules</h2>
+<p>Two rules. Verify both by tabbing through every page.</p>
+
+<div class="do-dont">
+<div class="col">
+  <h4 style="color: #166534;">Do</h4>
+  <p>Mono label always sits <strong>below</strong> the headline banner. Format: <code>● UPPERCASE TEXT</code></p>
+  <p>Text under the banner gets <code>pl-5</code> (20px) so it lines up with where the headline letters start inside the banner card. The banner has a 4px purple border + <code>px-4</code> (16px) padding = 20px text-start indent.</p>
+</div>
+<div class="col no">
+  <h4>Don't</h4>
+  <p>Don't put the mono label <em>above</em> the banner. That was sign-in's pattern until 2026-06-18 and it broke the rhythm with every other page.</p>
+  <p>Don't let the mono label or body text start at the container's left edge. That visual offset is what made Tim flag every page during alignment passes.</p>
+</div>
+</div>
+</section>
+
+<hr />
+
+<!-- ============================================================ -->
+<!-- BANNER                                                       -->
+<!-- ============================================================ -->
+<section id="banner">
+<h2>Headline banner</h2>
+<p>The signature component. Every page has one. White card with a 4px brand-purple left border, sitting on the iris cream background.</p>
+
+<div class="specimen">
+  <div class="ph-headline" style="max-width: 340px;">
+    <h2>Who did you <span class="accent">just meet?</span></h2>
+  </div>
+  <div class="ph-mono-label" style="padding-left: 18px;">● GOOD EVENING, TIM</div>
+  <pre style="margin-top: 14px;"><code>&lt;div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3
+                 shadow-[0_2px_8px_rgba(0,0,0,0.04)]"&gt;
+  &lt;h1 className="text-4xl font-black leading-[1.02] tracking-tight"&gt;
+    Who did you&lt;br /&gt;
+    &lt;span className="text-brand"&gt;just meet?&lt;/span&gt;
+  &lt;/h1&gt;
+&lt;/div&gt;
+&lt;div className="mt-4 pl-5 font-mono text-[13px] tracking-[0.2em]
+                 font-semibold uppercase text-muted"&gt;
+  ● GOOD EVENING, TIM
+&lt;/div&gt;</code></pre>
+</div>
+
+<h3>Rules</h3>
+<ul>
+  <li>Always <code>text-4xl font-black</code>. Standardized across every page on 2026-06-18.</li>
+  <li>Two-line headline. First line plain (black). Second line accent (brand purple). Use <code>&lt;br /&gt;</code> not flex/grid.</li>
+  <li>Bottom corners (top-right + bottom-right) are <code>rounded-r-xl</code>. Left edge is the purple border, no rounding.</li>
+  <li><strong>Editable variants</strong> (contact name on connection detail) use the <code>EditableHeading</code> component inside — tap to make the headline an underlined input.</li>
+</ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- HEADER                                                       -->
+<!-- ============================================================ -->
+<section id="header">
+<h2>Page header</h2>
+<p>The thin row above the banner: logo + status pill. Imported as <code>&lt;PageHeader status={...} /&gt;</code> from <code>src/components/page-header.tsx</code>.</p>
+
+<div class="specimen">
+  <div class="ph-header" style="max-width: 340px; padding-right: 24px;">
+    <div class="ph-logo"><div class="mark">c</div> Connectyall</div>
+    <div class="ph-status"><span class="dot">●</span> READY</div>
+  </div>
+</div>
+
+<h3>Status pill conventions</h3>
+<ul>
+  <li><strong>Marketing root:</strong> <code>● VOICE TO CONNECTION</code> (now sits in the header status, not as a label above the banner)</li>
+  <li><strong>Sign-in email:</strong> <code>● SIGN IN</code></li>
+  <li><strong>Sign-in OTP:</strong> <code>● ENTER CODE</code></li>
+  <li><strong>Profile:</strong> <code>PROFILE</code></li>
+  <li><strong>Record idle:</strong> <code>● READY</code></li>
+  <li><strong>Record recording:</strong> <code>● REC</code> (red)</li>
+  <li><strong>Record processing:</strong> <code>● THINKING</code> (was "PROCESSING" — too duplicated with the label below)</li>
+  <li><strong>Connections list:</strong> <code>5 PEOPLE</code> / <code>1 PERSON</code></li>
+  <li><strong>Connection detail:</strong> <code>2 MEETINGS</code> / <code>1 MEETING</code></li>
+</ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- BOTTOM NAV                                                   -->
+<!-- ============================================================ -->
+<section id="bottom-nav">
+<h2>Bottom nav</h2>
+<p>Three tabs. The active one is a brand-purple pill with icon + label; the other two are 40px circles with just an icon. Floating <code>fixed bottom-5</code>, centered with <code>left-1/2 -translate-x-1/2</code>.</p>
+
+<div class="specimen">
+  <div style="background: #0F0F12; color: #fff; border-radius: 999px; padding: 6px; display: inline-flex; gap: 4px; box-shadow: 0 6px 20px rgba(0,0,0,0.25);">
+    <div style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #71717a;"><svg style="width:16px;height:16px;"><use href="#i-user"/></svg></div>
+    <div style="display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; height: 40px; border-radius: 999px; background: var(--brand); font-family: Inter; font-size: 14px; font-weight: 600;"><svg style="width:16px;height:16px;"><use href="#i-mic"/></svg> Record</div>
+    <div style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #71717a;"><svg style="width:16px;height:16px;"><use href="#i-users"/></svg></div>
+  </div>
+</div>
+
+<h3>Tab order</h3>
+<ol>
+  <li><code>/app/profile</code> · Profile (left)</li>
+  <li><code>/app/record</code> · Record (middle — default destination after sign-in)</li>
+  <li><code>/app/connections</code> · Connections (right)</li>
+</ol>
+<p>This order drives the directional page slide (see <a href="#transitions">Page transitions</a>).</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- BUTTONS                                                      -->
+<!-- ============================================================ -->
+<section id="buttons">
+<h2>Buttons</h2>
+<p>All actions speak Concept 1 — mono uppercase JetBrains Mono with <code>tracking-[0.14em]</code> to <code>tracking-[0.18em]</code>. Decoration is minimal: no icons in send/visit/add pills (text only), no emoji in save labels.</p>
+
+<h3>Primary CTA</h3>
+<div class="specimen">
+  <span class="btn-cta">Save and connect</span>
+  <p style="font-size: 13px; color: var(--doc-muted); margin-top: 8px;">Brand purple, mono uppercase, brand-glow shadow. One per page maximum. Examples: <code>Open the app</code> · <code>Send code</code> · <code>Sign in</code> · <code>Start connecting</code> · <code>Save</code> · <code>Record your first</code>.</p>
+  <pre><code>className="px-5 py-4 rounded-full bg-brand text-white font-mono
+           text-[13px] tracking-[0.18em] font-bold uppercase
+           shadow-[0_16px_36px_rgba(124,92,255,0.42),
+                  0_2px_6px_rgba(124,92,255,0.20)]"</code></pre>
+</div>
+
+<h3>Send / Visit / Copy pill</h3>
+<div class="specimen">
+  <div class="specimen-row"><span class="specimen-label">Send</span><span class="btn-send">Send</span></div>
+  <div class="specimen-row"><span class="specimen-label">Visit</span><span class="btn-send">Visit</span></div>
+  <div class="specimen-row"><span class="specimen-label">Copy (wechat)</span><span class="btn-send">Copy</span></div>
+  <p style="font-size: 13px; color: var(--doc-muted); margin-top: 8px;">Driven by <code>channelAction(kind)</code> in <code>channel-icons.tsx</code>. See <a href="#channels">Channel rows</a>.</p>
+</div>
+
+<h3>Chip</h3>
+<div class="specimen">
+  <span class="btn-chip">+ Add channel</span>
+  <span class="btn-chip" style="margin-left: 8px;">Save to phone</span>
+  <p style="font-size: 13px; color: var(--doc-muted); margin-top: 8px;">Soft-purple <code>#E9DDFF</code> background, brand text. Used for <code>Add field</code> / <code>Save X to phone</code>. Same height as Send/Visit so they sit on the same row cleanly.</p>
+</div>
+
+<h3>Footer buttons (Sign out · Delete account)</h3>
+<div class="specimen">
+  <span class="btn-footer">Sign out</span>
+  <span class="btn-footer danger" style="margin-left: 8px;">Delete account</span>
+  <p style="font-size: 13px; color: var(--doc-muted); margin-top: 8px;">White background, 1.5px outline (black for neutral, red for danger). Mono uppercase like CTAs but quieter — no shadow, no fill.</p>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CARDS                                                        -->
+<!-- ============================================================ -->
+<section id="cards">
+<h2>Cards</h2>
+<p>White containers with a hairline border. Two types: <strong>info cards</strong> (profile fields, contact note, recap) and <strong>row cards</strong> (connection list entries with floating shadow).</p>
+
+<div class="specimen">
+<h4>Info card</h4>
+<div class="ph-card" style="max-width: 320px;">
+  <div class="lbl">PRIVATE NOTE</div>
+  <div class="val">Design Lead at Notion. Has a beagle named Pepper. <svg class="pencil"><use href="#i-pencil"/></svg></div>
+  <div class="divider"></div>
+  <div class="lbl">WHAT WE TALKED ABOUT</div>
+  <div class="val">AI eval frameworks; she's hiring a staff PM. <svg class="pencil"><use href="#i-pencil"/></svg></div>
+</div>
+<pre><code>&lt;div className="rounded-2xl bg-white border border-line px-5 py-4"&gt;
+  &lt;div className="font-mono text-[11px] tracking-[0.2em]
+                   uppercase text-muted font-semibold"&gt;PRIVATE NOTE&lt;/div&gt;
+  &lt;EditableTextArea value={notes} onSave={save} /&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<div class="specimen">
+<h4>Row card (connection list)</h4>
+<div style="background: #fff; border-left: 4px solid var(--brand); border-radius: 0 14px 14px 0; padding: 12px 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 14px; max-width: 320px;">
+  <div style="font-size: 30px; font-weight: 900; color: var(--brand); letter-spacing: -0.02em; line-height: 1; min-width: 44px;">SC</div>
+  <div style="flex: 1; min-width: 0;">
+    <div style="font-size: 14px; font-weight: 800;">Sarah Chen</div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--neutral-500); font-weight: 600; text-transform: uppercase; margin-top: 3px;">DESIGN LEAD · NOTION</div>
+  </div>
+  <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.18em; color: var(--neutral-400); font-weight: 600; text-transform: uppercase;">TODAY</div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: var(--brand); font-weight: 700; text-transform: uppercase; background: var(--brand-soft); padding: 3px 8px; border-radius: 5px;">EMAIL</div>
+  </div>
+</div>
+<p style="font-size: 13px; color: var(--doc-muted); margin-top: 12px;">Brand-purple left border + floating shadow. 30px bold initials in alternating purple/black (hash by contact name). Mono subtitle <code>ROLE · COMPANY</code>. Date stacks above channel pill on the right.</p>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- EDITING                                                      -->
+<!-- ============================================================ -->
+<section id="editing">
+<h2>Tap-to-edit pattern</h2>
+<p>Profile + connection detail share this pattern. Every value renders as plain text + a pencil icon. Tap → input appears with check + X buttons that replace the pencil.</p>
+
+<h3>Three implementations</h3>
+<ul>
+  <li><code>EditableLine</code> (<code>profile-editor.tsx</code>) — single-line input. Used for NAME / TITLE on profile.</li>
+  <li><code>EditableTextArea</code> (<code>connections/[id]/page.tsx</code>) — textarea that starts at <code>rows={1}</code> and auto-grows via <code>scrollHeight</code>. Used for PRIVATE NOTE / WHAT WE TALKED ABOUT.</li>
+  <li><code>EditableField</code> (<code>connections/[id]/page.tsx</code>) — channel value with star (preferred) + send/visit pill + delete X on the right. Used for every channel row.</li>
+</ul>
+
+<h3>Critical pattern: <code>onMouseDown.preventDefault()</code> on check + X</h3>
+<blockquote>
+  <strong>Why this exists:</strong> Without it, tapping the check button caused the input to blur first (mobile keyboard collapses, layout shifts), and the click could register on the wrong element. Symptom: check button "reverted" the change. Fix is two-part:
+  <ol>
+    <li>Add <code>onMouseDown={(e) =&gt; e.preventDefault()}</code> to every check + X button so focus stays put.</li>
+    <li>Capture <code>const next = draft</code> synchronously <em>before</em> <code>setEditing(false)</code> in <code>commit()</code>.</li>
+  </ol>
+  Applied to all three editable components. Don't remove either piece.
+</blockquote>
+</section>
+
+<!-- ============================================================ -->
+<!-- CHANNELS                                                     -->
+<!-- ============================================================ -->
+<section id="channels">
+<h2>Channel rows</h2>
+<p>The unified layout: <code>star · TAG · icon · value · action · ×</code>. Connection detail has all five. Profile has no star (you don't pick a preferred way to reach yourself) and no action pill.</p>
+
+<div class="specimen">
+<div class="ph-channel" style="max-width: 320px;">
+  <svg class="star active"><use href="#i-star"/></svg>
+  <span class="ch-tag">MAIL</span>
+  <svg style="color: var(--neutral-950);"><use href="#i-mail"/></svg>
+  <div class="ch-value">sarah@notion.so</div>
+  <span class="send">Send</span>
+  <span style="color: var(--neutral-400); padding: 3px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+</div>
+</div>
+
+<h3>Channel kinds + actions</h3>
+<table style="font-size: 13px; border-collapse: collapse; margin: 12px 0;">
+  <thead>
+    <tr style="background: #fff;"><th style="padding: 8px 12px; border: 1px solid #e7e3d7; text-align: left;">Channel</th><th style="padding: 8px 12px; border: 1px solid #e7e3d7;">Tag</th><th style="padding: 8px 12px; border: 1px solid #e7e3d7;">Action</th><th style="padding: 8px 12px; border: 1px solid #e7e3d7; text-align: left;">URL</th></tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">email</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge brand">EMAIL</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge green">SEND</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>mailto:</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">phone</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge brand">PH</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge green">SEND</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>sms:</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">whatsapp</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge brand">WA</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge green">SEND</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>wa.me/&lt;digits&gt;</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">line</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge brand">LINE</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge green">SEND</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>line.me/ti/p/~&lt;id&gt;</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">messenger</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge brand">MSG</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge green">SEND</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>m.me/&lt;username&gt;</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">instagram</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge brand">IG</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge green">SEND</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>ig.me/m/&lt;handle&gt;</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">wechat</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge brand">WC</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge green">SEND</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>weixin://dl/chat?&lt;id&gt;</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">telegram</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge brand">TG</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge gray">VISIT</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>t.me/&lt;handle&gt;</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">x</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge brand">X</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge gray">VISIT</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>x.com/&lt;handle&gt;</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">linkedin</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge brand">IN</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge gray">VISIT</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>linkedin.com/in/&lt;handle&gt;</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">website</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge brand">WEB</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><span class="badge gray">VISIT</span></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">URL as entered</td></tr>
+  </tbody>
+</table>
+
+<h3>Rules</h3>
+<ul>
+  <li><strong>Single instance per channel.</strong> Once a contact has one email (or phone, telegram, etc.), that channel disappears from the Add-field dropdown. Tim's product decision 2026-06-19.</li>
+  <li><strong>Send → Visit → Copy</strong> is determined by <code>channelAction(kind)</code>. Don't add a SEND button to a channel that can't deep-link to a compose screen.</li>
+  <li><strong>The button is text-only.</strong> No paper-plane icon. The mono caps carry the meaning.</li>
+  <li><strong>Add Field flow:</strong> chip → dropdown → pick channel → dropdown hides, channel row appears with star + icon + input + ADD + ×.</li>
+</ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- GLOW                                                         -->
+<!-- ============================================================ -->
+<section id="glows">
+<h2>Glow rings</h2>
+<p>Three concentric radial circles centered on the page's focal element (mic, avatar, sign-in form). Brand-purple by default; red on the recording state.</p>
+
+<div class="specimen" style="position: relative; height: 240px; overflow: hidden;">
+  <div class="glow" style="left: calc(50% - 110px); top: 10px;"></div>
+  <div style="position: absolute; top: 80px; left: calc(50% - 40px); width: 80px; height: 80px; background: var(--brand); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 36px rgba(124, 92, 255, 0.40);">
+    <svg style="color:#fff; width: 28px; height: 28px;"><use href="#i-mic"/></svg>
+  </div>
+</div>
+
+<h3>Animation: <code>glow-breathe</code></h3>
+<pre><code>@keyframes glow-breathe {
+  0%, 100% { transform: scale(1);    opacity: 0.78; }
+  50%      { transform: scale(1.14); opacity: 1; }
+}
+.glow-breathe       { animation: glow-breathe 4.5s ease-in-out infinite; }
+.glow-breathe-d1    { animation-delay: -1.5s; } /* inner ring 1 */
+.glow-breathe-d2    { animation-delay: -3s;   } /* inner ring 2 */</code></pre>
+<p style="font-size: 13px; color: var(--doc-muted);">Apply <code>.glow-breathe</code> to the outer ring, <code>-d1</code> / <code>-d2</code> to the inner two. The negative delays put each ring at a different phase so the rings ripple outward in a layered wave instead of pulsing in sync.</p>
+
+<h3>Sizing rules</h3>
+<ul>
+  <li>Outer ring: <strong>300–360px</strong> typically. Sign-in's GlowRings is 480px (more presence for the form).</li>
+  <li>Inner inset 1: ~30–60px inside the outer. Inner inset 2: ~60–120px inside.</li>
+  <li><strong>Don't let the breathing peak overlap text.</strong> Peak size = base × 1.14. If you have body text above the glow, leave at least <code>(base × 1.14 - base) / 2</code> of vertical clearance.</li>
+  <li>The profile avatar glow is centered on the photo, not the surrounding block. Wrap the avatar in its own <code>relative</code> div and put the glow inside with <code>top-1/2 -translate-y-1/2</code>.</li>
+</ul>
+</section>
+
+<hr />
+
+<!-- ============================================================ -->
+<!-- ANIMATIONS                                                   -->
+<!-- ============================================================ -->
+<section id="animations">
+<h2>Animations</h2>
+<p>Five named animations. All defined in <code>src/app/globals.css</code>.</p>
+
+<table style="font-size: 13px; border-collapse: collapse; margin: 12px 0;">
+  <thead><tr style="background: #fff;"><th style="padding: 8px 12px; border: 1px solid #e7e3d7; text-align: left;">Class</th><th style="padding: 8px 12px; border: 1px solid #e7e3d7; text-align: left;">Duration</th><th style="padding: 8px 12px; border: 1px solid #e7e3d7; text-align: left;">Where</th></tr></thead>
+  <tbody>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>logo-spinner</code></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">2.4s / infinite</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Processing logo on /app/record</td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>wave-bar</code></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">1.1s / staggered</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Processing waveform (15 bars)</td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>glow-breathe</code></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">4.5s / infinite</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">All glow rings</td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>vt-slide-{left,right}</code></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">220+260ms</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Bottom-nav page swap</td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>bnav-label-in</code></td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">200ms / 120ms delay</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Bottom-nav active label appearing</td></tr>
+  </tbody>
+</table>
+
+<h3>Tuning rules</h3>
+<ul>
+  <li><strong>Logo spinner timing is calibrated.</strong> 4 bounce-pauses per full rotation at 2.4s. If you change the duration, you must rescale the keyframe percentages proportionally — the bounce overshoot/recoil/settle pattern only works at the original ratio.</li>
+  <li><strong>Glow breathe delays are absolute, not relative.</strong> <code>-1.5s</code> and <code>-3s</code> are picked to land each ring at a distinct phase of a 4.5s cycle. Changing the duration without rescaling delays breaks the wave.</li>
+</ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- TRANSITIONS                                                  -->
+<!-- ============================================================ -->
+<section id="transitions">
+<h2>Page transitions</h2>
+<p>We use the browser-native View Transitions API to mask server-render latency. Two wrappers exist:</p>
+
+<h3><code>BottomNav</code></h3>
+<p>Wraps <code>router.push()</code> in <code>document.startViewTransition()</code> and adds <code>vt-slide-left</code> or <code>vt-slide-right</code> to <code>&lt;html&gt;</code> based on whether the new tab is to the left or right of the current one in <code>TABS</code>. Pages slide; the nav itself is pinned via <code>view-transition-name: bnav</code> so it stays put.</p>
+
+<h3><code>ViewTransitionLink</code></h3>
+<p>Drop-in replacement for <code>next/link</code>. Used for marketing → sign-in to mask the blank-white flash between server-rendered pages. Falls back to normal navigation on Firefox.</p>
+
+<pre><code>// src/components/view-transition-link.tsx
+import { ViewTransitionLink } from '@/components/view-transition-link';
+
+&lt;ViewTransitionLink href="/app" className="..."&gt;
+  Open the app
+&lt;/ViewTransitionLink&gt;</code></pre>
+
+<h3>When to use which</h3>
+<ul>
+  <li><strong>Use the bottom-nav itself</strong> for in-app tab switches. It handles direction.</li>
+  <li><strong>Use ViewTransitionLink</strong> for any cross-page link outside the bottom-nav (marketing CTA, sign-in, public landing).</li>
+  <li><strong>Don't use either for in-page actions</strong> (modals, tap-to-edit). Those are React state changes, not navigations.</li>
+</ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- EDITORIAL                                                    -->
+<!-- ============================================================ -->
+<section id="editorial">
+<h2>Editorial voice</h2>
+
+<h3>Page-by-page label conventions</h3>
+<ul>
+  <li><strong>Marketing root:</strong> Headline <code>Voice notes / that connects / y'all.</code> Mono label: <code>● VOICE TO CONNECTION</code> (below banner). Status: <code>● VOICE TO CONNECTION</code> (top right) — note "HOME" was changed back.</li>
+  <li><strong>Sign-in email:</strong> Headline <code>Welcome. / Sign in to start.</code> Mono label: <code>● NO PASSWORD NEEDED</code>. Status: <code>● SIGN IN</code>.</li>
+  <li><strong>Sign-in OTP:</strong> Headline <code>Drop the / 6-digit code.</code> Mono label: <code>● CHECK YOUR INBOX</code>. Status: <code>● ENTER CODE</code>.</li>
+  <li><strong>Profile (returning):</strong> Headline <code>Your profile</code>. Mono label (intent): <code>● HEY [NAME], KEEP IT FRESH</code>.</li>
+  <li><strong>Record idle:</strong> Headline <code>Who did you / just meet?</code> Mono label: <code>● GOOD MORNING/AFTERNOON/EVENING, [NAME]</code>. Status: <code>● READY</code>.</li>
+  <li><strong>Record recording:</strong> Headline <code>Listening / closely.</code> Mono label: <code>● RECORDING · 0:12</code> (red). Status: <code>● REC</code> (red).</li>
+  <li><strong>Record processing:</strong> Headline <code>Connecting / y'all…</code> Mono label: <code>● PROCESSING</code>. Status: <code>● THINKING</code>.</li>
+  <li><strong>Connections (populated):</strong> Headline <code>Your connections</code>. Mono label: <code>● [N] PERSON/PEOPLE</code>.</li>
+  <li><strong>Connection detail:</strong> Headline <code>[First] [Last]</code> (last name in accent purple, editable). Mono label: <code>● MET TODAY · [N] MEETINGS</code> (intent).</li>
+</ul>
+
+<h3>Bottom buttons</h3>
+<ul>
+  <li><strong>Profile primary CTA</strong> reads <code>Start connecting</code> (was "Save and start connecting" — shortened on the tap-to-edit refactor since each field auto-saves now).</li>
+  <li><strong>Connection detail primary CTA</strong> reads <code>Save</code>.</li>
+  <li><strong>"Save Sarah to phone"</strong> chip — not "to contacts." Tim's product call.</li>
+</ul>
+</section>
+
+<hr />
+
+<!-- ============================================================ -->
+<!-- SCREENS                                                      -->
+<!-- ============================================================ -->
+<section id="screens">
+<h2>Screen catalog</h2>
+<p>Mockups of every public screen, at-scale. Use these as the visual contract — when you add a new feature to one of these pages, this is what it should still look like after.</p>
+
+<!-- Marketing -->
+<h3 id="screen-marketing">Marketing root <code>/</code></h3>
+<div class="phone-grid">
+  <div class="frame">
+    <div class="frame-label"><span>/ · marketing</span><span class="pill">#M1</span></div>
+    <div class="phone">
+      <div class="ph-header">
+        <div class="ph-logo"><div class="mark">c</div> Connectyall</div>
+        <div class="ph-status"><span class="dot">●</span> VOICE TO CONNECTION</div>
+      </div>
+      <div class="ph-headline">
+        <h2>Voice notes<br />that <span class="accent">connects</span><br />y'all.</h2>
+      </div>
+      <div class="ph-mono-label">● VOICE TO CONNECTION</div>
+      <div class="ph-sub">Connectyall turns a voice memo you record after meeting someone into a connection built in an instant.</div>
+      <div style="padding-left: 18px; margin-top: 14px;"><span class="btn-cta" style="font-size: 11px; padding: 11px 18px;">Open the app →</span></div>
+      <div style="margin-top: auto; padding: 18px 0; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: #999;">PRIVACY · TERMS · A PORTFOLIO PROJECT BY TIM NAN</div>
+    </div>
+  </div>
+</div>
+
+<!-- Sign-in -->
+<h3 id="screen-signin">Sign-in <code>/app/sign-in</code></h3>
+<div class="phone-grid">
+  <div class="frame">
+    <div class="frame-label"><span>email step</span><span class="pill">#S1</span></div>
+    <div class="phone">
+      <div class="ph-header">
+        <div class="ph-logo"><div class="mark">c</div> Connectyall</div>
+        <div class="ph-status"><span class="dot">●</span> SIGN IN</div>
+      </div>
+      <div class="ph-headline">
+        <h2>Welcome.<br /><span class="accent">Sign in to start.</span></h2>
+      </div>
+      <div class="ph-mono-label">● NO PASSWORD NEEDED</div>
+      <div class="ph-sub">Drop your email and we'll send a 6-digit code.</div>
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 0 12px;">
+        <div style="position: relative; width: 100%;">
+          <div class="glow" style="left: calc(50% - 110px); top: -40px;"></div>
+        </div>
+        <div style="width: 100%; max-width: 260px; padding: 12px 16px; border-radius: 18px; background: #fff; border: 1px solid var(--line); font-size: 12px; color: var(--neutral-700); position: relative; z-index: 1;">you@example.com</div>
+        <div style="width: 100%; max-width: 260px; padding: 12px; border-radius: 999px; background: var(--brand); color: #fff; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; font-weight: 700; text-transform: uppercase; box-shadow: 0 12px 28px rgba(124,92,255,0.36); position: relative; z-index: 1;">Send code</div>
+      </div>
+      <div style="text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: var(--neutral-500); margin-bottom: 16px;"><span style="color: var(--brand);">●</span> CODE ARRIVES IN 2 SECONDS</div>
+    </div>
+  </div>
+  <div class="frame">
+    <div class="frame-label"><span>OTP step</span><span class="pill">#S2</span></div>
+    <div class="phone">
+      <div class="ph-header">
+        <div class="ph-logo"><div class="mark">c</div> Connectyall</div>
+        <div class="ph-status"><span class="dot">●</span> ENTER CODE</div>
+      </div>
+      <div class="ph-headline">
+        <h2>Drop the<br /><span class="accent">6-digit code.</span></h2>
+      </div>
+      <div class="ph-mono-label">● CHECK YOUR INBOX</div>
+      <div class="ph-sub">We sent it to <strong style="color: var(--neutral-950);">tim@example.com</strong>. Expires in 10 min.</div>
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 0 12px;">
+        <div style="position: relative; width: 100%;">
+          <div class="glow" style="left: calc(50% - 110px); top: -40px;"></div>
+        </div>
+        <div style="width: 100%; max-width: 260px; padding: 12px 16px; border-radius: 18px; background: #fff; border: 1px solid var(--line); text-align: center; font-size: 20px; font-weight: 700; letter-spacing: 0.3em; color: var(--neutral-950); position: relative; z-index: 1;">4 8 1 3 9 2</div>
+        <div style="width: 100%; max-width: 260px; padding: 12px; border-radius: 999px; background: var(--brand); color: #fff; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; font-weight: 700; text-transform: uppercase; box-shadow: 0 12px 28px rgba(124,92,255,0.36); position: relative; z-index: 1;">Sign in</div>
+      </div>
+      <div style="text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: var(--neutral-500); margin-bottom: 16px;"><span style="color: var(--brand);">●</span> USE A DIFFERENT EMAIL</div>
+    </div>
+  </div>
+</div>
+
+<!-- Record -->
+<h3 id="screen-record">Record <code>/app/record</code></h3>
+<div class="phone-grid">
+  <div class="frame">
+    <div class="frame-label"><span>idle</span><span class="pill">#R1</span></div>
+    <div class="phone">
+      <div class="ph-header">
+        <div class="ph-logo"><div class="mark">c</div> Connectyall</div>
+        <div class="ph-status"><span class="dot">●</span> READY</div>
+      </div>
+      <div class="ph-headline">
+        <h2>Who did you<br /><span class="accent">just meet?</span></h2>
+      </div>
+      <div class="ph-mono-label">● GOOD EVENING, TIM</div>
+      <div class="ph-sub">Tap to record. We'll pull a name, channels, and the gist.</div>
+      <div style="flex: 1; display: flex; align-items: center; justify-content: center; position: relative;">
+        <div class="glow" style="position: absolute;"></div>
+        <div style="width: 110px; height: 110px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 36px rgba(124, 92, 255, 0.40); position: relative; z-index: 1;">
+          <svg style="width: 40px; height: 40px;"><use href="#i-mic"/></svg>
+        </div>
+      </div>
+      <div style="text-align: center; padding-bottom: 70px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: var(--neutral-500);"><span style="color: var(--brand);">●</span> TAP TO RECORD · UP TO 60S</div>
+      <div class="ph-nav">
+        <div class="tab"><svg><use href="#i-user"/></svg></div>
+        <div class="tab active"><svg><use href="#i-mic"/></svg> Record</div>
+        <div class="tab"><svg><use href="#i-users"/></svg></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Profile -->
+<h3 id="screen-profile">Profile <code>/app/profile</code></h3>
+<div class="phone-grid">
+  <div class="frame">
+    <div class="frame-label"><span>returning user</span><span class="pill">#P1</span></div>
+    <div class="phone" style="overflow-y: auto;">
+      <div class="ph-header">
+        <div class="ph-logo"><div class="mark">c</div> Connectyall</div>
+        <div class="ph-status">PROFILE</div>
+      </div>
+      <div class="ph-headline">
+        <h2>Your <span class="accent">profile</span></h2>
+      </div>
+      <div class="ph-mono-label">● HEY TIM, KEEP IT FRESH</div>
+      <div style="display: flex; justify-content: center; position: relative; padding: 14px 0 8px;">
+        <div class="glow" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);"></div>
+        <div style="position: relative; z-index: 1; width: 110px; height: 110px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 800; font-family: Inter;">T</div>
+      </div>
+      <div class="ph-card">
+        <div class="lbl">NAME</div>
+        <div class="val">Tim Nan <svg class="pencil"><use href="#i-pencil"/></svg></div>
+        <div class="divider"></div>
+        <div class="lbl">TITLE</div>
+        <div class="val">Builder / PM <svg class="pencil"><use href="#i-pencil"/></svg></div>
+      </div>
+      <div class="ph-card">
+        <div class="lbl">HOW PEOPLE CAN REACH YOU</div>
+        <div class="ph-channel"><span class="ch-tag">MAIL</span><svg><use href="#i-mail"/></svg><div class="ch-value">tim@example.com</div></div>
+        <span class="btn-chip" style="margin-top: 6px;">+ Add field</span>
+      </div>
+      <div class="ph-cta" style="margin-top: 14px;">Start connecting</div>
+      <div class="ph-nav">
+        <div class="tab active"><svg><use href="#i-user"/></svg> Profile</div>
+        <div class="tab"><svg><use href="#i-mic"/></svg></div>
+        <div class="tab"><svg><use href="#i-users"/></svg></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Connections list -->
+<h3 id="screen-connections">Connections list <code>/app/connections</code></h3>
+<div class="phone-grid">
+  <div class="frame">
+    <div class="frame-label"><span>populated</span><span class="pill">#C1</span></div>
+    <div class="phone" style="overflow-y: auto;">
+      <div class="ph-header">
+        <div class="ph-logo"><div class="mark">c</div> Connectyall</div>
+        <div class="ph-status">5 PEOPLE</div>
+      </div>
+      <div class="ph-headline">
+        <h2>Your <span class="accent">connections</span></h2>
+      </div>
+      <div class="ph-mono-label">● 5 PEOPLE</div>
+      <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="background: #fff; border-left: 4px solid var(--brand); border-radius: 0 12px 12px 0; padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px;">
+          <div style="font-size: 22px; font-weight: 900; color: var(--brand); line-height: 1; min-width: 32px;">SC</div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 12px; font-weight: 800;">Sarah Chen</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--neutral-500); font-weight: 600; text-transform: uppercase; margin-top: 2px;">DESIGN LEAD · NOTION</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.18em; color: var(--neutral-400); font-weight: 600; text-transform: uppercase;">TODAY</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.14em; color: var(--brand); font-weight: 700; background: var(--brand-soft); padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">EMAIL</div>
+          </div>
+        </div>
+        <div style="background: #fff; border-left: 4px solid var(--brand); border-radius: 0 12px 12px 0; padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px;">
+          <div style="font-size: 22px; font-weight: 900; color: var(--neutral-950); line-height: 1; min-width: 32px;">MT</div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 12px; font-weight: 800;">Marcus Tate</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--neutral-500); font-weight: 600; text-transform: uppercase; margin-top: 2px;">SALES · DRAFTKINGS</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.18em; color: var(--neutral-400); font-weight: 600; text-transform: uppercase;">JUN 16</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.14em; color: var(--brand); font-weight: 700; background: var(--brand-soft); padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">IN</div>
+          </div>
+        </div>
+        <div style="background: #fff; border-left: 4px solid var(--brand); border-radius: 0 12px 12px 0; padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px;">
+          <div style="font-size: 22px; font-weight: 900; color: var(--brand); line-height: 1; min-width: 32px;">AP</div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 12px; font-weight: 800;">Aanya Patel</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--neutral-500); font-weight: 600; text-transform: uppercase; margin-top: 2px;">VP ENG · VERCEL</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.18em; color: var(--neutral-400); font-weight: 600; text-transform: uppercase;">JUN 14</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.14em; color: var(--brand); font-weight: 700; background: var(--brand-soft); padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">WA</div>
+          </div>
+        </div>
+      </div>
+      <div class="ph-nav">
+        <div class="tab"><svg><use href="#i-user"/></svg></div>
+        <div class="tab"><svg><use href="#i-mic"/></svg></div>
+        <div class="tab active"><svg><use href="#i-users"/></svg> Network</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Connection detail -->
+<h3 id="screen-detail">Connection detail <code>/app/connections/[id]</code></h3>
+<div class="phone-grid">
+  <div class="frame">
+    <div class="frame-label"><span>Sarah Chen</span><span class="pill">#D1</span></div>
+    <div class="phone" style="overflow-y: auto;">
+      <div class="ph-header">
+        <div class="ph-logo"><div class="mark">c</div> Connectyall</div>
+        <div class="ph-status">2 MEETINGS</div>
+      </div>
+      <div class="ph-headline">
+        <h2>Sarah <span class="accent">Chen</span> <svg style="width: 12px; height: 12px; color: var(--neutral-400); margin-left: 4px;"><use href="#i-pencil"/></svg></h2>
+      </div>
+      <div class="ph-mono-label">● MET TODAY · 2 MEETINGS</div>
+      <div class="ph-card">
+        <div class="lbl">PRIVATE NOTE</div>
+        <div class="val">Design Lead at Notion. Beagle named Pepper. <svg class="pencil"><use href="#i-pencil"/></svg></div>
+        <div class="divider"></div>
+        <div class="lbl">WHAT WE TALKED ABOUT</div>
+        <div class="val">AI eval frameworks; hiring staff PM. <svg class="pencil"><use href="#i-pencil"/></svg></div>
+      </div>
+      <div class="ph-card">
+        <div class="lbl">CHANNELS</div>
+        <div class="ph-channel" style="margin-top: 6px;">
+          <svg class="star active"><use href="#i-star"/></svg>
+          <span class="ch-tag">MAIL</span>
+          <svg style="color: var(--neutral-950);"><use href="#i-mail"/></svg>
+          <div class="ch-value">sarah@notion.so</div>
+          <span class="send">Send</span>
+        </div>
+        <div class="ph-channel">
+          <svg class="star"><use href="#i-star"/></svg>
+          <span class="ch-tag">IN</span>
+          <svg style="color: var(--neutral-950);"><use href="#i-user"/></svg>
+          <div class="ch-value">in/sarahchen</div>
+          <span class="send">Visit</span>
+        </div>
+        <div style="display: flex; gap: 4px; margin-top: 8px;">
+          <span class="btn-chip">+ Add channel</span>
+          <span class="btn-chip">Save Sarah to phone</span>
+        </div>
+      </div>
+      <div class="ph-cta">Save</div>
+      <div class="ph-nav">
+        <div class="tab"><svg><use href="#i-user"/></svg></div>
+        <div class="tab"><svg><use href="#i-mic"/></svg></div>
+        <div class="tab active"><svg><use href="#i-users"/></svg> Network</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<hr />
+
+<!-- ============================================================ -->
+<!-- DON'TS                                                       -->
+<!-- ============================================================ -->
+<section id="donts">
+<h2>Anti-patterns</h2>
+<p>Things we've explicitly decided against. Each is here because someone tried it and Tim said no.</p>
+
+<div class="do-dont">
+<div class="col no">
+<h4>Don't hand-roll <code>px-*</code> on the outer page wrapper</h4>
+<p>Use <code>APP_CONTAINER</code> / <code>APP_CONTAINER_FLEX</code> / <code>LANDING_CONTAINER_FLEX</code>. Each page that deviated by 8px broke alignment across tabs.</p>
+</div>
+<div class="col no">
+<h4>Don't put the mono label above the banner</h4>
+<p>Always below. Sign-in's old layout was the only outlier; we fixed it.</p>
+</div>
+<div class="col no">
+<h4>Don't use icons on send/visit/add buttons</h4>
+<p>Text only. <code>SEND</code>, <code>VISIT</code>, <code>ADD</code>. The mono caps carry the meaning. The paper-plane icon was removed app-wide.</p>
+</div>
+<div class="col no">
+<h4>Don't use emoji in chip labels</h4>
+<p>The 💾 in "Save X to phone" was removed. The ✓ checkmark on "Save" was removed. Use mono uppercase text on its own.</p>
+</div>
+<div class="col no">
+<h4>Don't add multiple channels of the same kind</h4>
+<p>One email, one phone, one of each social. The Add-field dropdown filters them out once present.</p>
+</div>
+<div class="col no">
+<h4>Don't use color icons in channel rows</h4>
+<p>All channel icons render in <code>currentColor</code> (black). LinkedIn blue, X red, etc. were removed for consistency.</p>
+</div>
+<div class="col no">
+<h4>Don't add corporate jargon</h4>
+<p>Never: leverage, utilize, robust, streamline, cutting-edge, harness, unlock. Use plain English.</p>
+</div>
+<div class="col no">
+<h4>Don't bold the value text in profile fields</h4>
+<p>Use the default body weight. The original <code>font-bold tracking-tight</code> on NAME / TITLE was a legacy rule; removed for parity with connection-detail's plain values.</p>
+</div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- FILE MAP                                                     -->
+<!-- ============================================================ -->
+<section id="files">
+<h2>File map</h2>
+<p>Where the conventions in this doc are enforced in code.</p>
+
+<table style="font-size: 13px; border-collapse: collapse; margin: 12px 0;">
+  <thead><tr style="background: #fff;"><th style="padding: 8px 12px; border: 1px solid #e7e3d7; text-align: left;">Topic</th><th style="padding: 8px 12px; border: 1px solid #e7e3d7; text-align: left;">File</th></tr></thead>
+  <tbody>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Container constants</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>src/app/app/_layout-constants.ts</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Tokens (colors, fonts, brand override)</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>src/app/globals.css</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Font loaders</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>src/app/layout.tsx</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">PageHeader (logo + status pill)</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>src/components/page-header.tsx</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">BottomNav</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>src/components/bottom-nav.tsx</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">ViewTransitionLink</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>src/components/view-transition-link.tsx</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Channel icons + action mapping</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>src/app/app/cards/[id]/channel-icons.tsx</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Channel URL helpers</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>src/lib/social-urls.ts</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Tap-to-edit components</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>src/app/app/profile/profile-editor.tsx</code> · <code>src/app/app/connections/[id]/page.tsx</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Animations (glow-breathe, view transitions, wave)</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>src/app/globals.css</code></td></tr>
+    <tr><td style="padding: 6px 12px; border: 1px solid #e7e3d7;">Greeting label helper</td><td style="padding: 6px 12px; border: 1px solid #e7e3d7;"><code>src/lib/greeting.ts</code></td></tr>
+  </tbody>
+</table>
+
+<h3>External references</h3>
+<ul>
+  <li><strong>Cross-session product log</strong> — <code>PM-OS/outputs/portfolio/connectyall-session-state.md</code>. Why decisions were made + ops gotchas. Read this on session start.</li>
+  <li><strong>Mockup archive</strong> — <code>PM-OS/outputs/portfolio/connectyall-ui-mockups/</code>. Point-in-time snapshots Tim has reviewed.</li>
+</ul>
+</section>
+
+<hr />
+
+<footer style="font-size: 12px; color: var(--doc-muted); padding: 24px 0;">
+<p>Last updated: 2026-06-19. Update this file when you change the system; don't let it drift from the code.</p>
+</footer>
+
+</main>
+
+</div>
+
+</body>
+</html>
