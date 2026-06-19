@@ -57,7 +57,7 @@ export default function SignInPage() {
       <div className="flex-1 flex flex-col pt-3 gap-8">
         {step === 'email' && (
           <Top
-            label="VOICE TO CONNECTION"
+            label="NO PASSWORD NEEDED"
             headlineFirst="Welcome."
             headlineAccent="Sign in to start."
             sub="Drop your email and we'll send a 6-digit code. No password, no magic link."
@@ -177,13 +177,13 @@ function GlowRings() {
   return (
     <div
       aria-hidden
-      className="absolute w-[320px] h-[320px] rounded-full"
+      className="glow-breathe absolute w-[480px] h-[480px] rounded-full pointer-events-none"
       style={{
-        background: 'radial-gradient(circle, rgba(124, 92, 255, 0.14) 0%, rgba(124, 92, 255, 0.04) 60%, rgba(124, 92, 255, 0) 80%)',
+        background: 'radial-gradient(circle, rgba(124, 92, 255, 0.20) 0%, rgba(124, 92, 255, 0.06) 60%, rgba(124, 92, 255, 0) 80%)',
       }}
     >
-      <div className="absolute inset-[30px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
-      <div className="absolute inset-[60px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
+      <div className="absolute inset-[60px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.07)' }} />
+      <div className="absolute inset-[120px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.14)' }} />
     </div>
   );
 }
