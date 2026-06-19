@@ -71,6 +71,13 @@
       "when": 1781660000000,
       "tag": "0009_rename_notes_summary",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781906900000,
+      "tag": "0010_users_short_blurb",
+      "breakpoints": true
     }
   ]
 }
