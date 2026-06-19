@@ -244,8 +244,8 @@ function GlowRings({ tone }: { tone: 'brand' | 'red' }) {
         background: `radial-gradient(circle, rgba(${rgb}, 0.18) 0%, rgba(${rgb}, 0.05) 60%, rgba(${rgb}, 0) 80%)`,
       }}
     >
-      <div className="absolute inset-[44px] rounded-full" style={{ background: `rgba(${rgb}, 0.07)` }} />
-      <div className="absolute inset-[88px] rounded-full" style={{ background: `rgba(${rgb}, 0.14)` }} />
+      <div className="glow-breathe-d1 absolute inset-[44px] rounded-full" style={{ background: `rgba(${rgb}, 0.07)` }} />
+      <div className="glow-breathe-d2 absolute inset-[88px] rounded-full" style={{ background: `rgba(${rgb}, 0.14)` }} />
     </div>
   );
 }
