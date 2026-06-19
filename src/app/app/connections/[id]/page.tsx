@@ -5,7 +5,7 @@ import { use, useEffect, useRef, useState } from 'react';
 import { LuStar, LuPencil, LuX as LuXIcon, LuCheck } from 'react-icons/lu';
 import {
   linkedinUrl, linkedinHandle, xUrl, xHandle, telegramUrl, telegramHandle,
-  whatsappUrl, wechatUrl, lineUrl, instagramUrl, messengerUrl,
+  whatsappUrl, wechatUrl, lineUrl, instagramUrl, instagramDmUrl, messengerUrl,
 } from '@/lib/social-urls';
 import { ChannelIcon, channelAction, type ChannelKind } from '../../cards/[id]/channel-icons';
 import { APP_CONTAINER } from '../../_layout-constants';
@@ -23,6 +23,7 @@ const socialUrl = {
   wechat: wechatUrl,
   line: lineUrl,
   instagram: instagramUrl,
+  instagramDm: instagramDmUrl,
   messenger: messengerUrl,
 };
 
@@ -221,6 +222,27 @@ type EditableFieldProps = {
   onRemove?: () => Promise<void>;
 };
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  function handleCopy() {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition-opacity"
+      title="Copy to clipboard"
+    >
+      {copied ? 'Copied' : 'Copy'}
+    </button>
+  );
+}
+
 function EditableField({
   kind, value, placeholder, isPreferred, sendHref, onSave, onTogglePreferred, onRemove,
 }: EditableFieldProps) {
@@ -295,18 +317,27 @@ function EditableField({
             <LuPencil size={12} className="text-neutral-400 flex-shrink-0 ml-auto" />
           </button>
 
-          {/* Send / Visit: labeled text-only button (display state only) */}
-          {sendHref && channelAction(kind) && (
-            <a
-              href={sendHref}
-              target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
-              rel="noopener noreferrer"
-              className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition-opacity"
-              title={channelAction(kind) === 'send' ? 'Send a message via this channel' : 'Open this profile'}
-            >
-              {channelAction(kind) === 'send' ? 'Send' : 'Visit'}
-            </a>
-          )}
+          {/* Send / Visit / Copy: text-only button (display state only) */}
+          {(() => {
+            const action = channelAction(kind);
+            if (action === 'copy') {
+              return <CopyButton text={value} />;
+            }
+            if (sendHref) {
+              return (
+                <a
+                  href={sendHref}
+                  target={sendHref.startsWith('mailto:') || sendHref.startsWith('sms:') ? undefined : '_blank'}
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition-opacity"
+                  title={action === 'send' ? 'Send a message via this channel' : 'Open this profile'}
+                >
+                  {action === 'send' ? 'Send' : 'Visit'}
+                </a>
+              );
+            }
+            return null;
+          })()}
 
           {/* Delete (display state only) */}
           {onRemove && (
@@ -821,7 +852,7 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
               value={contact.instagram}
               placeholder="instagram handle"
               isPreferred={contact.preferredChannel === 'instagram'}
-              sendHref={socialUrl.instagram(contact.instagram)}
+              sendHref={socialUrl.instagramDm(contact.instagram)}
               onSave={(v) => putContactField({ kind: 'instagram', value: v.replace(/^@/, '') })}
               onTogglePreferred={() => putContactField({ kind: 'preferred', value: contact.preferredChannel === 'instagram' ? null : 'instagram' })}
               onRemove={() => putContactField({ kind: 'instagram-clear' })}
@@ -847,8 +878,23 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
             <AddField
               existing={existingSingleChannels}
               onAdd={(channel, value) => {
-                if (channel === 'email') return putContactField({ kind: 'email-add', value });
-                if (channel === 'phone') return putContactField({ kind: 'phone-add', value });
+                if (channel === 'email') {
+                  const existingLower = (contact?.emails ?? []).map(e => e.toLowerCase());
+                  if (existingLower.includes(value.toLowerCase())) {
+                    alert('That email is already on the contact.');
+                    return Promise.resolve();
+                  }
+                  return putContactField({ kind: 'email-add', value });
+                }
+                if (channel === 'phone') {
+                  const digits = value.replace(/\D/g, '');
+                  const existingDigits = (contact?.phones ?? []).map(p => p.replace(/\D/g, ''));
+                  if (existingDigits.includes(digits)) {
+                    alert('That phone number is already on the contact.');
+                    return Promise.resolve();
+                  }
+                  return putContactField({ kind: 'phone-add', value });
+                }
                 if (channel === 'whatsapp') return putContactField({ kind: 'whatsapp', value: value.replace(/\D/g, '') });
                 if (channel === 'line') return putContactField({ kind: 'line', value: value.replace(/^[~@]/, '') });
                 return putContactField({ kind: channel, value });

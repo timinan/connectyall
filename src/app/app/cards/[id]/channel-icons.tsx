@@ -32,23 +32,33 @@ export function ChannelIcon({ kind, size = 18 }: { kind: ChannelKind; size?: num
   return <Icon size={size} color={color} />;
 }
 
-// Whether this channel can deep-link directly to a message compose, vs. only
-// open a profile / external page. Drives the Send vs Visit button label.
-export function channelAction(kind: ChannelKind): 'send' | 'visit' | null {
+// What action button to show for this channel:
+//   'send'  — opens a direct message compose (deep link)
+//   'visit' — opens a profile / external page
+//   'copy'  — no URL scheme; copy the value to clipboard so user can paste it
+//
+// Notes on the trickier ones:
+//   - Instagram: `ig.me/m/<handle>` opens DM directly (official Meta deep link)
+//   - Telegram:  `t.me/<handle>` only opens the profile; Telegram has no public
+//     URL scheme for "compose a message to <handle>" for regular users.
+//   - X (Twitter): DM compose requires a numeric user ID, which we don't have
+//     from the handle, so we can only link to the profile.
+//   - WeChat: no usable web URL scheme; meaningful action is to copy the ID.
+export function channelAction(kind: ChannelKind): 'send' | 'visit' | 'copy' {
   switch (kind) {
     case 'email':
     case 'phone':
     case 'whatsapp':
     case 'line':
     case 'messenger':
+    case 'instagram':
       return 'send';
     case 'telegram':
     case 'x':
     case 'linkedin':
-    case 'instagram':
     case 'website':
       return 'visit';
     case 'wechat':
-      return null;
+      return 'copy';
   }
 }
