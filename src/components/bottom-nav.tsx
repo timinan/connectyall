@@ -11,19 +11,10 @@ const TABS = [
   { href: '/app/connections', icon: LuUsers, label: 'Connections', match: '/app/connections' },
 ] as const;
 
-// Fixed geometry — used both for indicator math and for explicit tab widths.
-const COLLAPSED = 40;
-const EXPANDED = 148;
-const GAP = 4;
-const PADDING = 6;
-const TAB_HEIGHT = 40;
-const NAV_HEIGHT = TAB_HEIGHT + PADDING * 2;
-const NAV_WIDTH = PADDING * 2 + EXPANDED + COLLAPSED * 2 + GAP * 2;
-
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  // Optimistic "just tapped" — drives the indicator + active tab before the route commits.
+  // Optimistic "just tapped" so the new pill renders before the route commits.
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,19 +25,6 @@ export function BottomNav() {
     pendingHref ??
     TABS.find((t) => pathname.startsWith(t.match))?.href ??
     TABS[1].href;
-  const targetIndex = Math.max(0, TABS.findIndex((t) => t.href === targetHref));
-
-  // Position each tab absolutely — flex's min-width:auto can't shrink content with
-  // whitespace-nowrap labels, so we sidestep flex layout entirely for the tabs.
-  function tabLeft(i: number): number {
-    let left = PADDING;
-    for (let j = 0; j < i; j++) {
-      left += (j === targetIndex ? EXPANDED : COLLAPSED) + GAP;
-    }
-    return left;
-  }
-
-  const indicatorLeft = tabLeft(targetIndex);
 
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
     if (pathname.startsWith(href)) return;
@@ -72,59 +50,31 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Primary"
-      className="bnav-pin fixed bottom-5 left-1/2 z-40 bg-[#0F0F12] rounded-full shadow-[0_6px_20px_rgba(0,0,0,0.25)]"
-      style={{
-        width: `${NAV_WIDTH}px`,
-        height: `${NAV_HEIGHT}px`,
-        transform: 'translateX(-50%)',
-      }}
+      className="bnav-pin fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-[#0F0F12] text-white rounded-full p-1.5 flex gap-1 items-center shadow-[0_6px_20px_rgba(0,0,0,0.25)]"
     >
-      {/* Sliding purple indicator behind the active tab */}
-      <span
-        aria-hidden
-        className="absolute bg-brand rounded-full transition-[left] duration-300 ease-out pointer-events-none"
-        style={{
-          left: `${indicatorLeft}px`,
-          top: `${PADDING}px`,
-          width: `${EXPANDED}px`,
-          height: `${TAB_HEIGHT}px`,
-        }}
-      />
-      {/* Tabs — absolutely positioned so flex's min-width:auto can't grow them */}
-      {TABS.map(({ href, icon: Icon, label }, i) => {
-        const isTarget = i === targetIndex;
-        return (
+      {TABS.map(({ href, icon: Icon, label }) => {
+        const isTarget = href === targetHref;
+        return isTarget ? (
+          <Link
+            key={href}
+            href={href}
+            prefetch
+            onClick={(e) => handleClick(e, href)}
+            className="inline-flex items-center gap-1.5 px-4 h-10 rounded-full bg-brand text-white text-sm font-semibold active:scale-95 transition-transform"
+          >
+            <Icon size={16} className="flex-shrink-0" />
+            <span className="whitespace-nowrap">{label}</span>
+          </Link>
+        ) : (
           <Link
             key={href}
             href={href}
             prefetch
             onClick={(e) => handleClick(e, href)}
             aria-label={label}
-            className={`
-              absolute inline-flex items-center overflow-hidden rounded-full
-              transition-[left,width,color] duration-300 ease-out
-              active:scale-95
-              ${isTarget ? 'text-white' : 'text-zinc-400 hover:text-white'}
-            `}
-            style={{
-              left: `${tabLeft(i)}px`,
-              top: `${PADDING}px`,
-              width: isTarget ? `${EXPANDED}px` : `${COLLAPSED}px`,
-              height: `${TAB_HEIGHT}px`,
-              paddingLeft: '12px',
-              gap: '6px',
-              zIndex: 10,
-            }}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-zinc-400 hover:text-white active:scale-90 transition-transform"
           >
-            <Icon size={16} className="flex-shrink-0" />
-            {isTarget && (
-              <span
-                key={`${href}-label`}
-                className="text-sm font-semibold whitespace-nowrap animate-bnav-label"
-              >
-                {label}
-              </span>
-            )}
+            <Icon size={16} />
           </Link>
         );
       })}
