@@ -5,7 +5,7 @@ import { getServerSession } from '@/lib/auth/session';
 import { upsertProfile, setSocial, clearSocial, setPhotoFromBytes, getById } from '@/services/UserProfileService';
 import { db } from '@/lib/db/client';
 import { contacts, interactions, users } from '@/lib/db/schema';
-import { linkedinHandle, xHandle, telegramHandle } from '@/lib/social-urls';
+import { linkedinHandle, xHandle, telegramHandle, instagramHandle, messengerHandle } from '@/lib/social-urls';
 import { deleteObject, listObjects } from '@/lib/r2/client';
 
 export const runtime = 'nodejs';
@@ -17,7 +17,7 @@ const ProfileSchema = z.object({
   selfIntro: z.string().max(280).nullable().optional(),
 });
 
-const ChannelEnum = z.enum(['x', 'linkedin', 'email', 'website', 'telegram', 'whatsapp', 'wechat', 'line', 'phone']);
+const ChannelEnum = z.enum(['x', 'linkedin', 'email', 'website', 'telegram', 'whatsapp', 'wechat', 'line', 'phone', 'instagram', 'messenger']);
 
 const SocialSchema = z.discriminatedUnion('action', [
   z.object({
@@ -71,6 +71,8 @@ export async function PUT(req: Request) {
     if (kind === 'linkedin') value = linkedinHandle(value);
     else if (kind === 'x') value = xHandle(value);
     else if (kind === 'telegram') value = telegramHandle(value);
+    else if (kind === 'instagram') value = instagramHandle(value);
+    else if (kind === 'messenger') value = messengerHandle(value);
     if (kind === 'telegram') {
       await db().update(users).set({ telegramUsername: value }).where(eq(users.id, session.user.id));
     } else {

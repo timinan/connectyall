@@ -24,10 +24,14 @@ export type UpdatableField =
   | { kind: 'whatsapp'; value: string }
   | { kind: 'wechat'; value: string }
   | { kind: 'line'; value: string }
+  | { kind: 'instagram'; value: string }
+  | { kind: 'messenger'; value: string }
   | { kind: 'whatsapp-clear' }
   | { kind: 'wechat-clear' }
   | { kind: 'line-clear' }
-  | { kind: 'preferred'; value: 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line' | null }
+  | { kind: 'instagram-clear' }
+  | { kind: 'messenger-clear' }
+  | { kind: 'preferred'; value: 'telegram' | 'email' | 'phone' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line' | 'instagram' | 'messenger' | null }
   | { kind: 'notes'; value: string | null };
 
 export async function createContact(input: NewContact): Promise<Contact> {
@@ -93,6 +97,8 @@ export async function updateContactField(contactId: string, field: UpdatableFiel
     case 'whatsapp':
     case 'wechat':
     case 'line':
+    case 'instagram':
+    case 'messenger':
       await db()
         .update(contacts)
         .set({ links: sql`${contacts.links} || ${JSON.stringify({ [field.kind]: field.value })}::jsonb` })
@@ -148,8 +154,10 @@ export async function updateContactField(contactId: string, field: UpdatableFiel
     case 'website-clear':
     case 'whatsapp-clear':
     case 'wechat-clear':
-    case 'line-clear': {
-      const linkKey = field.kind.replace('-clear', ''); // 'telegram' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line'
+    case 'line-clear':
+    case 'instagram-clear':
+    case 'messenger-clear': {
+      const linkKey = field.kind.replace('-clear', '');
       await db()
         .update(contacts)
         .set({ links: sql`${contacts.links} - ${linkKey}` })
@@ -167,7 +175,7 @@ export async function updateContactField(contactId: string, field: UpdatableFiel
 
 export async function setContactLink(
   contactId: string,
-  kind: 'telegram' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line',
+  kind: 'telegram' | 'x' | 'linkedin' | 'website' | 'whatsapp' | 'wechat' | 'line' | 'instagram' | 'messenger',
   value: string
 ): Promise<void> {
   return updateContactField(contactId, { kind, value });
