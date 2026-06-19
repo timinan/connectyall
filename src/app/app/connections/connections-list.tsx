@@ -219,13 +219,13 @@ function GlowRings() {
   return (
     <div
       aria-hidden
-      className="absolute w-[300px] h-[300px] rounded-full"
+      className="glow-breathe absolute w-[300px] h-[300px] rounded-full pointer-events-none"
       style={{
-        background: 'radial-gradient(circle, rgba(124, 92, 255, 0.14) 0%, rgba(124, 92, 255, 0.04) 60%, rgba(124, 92, 255, 0) 80%)',
+        background: 'radial-gradient(circle, rgba(124, 92, 255, 0.18) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)',
       }}
     >
-      <div className="absolute inset-[30px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
-      <div className="absolute inset-[60px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
+      <div className="glow-breathe-d1 absolute inset-[34px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.07)' }} />
+      <div className="glow-breathe-d2 absolute inset-[66px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.14)' }} />
     </div>
   );
 }
@@ -288,8 +288,7 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
     setConfirm(null);
   }
 
-  const totalMeetings = rows.reduce((acc, c) => acc + (c.meetingsCount ?? 0), 0);
-  const status = `${rows.length} PEOPLE · ${totalMeetings} MEMOS`;
+  const status = `${rows.length} ${rows.length === 1 ? 'PERSON' : 'PEOPLE'}`;
 
   return (
     <div className={APP_CONTAINER}>
@@ -336,18 +335,20 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
       {rows.length === 0 && (
         <div className="flex-1 flex flex-col gap-8 pt-3">
           <div>
-            <div className="font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">NOBODY HERE YET</div>
-            <div className="mt-3 bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <div className="bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
               <h2 className="text-4xl font-black leading-[1.02] tracking-tight">
                 Your<br />
                 <span className="text-brand">network awaits.</span>
               </h2>
             </div>
-            <p className="mt-4 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">
+            <div className="mt-4 pl-5 font-mono text-[13px] tracking-[0.2em] font-semibold uppercase text-muted">
+              ● NOBODY HERE YET
+            </div>
+            <p className="mt-2 pl-5 text-[15px] text-neutral-600 leading-relaxed max-w-[280px]">
               Record your first voice memo and they&apos;ll show up here automatically.
             </p>
           </div>
-          <div className="flex-1 flex flex-col items-center justify-center gap-5">
+          <div className="flex-1 flex flex-col items-center justify-end pb-16">
             <div className="relative flex items-center justify-center py-6">
               <GlowRings />
               <Link
@@ -356,9 +357,6 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
               >
                 <LuMic size={20} /> Record your first
               </Link>
-            </div>
-            <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium">
-              <span className="text-brand mr-1">●</span> TAP TO RECORD <span className="text-neutral-400">·</span> UP TO 60S
             </div>
           </div>
         </div>
