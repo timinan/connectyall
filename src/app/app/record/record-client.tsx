@@ -239,13 +239,13 @@ function GlowRings({ tone }: { tone: 'brand' | 'red' }) {
   return (
     <div
       aria-hidden
-      className="glow-breathe absolute w-[400px] h-[400px] rounded-full pointer-events-none"
+      className="glow-breathe absolute w-[320px] h-[320px] rounded-full pointer-events-none"
       style={{
         background: `radial-gradient(circle, rgba(${rgb}, 0.18) 0%, rgba(${rgb}, 0.05) 60%, rgba(${rgb}, 0) 80%)`,
       }}
     >
-      <div className="glow-breathe-d1 absolute inset-[44px] rounded-full" style={{ background: `rgba(${rgb}, 0.07)` }} />
-      <div className="glow-breathe-d2 absolute inset-[88px] rounded-full" style={{ background: `rgba(${rgb}, 0.14)` }} />
+      <div className="glow-breathe-d1 absolute inset-[36px] rounded-full" style={{ background: `rgba(${rgb}, 0.07)` }} />
+      <div className="glow-breathe-d2 absolute inset-[70px] rounded-full" style={{ background: `rgba(${rgb}, 0.14)` }} />
     </div>
   );
 }
