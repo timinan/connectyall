@@ -159,8 +159,13 @@ export default async function PublicCardPage({ params }: { params: Promise<{ id:
               {avatarInitial}
             </div>
           )}
+          {profile.tagline && (
+            <p className="text-[14px] text-neutral-950 font-semibold mt-3.5 text-center leading-snug max-w-[300px] px-6">
+              {profile.tagline}
+            </p>
+          )}
           {profile.shortBlurb && (
-            <p className="text-[14px] text-neutral-700 mt-3.5 text-center leading-snug max-w-[300px] px-6">
+            <p className="text-[13.5px] text-neutral-600 mt-1.5 text-center leading-snug max-w-[300px] px-6">
               {profile.shortBlurb}
             </p>
           )}
