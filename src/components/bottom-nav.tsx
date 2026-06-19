@@ -88,6 +88,7 @@ export function BottomNav() {
             aria-label={label}
             className={`
               relative z-10 inline-flex items-center h-10 rounded-full pl-3 gap-1.5 overflow-hidden
+              min-w-0 shrink-0 grow-0
               transition-[width,color] duration-300 ease-out will-change-[width]
               active:scale-95
               ${isTarget ? 'text-white' : 'text-zinc-400 hover:text-white'}
