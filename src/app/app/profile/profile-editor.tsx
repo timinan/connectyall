@@ -162,23 +162,23 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
       <PageHeader status="PROFILE" />
 
       <div className="relative">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-16 w-[380px] h-[380px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.16) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)' }}
-        >
-          <div className="absolute inset-[50px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
-          <div className="absolute inset-[100px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
-        </div>
-
         <div className="relative z-10 bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
           <h1 className="text-4xl font-black leading-[1.02] tracking-tight">
             Your <span className="text-brand">profile</span>
           </h1>
         </div>
 
-        <div className="relative z-10 flex flex-col items-center mt-2 pt-2 pb-10">
-          <div className="relative inline-block">
+        <div className="relative flex flex-col items-center mt-2 pt-2 pb-10">
+          {/* Glow centered on the avatar — extends behind banner above + first card below */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(124, 92, 255, 0.16) 0%, rgba(124, 92, 255, 0.05) 60%, rgba(124, 92, 255, 0) 80%)' }}
+          >
+            <div className="absolute inset-[44px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.06)' }} />
+            <div className="absolute inset-[88px] rounded-full" style={{ background: 'rgba(124, 92, 255, 0.12)' }} />
+          </div>
+          <div className="relative z-10 inline-block">
             <Avatar profile={profile ? { displayName: profile.displayName, photoR2Url: profile.photoR2Url } : null} />
             <button
               type="button"
