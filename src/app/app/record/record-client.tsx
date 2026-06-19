@@ -145,7 +145,8 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
             sub="Hang tight while we turn your voice into a connection."
           />
         )}
-        <div className="flex-1 flex flex-col items-center justify-center gap-5">
+        <div className="relative flex-1 flex flex-col items-center justify-center">
+          {/* Mic / logo + glow — centered in the available whitespace */}
           <div className="relative flex items-center justify-center">
             <GlowRings tone={state === 'recording' ? 'red' : 'brand'} />
             {state === 'idle' && (
@@ -176,27 +177,30 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
               </div>
             )}
           </div>
-          <div className="flex items-end justify-center gap-1 h-14 px-4">
-            {levels.map((_v, i) => {
-              if (state === 'uploading') {
+          {/* Waveform + caption — out of flow so the mic stays at the true center */}
+          <div className="absolute left-0 right-0 bottom-0 flex flex-col items-center gap-3">
+            <div className="flex items-end justify-center gap-1 h-14 px-4">
+              {levels.map((_v, i) => {
+                if (state === 'uploading') {
+                  return (
+                    <div
+                      key={i}
+                      className="w-1 bg-brand/55 rounded wave-bar"
+                      style={{ animationDelay: `${i * 0.07}s` }}
+                    />
+                  );
+                }
                 return (
                   <div
                     key={i}
-                    className="w-1 bg-brand/55 rounded wave-bar"
-                    style={{ animationDelay: `${i * 0.07}s` }}
+                    style={{ height: `${Math.max(8, _v * 56)}px` }}
+                    className={`w-1 ${state === 'recording' ? 'bg-red-500/55' : 'bg-brand/55'} rounded`}
                   />
                 );
-              }
-              return (
-                <div
-                  key={i}
-                  style={{ height: `${Math.max(8, _v * 56)}px` }}
-                  className={`w-1 ${state === 'recording' ? 'bg-red-500/55' : 'bg-brand/55'} rounded`}
-                />
-              );
-            })}
+              })}
+            </div>
+            <Caption state={state} />
           </div>
-          <Caption state={state} />
         </div>
       </div>
       <BottomNav />
