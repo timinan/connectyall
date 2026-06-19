@@ -11,9 +11,113 @@ import { APP_CONTAINER_FLEX } from '../_layout-constants';
 
 type State = 'idle' | 'recording' | 'uploading';
 
+type RecError = { title: string; body: string };
+
+// Map a raw failure (DOMException from getUserMedia/MediaRecorder, a fetch
+// TypeError, or an API response body) to a sentence a non-technical person can
+// act on. Whenever we add a new failure mode, add a case here — not a new alert.
+function decodeMediaError(err: unknown): RecError {
+  if (err instanceof DOMException) {
+    switch (err.name) {
+      case 'NotAllowedError':
+      case 'PermissionDeniedError':
+        return {
+          title: 'Microphone access blocked',
+          body: 'Your browser blocked the microphone. Open site settings, allow the mic, then try again.',
+        };
+      case 'NotFoundError':
+      case 'DevicesNotFoundError':
+        return {
+          title: 'No microphone found',
+          body: "We couldn't find a microphone on this device. Plug one in (or switch devices) and try again.",
+        };
+      case 'NotReadableError':
+      case 'TrackStartError':
+        return {
+          title: 'Microphone busy',
+          body: 'Another app is using the mic. Close it and try again.',
+        };
+      case 'SecurityError':
+        return {
+          title: 'Not a secure connection',
+          body: 'The mic only works on HTTPS pages. Reload the page over https and try again.',
+        };
+      case 'AbortError':
+        return {
+          title: 'Recording cut off',
+          body: 'The recording stopped before it finished. Try again.',
+        };
+    }
+  }
+  if (err instanceof TypeError) {
+    // fetch network failures land here as TypeError("Failed to fetch")
+    return {
+      title: "Couldn't reach the server",
+      body: 'Check your internet connection and try again.',
+    };
+  }
+  return {
+    title: 'Something went wrong',
+    body: 'We hit an unexpected error starting the recording. Try again.',
+  };
+}
+
+function decodeUploadError(status: number, raw: string): RecError {
+  // The capture API returns either `{ "error": "..." }` JSON or plain text.
+  let apiMessage = raw;
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.error === 'string') apiMessage = parsed.error;
+  } catch { /* not JSON, use raw */ }
+
+  if (status === 401) {
+    return {
+      title: 'Signed out',
+      body: 'Your session expired. Sign in again to keep recording.',
+    };
+  }
+  if (status === 413 || /too large/i.test(apiMessage)) {
+    return {
+      title: 'Recording too long',
+      body: 'That recording is over 20 MB. Try a shorter memo (under about a minute).',
+    };
+  }
+  if (/unsupported mime/i.test(apiMessage)) {
+    return {
+      title: 'Audio format not supported',
+      body: "Your browser saved the recording in a format we can't read yet. Try a different browser or device.",
+    };
+  }
+  if (/audio file required/i.test(apiMessage)) {
+    return {
+      title: 'Recording came through empty',
+      body: 'Your mic might not have captured any sound. Check the device and try again.',
+    };
+  }
+  return {
+    title: "Couldn't upload that recording",
+    body: 'The server rejected the upload. Try again in a moment — if it keeps happening, restart the app.',
+  };
+}
+
+function processingError(): RecError {
+  return {
+    title: "We couldn't make sense of that one",
+    body: "Our processor had trouble pulling a name and details from the recording. Try again — speak a bit clearer, or move somewhere quieter.",
+  };
+}
+
+function processingTimeoutError(): RecError {
+  return {
+    title: 'Taking longer than usual',
+    body: "We're still working on it. Your recording might appear in Connections in a minute. Try again if you don't want to wait.",
+  };
+}
+
 export function RecordClient({ displayName }: { displayName: string | null }) {
   const router = useRouter();
   const [state, setState] = useState<State>('idle');
+  const [error, setError] = useState<RecError | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [levels, setLevels] = useState<number[]>(Array(15).fill(0));
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -21,6 +125,27 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
   const timerRef = useRef<number | null>(null);
+
+  // Stop everything still running and reset visual state — called both when
+  // bailing on an error AND when the user taps Try again.
+  function resetToIdle() {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (timerRef.current) clearInterval(timerRef.current);
+    rafRef.current = null;
+    timerRef.current = null;
+    recorderRef.current = null;
+    chunksRef.current = [];
+    setLevels(Array(15).fill(0));
+    setElapsed(0);
+    setState('idle');
+  }
+
+  function failWith(err: RecError) {
+    resetToIdle();
+    setError(err);
+  }
 
   useEffect(() => {
     return () => {
@@ -31,7 +156,14 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
   }, []);
 
   async function start() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    setError(null);
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      failWith(decodeMediaError(err));
+      return;
+    }
     streamRef.current = stream;
 
     const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
@@ -39,7 +171,13 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
       : MediaRecorder.isTypeSupported('audio/mp4')
       ? 'audio/mp4'
       : '';
-    const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    let rec: MediaRecorder;
+    try {
+      rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    } catch (err) {
+      failWith(decodeMediaError(err));
+      return;
+    }
     chunksRef.current = [];
     rec.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
     rec.start();
@@ -83,22 +221,32 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
     const blob = new Blob(chunksRef.current, { type: rec.mimeType || 'audio/webm' });
     const fd = new FormData();
     fd.append('audio', new File([blob], `memo.${(rec.mimeType || 'webm').split('/')[1].split(';')[0]}`, { type: blob.type }));
-    const res = await fetch('/api/capture', { method: 'POST', body: fd });
+    let res: Response;
+    try {
+      res = await fetch('/api/capture', { method: 'POST', body: fd });
+    } catch (err) {
+      failWith(decodeMediaError(err));
+      return;
+    }
     if (!res.ok) {
-      alert(`Upload failed: ${await res.text()}`);
-      setState('idle');
+      failWith(decodeUploadError(res.status, await res.text()));
       return;
     }
     const { interactionId } = await res.json();
     const startTime = Date.now();
     while (Date.now() - startTime < 60_000) {
       await new Promise((r) => setTimeout(r, 1500));
-      const poll = await fetch(`/api/cards/${interactionId}`, { cache: 'no-store' });
+      let poll: Response;
+      try {
+        poll = await fetch(`/api/cards/${interactionId}`, { cache: 'no-store' });
+      } catch {
+        // transient network blip during polling — skip this tick and retry
+        continue;
+      }
       if (!poll.ok) continue;
       const payload = await poll.json();
       if (payload.status === 'failed') {
-        alert('Sorry — that recording could not be processed.');
-        setState('idle');
+        failWith(processingError());
         return;
       }
       if (payload.status === 'ready') {
@@ -110,7 +258,7 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
         return;
       }
     }
-    router.push('/app/connections');
+    failWith(processingTimeoutError());
   }
 
   const status: ReactNode =
@@ -210,6 +358,46 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
         </div>
       </div>
       <BottomNav />
+      {error && (
+        <ErrorModal
+          error={error}
+          onTryAgain={() => {
+            setError(null);
+            resetToIdle();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ErrorModal({ error, onTryAgain }: { error: RecError; onTryAgain: () => void }) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="rec-error-title"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6 bg-black/40"
+    >
+      <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full px-6 py-6 space-y-4">
+        <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-brand font-bold">
+          <span className="mr-1">●</span> RECORDING DIDN&apos;T LAND
+        </div>
+        <h2 id="rec-error-title" className="text-xl font-extrabold text-neutral-950 leading-tight">
+          {error.title}
+        </h2>
+        <p className="text-[14px] text-neutral-700 leading-relaxed">
+          {error.body}
+        </p>
+        <button
+          type="button"
+          onClick={onTryAgain}
+          autoFocus
+          className="w-full px-4 py-4 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
+        >
+          Try again
+        </button>
+      </div>
     </div>
   );
 }
