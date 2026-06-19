@@ -81,6 +81,8 @@ export default function SignInPage() {
               >
                 <input
                   type="email"
+                  name="email"
+                  autoComplete="email"
                   required
                   placeholder="you@example.com"
                   value={email}
@@ -103,9 +105,11 @@ export default function SignInPage() {
               >
                 <input
                   type="text"
+                  name="otp"
                   inputMode="numeric"
                   pattern="[0-9]*"
                   autoComplete="one-time-code"
+                  enterKeyHint="go"
                   maxLength={6}
                   required
                   placeholder="123456"

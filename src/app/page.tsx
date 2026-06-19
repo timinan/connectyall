@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from '@/lib/auth/session';
 import { getById } from '@/services/UserProfileService';
 import { PageHeader } from '@/components/page-header';
+import { ViewTransitionLink } from '@/components/view-transition-link';
 import { LANDING_CONTAINER_FLEX } from './app/_layout-constants';
 
 export const dynamic = 'force-dynamic';
@@ -50,12 +51,12 @@ export default async function Home() {
           <p className="mt-2 pl-5 text-[15px] text-neutral-700 leading-relaxed max-w-[280px]">
             Connectyall turns a voice memo you record after meeting someone into a connection built in an instant. Talk it out, we handle the rest.
           </p>
-          <Link
+          <ViewTransitionLink
             href="/app"
             className="mt-6 ml-5 inline-flex w-fit items-center gap-2 px-6 py-4 rounded-full bg-brand text-white font-mono text-[12px] tracking-[0.18em] font-bold uppercase hover:opacity-90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
           >
             Open the app →
-          </Link>
+          </ViewTransitionLink>
         </div>
         <footer className="mt-auto pt-12 font-mono text-[10px] tracking-[0.2em] uppercase text-muted text-center">
           <Link href="/privacy" className="hover:text-neutral-950 transition">PRIVACY</Link>
