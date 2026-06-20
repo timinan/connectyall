@@ -9,6 +9,7 @@ const deleteWhere = vi.hoisted(() => vi.fn());
 const selectFrom = vi.hoisted(() => vi.fn());
 const selectWhere = vi.hoisted(() => vi.fn());
 const selectOrderBy = vi.hoisted(() => vi.fn());
+const selectInnerJoin = vi.hoisted(() => vi.fn());
 const dbMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../lib/db/client', () => ({ db: dbMock }));
@@ -21,7 +22,8 @@ beforeEach(() => {
   updateSet.mockReturnValue({ where: updateWhere });
   updateWhere.mockReturnValue({ returning: updateReturning });
   deleteWhere.mockResolvedValue(undefined);
-  selectFrom.mockReturnValue({ where: selectWhere });
+  selectFrom.mockReturnValue({ where: selectWhere, innerJoin: selectInnerJoin });
+  selectInnerJoin.mockReturnValue({ where: selectWhere });
   selectWhere.mockReturnValue({ orderBy: selectOrderBy });
   selectOrderBy.mockResolvedValue([]);
   dbMock.mockReturnValue({
@@ -38,6 +40,8 @@ import {
   listForContact,
   updateFollowUp,
   deleteFollowUp,
+  countDueTodayForUser,
+  listDueTodayForUser,
 } from './FollowUpsService';
 
 describe('FollowUpsService', () => {
@@ -112,5 +116,28 @@ describe('FollowUpsService', () => {
   it('deleteFollowUp deletes by id', async () => {
     await deleteFollowUp('fu-1');
     expect(deleteWhere).toHaveBeenCalled();
+  });
+});
+
+describe('FollowUpsService — due-today', () => {
+  beforeEach(() => {
+    // Override the selectOrderBy mock to also feed listDueTodayForUser tests
+    selectOrderBy.mockResolvedValue([
+      { id: 'fu-1', topic: 't1', contactName: 'Sarah', contactId: 'c-1' },
+      { id: 'fu-2', topic: 't2', contactName: 'Marcus', contactId: 'c-2' },
+    ]);
+  });
+
+  it('countDueTodayForUser runs a SELECT scoped to user + pending + due-by-end-of-today', async () => {
+    selectOrderBy.mockResolvedValueOnce([{ id: 'fu-1' }, { id: 'fu-2' }]);
+    const count = await countDueTodayForUser('u-1', 'America/Vancouver');
+    expect(count).toBe(2);
+    expect(selectFrom).toHaveBeenCalled();
+  });
+
+  it('listDueTodayForUser returns rows with contact info attached', async () => {
+    const rows = await listDueTodayForUser('u-1', 'America/Vancouver');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveProperty('contactName');
   });
 });
