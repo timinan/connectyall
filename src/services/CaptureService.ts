@@ -1,6 +1,6 @@
-import { and, gte, eq, sql } from 'drizzle-orm';
+import { and, gte, eq, lt, sql } from 'drizzle-orm';
 import { db } from '../lib/db/client';
-import { usageEvents, contacts } from '../lib/db/schema';
+import { usageEvents, contacts, interactions } from '../lib/db/schema';
 import { env } from '../lib/env';
 import { transcribe } from './TranscriptionService';
 import { extract, type ExtractedContact } from './ExtractionService';
@@ -136,4 +136,43 @@ export async function processCapture(input: CaptureInput): Promise<void> {
       contentType: 'image/png',
     });
   }
+}
+
+/**
+ * Find interactions that are stuck mid-pipeline. The janitor calls this every
+ * 2 minutes to recover anything the inline path dropped (network blip,
+ * function timeout, deploy interruption).
+ *
+ * Returns only rows that have the capture metadata we need to re-run the
+ * pipeline. Rows without it (legacy, or secondary contacts that don't have
+ * their own audio) are filtered out by the IS NOT NULL guards.
+ */
+export async function findStuckProcessingCaptures(opts: {
+  maxAgeSeconds: number;
+  limit: number;
+}): Promise<Array<{ id: string; userId: string; audioR2Key: string; mimeType: string }>> {
+  const cutoff = sql`now() - (${opts.maxAgeSeconds} * interval '1 second')`;
+  const rows = await db()
+    .select({
+      id: interactions.id,
+      userId: interactions.userId,
+      audioR2Key: interactions.audioR2Key,
+      mimeType: interactions.mimeType,
+    })
+    .from(interactions)
+    .where(
+      and(
+        eq(interactions.status, 'processing'),
+        lt(interactions.occurredAt, cutoff as unknown as Date),
+        sql`${interactions.userId} IS NOT NULL`,
+        sql`${interactions.audioR2Key} IS NOT NULL`,
+        sql`${interactions.mimeType} IS NOT NULL`,
+      ),
+    )
+    .limit(opts.limit);
+  // The runtime guard mirrors the SQL filter so the return type is narrow.
+  return rows
+    .filter((r): r is { id: string; userId: string; audioR2Key: string; mimeType: string } =>
+      r.userId !== null && r.audioR2Key !== null && r.mimeType !== null)
+    .map((r) => ({ id: r.id, userId: r.userId, audioR2Key: r.audioR2Key, mimeType: r.mimeType }));
 }
