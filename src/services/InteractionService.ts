@@ -16,13 +16,19 @@ export async function updateRecap(interactionId: string, recap: string): Promise
     .where(eq(interactions.id, interactionId));
 }
 
-export async function mintStub(source: NewInteraction['source']): Promise<string> {
+export async function mintStub(
+  source: NewInteraction['source'],
+  captureMetadata?: { userId: string; audioR2Key: string; mimeType: string },
+): Promise<string> {
   const [row] = await db()
     .insert(interactions)
     .values({
       source,
       structuredData: {},
       status: 'processing',
+      userId: captureMetadata?.userId ?? null,
+      audioR2Key: captureMetadata?.audioR2Key ?? null,
+      mimeType: captureMetadata?.mimeType ?? null,
     })
     .returning({ id: interactions.id });
   return row.id;
