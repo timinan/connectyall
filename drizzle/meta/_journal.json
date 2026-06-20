@@ -78,6 +78,13 @@
       "when": 1781906900000,
       "tag": "0010_users_short_blurb",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1782000000000,
+      "tag": "0011_interactions_capture_metadata",
+      "breakpoints": true
     }
   ]
 }
