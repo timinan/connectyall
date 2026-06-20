@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const { generateObjectMock } = vi.hoisted(() => ({
   generateObjectMock: vi.fn(),
@@ -52,7 +52,11 @@ describe('extract', () => {
 });
 
 describe('extract (with retry)', () => {
-  beforeEach(() => generateObjectMock.mockReset());
+  beforeEach(() => {
+    vi.useFakeTimers();
+    generateObjectMock.mockReset();
+  });
+  afterEach(() => vi.useRealTimers());
 
   it('retries when generateObject throws a transient 5xx-shaped error', async () => {
     const transient = Object.assign(new Error('upstream'), { statusCode: 503 });
@@ -61,7 +65,9 @@ describe('extract (with retry)', () => {
       .mockResolvedValueOnce({
         object: { contacts: [], was_live_recording: false },
       });
-    const result = await extract({ transcript: 'hi', selfIntro: '' });
+    const promise = extract({ transcript: 'hi', selfIntro: '' });
+    await vi.runAllTimersAsync();
+    const result = await promise;
     expect(result.contacts).toHaveLength(0);
     expect(generateObjectMock).toHaveBeenCalledTimes(2);
   });
@@ -73,7 +79,9 @@ describe('extract (with retry)', () => {
       .mockResolvedValueOnce({
         object: { contacts: [], was_live_recording: false },
       });
-    const result = await extract({ transcript: 'hi', selfIntro: '' });
+    const promise = extract({ transcript: 'hi', selfIntro: '' });
+    await vi.runAllTimersAsync();
+    const result = await promise;
     expect(result.contacts).toHaveLength(0);
     expect(generateObjectMock).toHaveBeenCalledTimes(2);
   });
@@ -81,7 +89,9 @@ describe('extract (with retry)', () => {
   it('does NOT retry on a 4xx that is not 429', async () => {
     const badReq = Object.assign(new Error('bad input'), { statusCode: 400 });
     generateObjectMock.mockRejectedValueOnce(badReq);
-    await expect(extract({ transcript: 'hi', selfIntro: '' })).rejects.toThrow();
+    const assertion = expect(extract({ transcript: 'hi', selfIntro: '' })).rejects.toThrow();
+    await vi.runAllTimersAsync();
+    await assertion;
     expect(generateObjectMock).toHaveBeenCalledTimes(1);
   });
 });
