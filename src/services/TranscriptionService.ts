@@ -1,6 +1,8 @@
 import { env } from '../lib/env';
+import { withRetry } from '../lib/retry';
 
-export async function transcribe(audio: Uint8Array): Promise<string> {
+// Single Whisper call. Retried by withRetry() in transcribe() below.
+async function callWhisper(audio: Uint8Array): Promise<string> {
   const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN } = env();
   const url = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/openai/whisper`;
   const res = await fetch(url, {
@@ -11,6 +13,14 @@ export async function transcribe(audio: Uint8Array): Promise<string> {
     },
     body: new Blob([audio as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }),
   });
+  if (!res.ok) {
+    // 4xx → non-retryable HardError; 5xx → retryable TransientError. Both carry
+    // the status so the predicate in transcribe() can decide.
+    const text = await res.text().catch(() => '');
+    const err = new Error(`Whisper HTTP ${res.status}: ${text || 'no body'}`) as Error & { status: number };
+    err.status = res.status;
+    throw err;
+  }
   const json = (await res.json()) as {
     success: boolean;
     result?: { text: string };
@@ -21,4 +31,17 @@ export async function transcribe(audio: Uint8Array): Promise<string> {
     throw new Error(`Whisper transcription failed: ${reason}`);
   }
   return json.result?.text ?? '';
+}
+
+export async function transcribe(audio: Uint8Array): Promise<string> {
+  return withRetry(() => callWhisper(audio), {
+    maxAttempts: 3, // 1 try + 2 retries
+    baseDelayMs: 500,
+    shouldRetry: (err) => {
+      // Retry transient network failures (no HTTP response) and 5xx.
+      if (err instanceof TypeError) return true; // fetch network error
+      const status = (err as { status?: number })?.status;
+      return typeof status === 'number' && status >= 500;
+    },
+  });
 }
