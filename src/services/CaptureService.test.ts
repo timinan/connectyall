@@ -189,4 +189,24 @@ describe('findStuckProcessingCaptures', () => {
 
     expect(rows).toEqual([]);
   });
+
+  it('drops rows where any metadata field is null (runtime guard)', async () => {
+    const fullRow = {
+      id: 'i-good',
+      userId: 'u-1',
+      audioR2Key: 'captures/u-1/a.webm',
+      mimeType: 'audio/webm',
+    };
+    const partialNullRow = {
+      id: 'i-bad',
+      userId: 'u-2',
+      audioR2Key: null,
+      mimeType: 'audio/webm',
+    };
+    limitMock.mockResolvedValueOnce([partialNullRow, fullRow]);
+
+    const rows = await findStuckProcessingCaptures({ maxAgeSeconds: 60, limit: 20 });
+
+    expect(rows).toEqual([fullRow]);
+  });
 });
