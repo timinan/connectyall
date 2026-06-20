@@ -95,3 +95,47 @@ describe('extract (with retry)', () => {
     expect(generateObjectMock).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('extract — follow_ups field', () => {
+  beforeEach(() => generateObjectMock.mockReset());
+
+  it('passes through follow_ups from the LLM response', async () => {
+    generateObjectMock.mockResolvedValueOnce({
+      object: {
+        contacts: [{
+          name: 'Sarah Chen', role: 'PM', company: 'Acme',
+          emails: [], phones: [], preferred_channel: null,
+          links: {}, context: 'met at AI breakfast',
+          recap: 'her staff PM role at Acme',
+          user_commitments: ['follow up about the role'],
+          their_commitments: [],
+          follow_ups: [
+            { topic: 'the staff PM role', relative_due: 'in 3 days' },
+            { topic: 'send the deck', relative_due: 'tomorrow' },
+          ],
+        }],
+        was_live_recording: false,
+      },
+    });
+    const result = await extract({ transcript: 'hi', selfIntro: '' });
+    expect(result.contacts[0].follow_ups).toHaveLength(2);
+    expect(result.contacts[0].follow_ups[0].topic).toBe('the staff PM role');
+  });
+
+  it('defaults to empty array when LLM omits the field', async () => {
+    generateObjectMock.mockResolvedValueOnce({
+      object: {
+        contacts: [{
+          name: 'Sarah Chen', role: null, company: null,
+          emails: [], phones: [], preferred_channel: null,
+          links: {}, context: 'met somewhere', recap: 'something',
+          user_commitments: [], their_commitments: [],
+          // follow_ups deliberately omitted
+        }],
+        was_live_recording: false,
+      },
+    });
+    const result = await extract({ transcript: 'hi', selfIntro: '' });
+    expect(result.contacts[0].follow_ups).toEqual([]);
+  });
+});

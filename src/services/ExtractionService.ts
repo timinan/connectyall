@@ -24,6 +24,10 @@ export const ContactSchema = z.object({
   recap: z.string(),
   user_commitments: z.array(z.string()),
   their_commitments: z.array(z.string()),
+  follow_ups: z.array(z.object({
+    topic: z.string(),
+    relative_due: z.string().nullable(),
+  })).optional().default([]),
 });
 
 export const ExtractionSchema = z.object({
@@ -72,6 +76,30 @@ ANTI-EXAMPLES (don't do these):
 - ❌ "The conversation covered her startup pivot." — meta-narration
 
 If the original phrasing already reads as a clean noun phrase, leave it alone — don't paraphrase aggressively just for the sake of it.
+
+FOLLOW-UPS EXTRACTION (the "follow_ups" field per contact):
+
+Capture concrete commitments THE SPEAKER made about future actions toward this contact. Each follow_up has:
+  - topic: a short phrase describing what they said they'd do, in the speaker's framing
+  - relative_due: a relative-date phrase as spoken ("tomorrow", "in 3 days", "next week", "by Friday"), or null if no time was mentioned
+
+Examples:
+- "Need to follow up with her in 3 days about the role"
+  → { "topic": "the role", "relative_due": "in 3 days" }
+- "Send her the deck tomorrow"
+  → { "topic": "send her the deck", "relative_due": "tomorrow" }
+- "I should circle back eventually"
+  → { "topic": "circle back", "relative_due": null }
+- "Let me intro him to my designer friend next week"
+  → { "topic": "intro him to my designer friend", "relative_due": "next week" }
+
+DO NOT include commitments the OTHER person made:
+- "She'll send me the deck" → NOT a follow-up (that's her commitment, goes in their_commitments)
+- "He's going to share the doc" → NOT a follow-up
+
+Keep topics short — 3 to 8 words is the sweet spot. They render in a tight UI row.
+
+If no follow-ups were mentioned, return an empty array.
 
 LINKS EXTRACTION (be aggressive about this — these are the most valuable field):
 
@@ -178,6 +206,7 @@ function normalizeContacts(contacts: ExtractedContact[]): ExtractedContact[] {
     if (c.company && NULLISH.has(c.company.toLowerCase())) c.company = null;
     if (c.notes && NULLISH.has(c.notes.toLowerCase())) c.notes = null;
     if (c.recap && NULLISH.has(c.recap.toLowerCase())) c.recap = '';
+    if (!c.follow_ups) c.follow_ups = [];
   }
   return contacts;
 }
