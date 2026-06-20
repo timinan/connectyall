@@ -166,11 +166,13 @@ describe('processCapture', () => {
 });
 
 describe('findStuckProcessingCaptures', () => {
+  const occurredAt = new Date(Date.now() - 90 * 1000).toISOString();
   const olderRow = {
     id: 'i-1',
     userId: 'u-1',
     audioR2Key: 'captures/u-1/a.webm',
     mimeType: 'audio/webm',
+    occurredAt,
   };
 
   it('returns rows where status=processing AND occurredAt older than the threshold', async () => {
@@ -196,12 +198,14 @@ describe('findStuckProcessingCaptures', () => {
       userId: 'u-1',
       audioR2Key: 'captures/u-1/a.webm',
       mimeType: 'audio/webm',
+      occurredAt,
     };
     const partialNullRow = {
       id: 'i-bad',
       userId: 'u-2',
       audioR2Key: null,
       mimeType: 'audio/webm',
+      occurredAt,
     };
     limitMock.mockResolvedValueOnce([partialNullRow, fullRow]);
 
