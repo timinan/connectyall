@@ -90,4 +90,13 @@ describe('transcribe (with retry)', () => {
     await assertion;
     expect(f).toHaveBeenCalledTimes(1);
   });
+
+  it('returns empty string when result.text is absent in a success body', async () => {
+    const f = globalThis.fetch as ReturnType<typeof vi.fn>;
+    f.mockResolvedValueOnce(jsonResponse({ success: true, result: {} }));
+    const promise = transcribe(new Uint8Array([1]));
+    await vi.runAllTimersAsync();
+    await expect(promise).resolves.toBe('');
+    expect(f).toHaveBeenCalledTimes(1);
+  });
 });
