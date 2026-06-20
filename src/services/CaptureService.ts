@@ -1,4 +1,4 @@
-import { and, gte, eq, lt, sql } from 'drizzle-orm';
+import { and, gte, eq, lt, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../lib/db/client';
 import { usageEvents, contacts, interactions } from '../lib/db/schema';
 import { env } from '../lib/env';
@@ -164,9 +164,9 @@ export async function findStuckProcessingCaptures(opts: {
       and(
         eq(interactions.status, 'processing'),
         lt(interactions.occurredAt, cutoff as unknown as Date),
-        sql`${interactions.userId} IS NOT NULL`,
-        sql`${interactions.audioR2Key} IS NOT NULL`,
-        sql`${interactions.mimeType} IS NOT NULL`,
+        isNotNull(interactions.userId),
+        isNotNull(interactions.audioR2Key),
+        isNotNull(interactions.mimeType),
       ),
     )
     .limit(opts.limit);
