@@ -5,6 +5,9 @@ import { withRetry } from '../lib/retry';
 async function callWhisper(audio: Uint8Array): Promise<string> {
   const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN } = env();
   const url = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/openai/whisper`;
+  // No fetch timeout here — the Vercel 60s function ceiling is the safety net
+  // on hung-upstream. Retries don't help against a hang; they only help against
+  // a clean reject or 5xx response.
   const res = await fetch(url, {
     method: 'POST',
     headers: {
