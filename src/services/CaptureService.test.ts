@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const {
   countMock,
+  limitMock,
   insertValuesMock,
   insertMock,
   transcribeMock,
@@ -16,6 +17,7 @@ const {
   mintStubMock,
 } = vi.hoisted(() => {
   const countMock = vi.fn().mockResolvedValue([{ count: 0 }]);
+  const limitMock = vi.fn().mockResolvedValue([]);
   const insertValuesMock = vi.fn().mockResolvedValue(undefined);
   const insertMock = vi.fn().mockReturnValue({ values: insertValuesMock });
   const transcribeMock = vi.fn();
@@ -29,7 +31,7 @@ const {
   const markFailedMock = vi.fn().mockResolvedValue(undefined);
   const mintStubMock = vi.fn().mockResolvedValue('extra-interaction-id');
   return {
-    countMock, insertValuesMock, insertMock,
+    countMock, limitMock, insertValuesMock, insertMock,
     transcribeMock, extractMock, getByIdMock,
     createContactMock, findByNameAndCompanyMock,
     renderCardMock, uploadBytesMock,
@@ -39,7 +41,15 @@ const {
 
 vi.mock('../lib/db/client', () => ({
   db: () => ({
-    select: () => ({ from: () => ({ where: () => countMock() }) }),
+    select: () => ({
+      from: () => ({
+        where: () => {
+          const p = countMock();
+          (p as unknown as Record<string, unknown>).limit = limitMock;
+          return p;
+        },
+      }),
+    }),
     insert: insertMock,
   }),
 }));
@@ -73,7 +83,7 @@ vi.mock('../lib/r2/client', () => ({
   downloadObject: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
 }));
 
-import { processCapture } from './CaptureService';
+import { processCapture, findStuckProcessingCaptures } from './CaptureService';
 
 const baseInput = {
   userId: 'user-uuid-1',
@@ -152,5 +162,31 @@ describe('processCapture', () => {
     await processCapture(baseInput);
     expect(markFailedMock).toHaveBeenCalledWith('interaction-uuid-1');
     expect(transcribeMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('findStuckProcessingCaptures', () => {
+  const olderRow = {
+    id: 'i-1',
+    userId: 'u-1',
+    audioR2Key: 'captures/u-1/a.webm',
+    mimeType: 'audio/webm',
+  };
+
+  it('returns rows where status=processing AND occurredAt older than the threshold', async () => {
+    limitMock.mockResolvedValueOnce([olderRow]);
+
+    const rows = await findStuckProcessingCaptures({ maxAgeSeconds: 60, limit: 20 });
+
+    expect(rows).toEqual([olderRow]);
+    expect(limitMock).toHaveBeenCalledWith(20);
+  });
+
+  it('returns empty array when no stuck rows exist', async () => {
+    limitMock.mockResolvedValueOnce([]);
+
+    const rows = await findStuckProcessingCaptures({ maxAgeSeconds: 60, limit: 20 });
+
+    expect(rows).toEqual([]);
   });
 });
