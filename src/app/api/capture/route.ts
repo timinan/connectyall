@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { after } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getServerSession } from '@/lib/auth/session';
 import { uploadBytes } from '@/lib/r2/client';
 import { mintStub } from '@/services/InteractionService';
-import { inngest } from '@/lib/inngest/client';
+import { processCapture } from '@/services/CaptureService';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -25,21 +26,32 @@ export async function POST(req: Request) {
   if (!ALLOWED_MIME.includes(baseMime)) return NextResponse.json({ error: `unsupported mime: ${file.type}` }, { status: 400 });
 
   const ext = baseMime.split('/').pop() ?? 'webm';
-  const key = `captures/${session.user.id}/${randomUUID()}.${ext}`;
+  const audioR2Key = `captures/${session.user.id}/${randomUUID()}.${ext}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
-  await uploadBytes({ key, bytes, contentType: baseMime });
+  await uploadBytes({ key: audioR2Key, bytes, contentType: baseMime });
 
-  const interactionId = await mintStub('voice');
+  // Mint the stub WITH capture metadata. If the inline pipeline drops, the
+  // janitor will find this row and re-run processCapture against the same
+  // audio still sitting in R2.
+  const interactionId = await mintStub('voice', {
+    userId: session.user.id,
+    audioR2Key,
+    mimeType: baseMime,
+  });
 
-  await inngest.send({
-    name: 'capture/process',
-    data: {
+  // Inline pipeline: keep running after the response goes back to the phone.
+  // Any thrown error here is caught so the function exits cleanly; the row
+  // stays at status='processing' and the janitor picks it up within 2 min.
+  after(
+    processCapture({
       userId: session.user.id,
-      audioR2Key: key,
+      audioR2Key,
       mimeType: baseMime,
       interactionId,
-    },
-  });
+    }).catch((err) => {
+      console.error('inline processCapture failed; janitor will retry', { interactionId, err });
+    }),
+  );
 
   return NextResponse.json({ interactionId });
 }
