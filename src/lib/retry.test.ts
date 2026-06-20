@@ -67,4 +67,12 @@ describe('withRetry', () => {
     expect(fn).toHaveBeenCalledTimes(3);
     await expect(promise).resolves.toBe('ok');
   });
+
+  it('throws synchronously when maxAttempts < 1', async () => {
+    const fn = vi.fn();
+    await expect(
+      withRetry(fn, { maxAttempts: 0, baseDelayMs: 100, shouldRetry: () => true }),
+    ).rejects.toThrow(/maxAttempts must be >= 1/);
+    expect(fn).not.toHaveBeenCalled();
+  });
 });
