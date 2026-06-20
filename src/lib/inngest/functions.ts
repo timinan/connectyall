@@ -27,10 +27,8 @@ export const recoverStuckCapturesFn = inngest.createFunction(
         });
         recovered += 1;
       } catch (err) {
-        // Don't let one bad row block the rest. processCapture's own retries
-        // already covered transient failures; what bubbles up here is hard
-        // and gets surfaced in Inngest dashboard logs.
-        console.error('recover-stuck-captures: row failed', { interactionId: row.id, err });
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[janitor] row failed (interactionId=${row.id}) — ${msg}`);
         failed += 1;
         // If the recording has been stuck for more than 30 minutes, give up.
         // The user can re-record. This caps the blast radius of permanently
@@ -40,12 +38,15 @@ export const recoverStuckCapturesFn = inngest.createFunction(
         if (ageMs > 30 * 60 * 1000) {
           try {
             await markFailed(row.id);
+            console.error(`[janitor] giving up after 30min (interactionId=${row.id})`);
           } catch (markErr) {
-            console.error('recover-stuck-captures: markFailed also failed', { interactionId: row.id, markErr });
+            const markMsg = markErr instanceof Error ? markErr.message : String(markErr);
+            console.error(`[janitor] markFailed also failed (interactionId=${row.id}) — ${markMsg}`);
           }
         }
       }
     }
+    console.log(`[janitor] sweep complete: swept=${stuck.length} recovered=${recovered} failed=${failed}`);
     return { swept: stuck.length, recovered, failed };
   },
 );
