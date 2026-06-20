@@ -86,5 +86,12 @@ describe('mintStub with capture metadata', () => {
     // The new fields are exposed via a sibling helper in step 5; for now this
     // assertion just guards that mintStub doesn't throw with the new signature.
     expect(typeof id).toBe('string');
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: '00000000-0000-0000-0000-000000000001',
+        audioR2Key: 'captures/user-1/abc.webm',
+        mimeType: 'audio/webm',
+      }),
+    );
   });
 });
