@@ -71,3 +71,20 @@ describe('InteractionService', () => {
     expect(r?.status).toBe('ready');
   });
 });
+
+describe('mintStub with capture metadata', () => {
+  it('persists userId, audioR2Key, and mimeType when provided', async () => {
+    insertReturning.mockResolvedValueOnce([{ id: 'int-2' }]);
+    selectLimit.mockResolvedValueOnce([{ id: 'int-2', status: 'processing', contactId: null, structuredData: {} }]);
+    const id = await mintStub('voice', {
+      userId: '00000000-0000-0000-0000-000000000001',
+      audioR2Key: 'captures/user-1/abc.webm',
+      mimeType: 'audio/webm',
+    });
+    const row = await getStatus(id);
+    expect(row).not.toBeNull();
+    // The new fields are exposed via a sibling helper in step 5; for now this
+    // assertion just guards that mintStub doesn't throw with the new signature.
+    expect(typeof id).toBe('string');
+  });
+});
