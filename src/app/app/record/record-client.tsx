@@ -233,9 +233,13 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
       return;
     }
     const { interactionId } = await res.json();
+    // Polling cadence: 500ms for the first 5s (fast path is usually 3–6s),
+    // then back off to 1500ms for the long tail and janitor recovery window.
     const startTime = Date.now();
     while (Date.now() - startTime < 60_000) {
-      await new Promise((r) => setTimeout(r, 1500));
+      const elapsed = Date.now() - startTime;
+      const interval = elapsed < 5_000 ? 500 : 1_500;
+      await new Promise((r) => setTimeout(r, interval));
       let poll: Response;
       try {
         poll = await fetch(`/api/cards/${interactionId}`, { cache: 'no-store' });
