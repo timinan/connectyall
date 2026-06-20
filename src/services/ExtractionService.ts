@@ -1,6 +1,7 @@
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { getLLM } from '../lib/llm';
+import { withRetry } from '../lib/retry';
 
 export const ContactSchema = z.object({
   name: z.string(),
@@ -186,12 +187,26 @@ export async function extract(input: {
   selfIntro?: string | null;
 }): Promise<ExtractionResult> {
   const userContext = input.selfIntro ? `About the speaker: ${input.selfIntro}\n\n` : '';
-  const result = await generateObject({
-    model: getLLM(),
-    system: SYSTEM_PROMPT,
-    prompt: `${userContext}Transcript:\n${input.transcript}`,
-    schema: ExtractionSchema,
-  });
+  const result = await withRetry(
+    () => generateObject({
+      model: getLLM(),
+      schema: ExtractionSchema,
+      system: SYSTEM_PROMPT,
+      prompt: `${userContext}Transcript:\n${input.transcript}`,
+    }),
+    {
+      maxAttempts: 3, // 1 try + 2 retries
+      baseDelayMs: 1000,
+      shouldRetry: (err) => {
+        const status = (err as { statusCode?: number; status?: number })?.statusCode
+          ?? (err as { status?: number })?.status;
+        if (typeof status !== 'number') return false;
+        if (status >= 500) return true; // transient upstream
+        if (status === 429) return true; // retryable rate limit
+        return false;
+      },
+    },
+  );
   // Normalize string "null"/"none"/etc. to actual null for nullable fields
   normalizeContacts(result.object.contacts);
   return result.object;

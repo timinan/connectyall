@@ -50,3 +50,38 @@ describe('extract', () => {
     expect(result.contacts).toHaveLength(0);
   });
 });
+
+describe('extract (with retry)', () => {
+  beforeEach(() => generateObjectMock.mockReset());
+
+  it('retries when generateObject throws a transient 5xx-shaped error', async () => {
+    const transient = Object.assign(new Error('upstream'), { statusCode: 503 });
+    generateObjectMock
+      .mockRejectedValueOnce(transient)
+      .mockResolvedValueOnce({
+        object: { contacts: [], was_live_recording: false },
+      });
+    const result = await extract({ transcript: 'hi', selfIntro: '' });
+    expect(result.contacts).toHaveLength(0);
+    expect(generateObjectMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries on a retryable 429', async () => {
+    const tooMany = Object.assign(new Error('rate limited'), { statusCode: 429 });
+    generateObjectMock
+      .mockRejectedValueOnce(tooMany)
+      .mockResolvedValueOnce({
+        object: { contacts: [], was_live_recording: false },
+      });
+    const result = await extract({ transcript: 'hi', selfIntro: '' });
+    expect(result.contacts).toHaveLength(0);
+    expect(generateObjectMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does NOT retry on a 4xx that is not 429', async () => {
+    const badReq = Object.assign(new Error('bad input'), { statusCode: 400 });
+    generateObjectMock.mockRejectedValueOnce(badReq);
+    await expect(extract({ transcript: 'hi', selfIntro: '' })).rejects.toThrow();
+    expect(generateObjectMock).toHaveBeenCalledTimes(1);
+  });
+});
