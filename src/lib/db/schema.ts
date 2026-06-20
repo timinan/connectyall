@@ -95,6 +95,28 @@ export const usageEvents = pgTable(
   })
 );
 
+export const followUps = pgTable(
+  'follow_ups',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
+    interactionId: uuid('interaction_id').references(() => interactions.id, { onDelete: 'set null' }),
+    topic: text('topic').notNull(),
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    status: text('status').notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    doneAt: timestamp('done_at', { withTimezone: true }),
+  },
+  (t) => ({
+    userPendingDueIdx: index('follow_ups_user_pending_due_idx').on(t.userId, t.status, t.dueAt),
+    contactIdx: index('follow_ups_contact_idx').on(t.contactId),
+  }),
+);
+
+export type FollowUp = typeof followUps.$inferSelect;
+export type NewFollowUp = typeof followUps.$inferInsert;
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Contact = typeof contacts.$inferSelect;
