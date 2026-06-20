@@ -68,9 +68,13 @@ export const interactions = pgTable(
     structuredData: jsonb('structured_data').notNull(),
     status: interactionStatusEnum('status').default('ready').notNull(),
     occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),
+    userId: uuid('user_id'),
+    audioR2Key: text('audio_r2_key'),
+    mimeType: text('mime_type'),
   },
   (t) => ({
     contactIdx: index('interactions_contact_id_idx').on(t.contactId),
+    statusOccurredAtIdx: index('interactions_status_occurred_at_idx').on(t.status, t.occurredAt),
   })
 );
 
