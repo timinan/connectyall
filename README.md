@@ -1,164 +1,65 @@
 # Connectyall
 
-Telegram bot that turns a voice memo about someone you met into a designed card you forward to them.
+A phone-first PWA that turns the voice memo you record right after meeting someone into a shareable connection card.
 
-**Spec:** `PM-OS/outputs/prds/2026-06-12-connectyall-design.md`
-**v1 plan:** `PM-OS/outputs/prds/2026-06-13-connectyall-v1-implementation-plan.md`
+**Live:** https://connectyall.vercel.app
+
+## What it does
+
+You meet someone. Walking away, you tap a button and just talk: "Met Sarah at the AI breakfast. She's hiring backend engineers. Telegram is @sarahc, email sarah@acme.com. Send her the deck I told her about." A few seconds later you have a real contact, a recap of what you talked about, and a single share link that gives Sarah a clean page with your photo, your details, and an option to save you to her phone.
+
+No typing on the napkin. No "I'll send you my LinkedIn later" that never happens.
 
 ## Stack
 
-- TypeScript + Next.js 16 (App Router)
-- Telegraf (Telegram Bot API)
-- Drizzle + Neon Postgres
-- Inngest (background jobs)
-- Cloudflare Workers AI (Whisper)
-- Cloudflare R2 (photo storage, S3-compatible)
-- Vercel AI SDK + Claude Haiku 4.5 (extraction, env-configurable)
-- Satori + Resvg (card PNG rendering)
-- Vercel (hosting)
+- **Frontend + API:** TypeScript, Next.js 16 (App Router) on Vercel
+- **Auth:** Better Auth with email OTP (no passwords, no magic links)
+- **DB:** Neon Postgres with Drizzle ORM
+- **Audio:** Browser MediaRecorder → Cloudflare R2 (private bucket)
+- **Transcription:** Cloudflare Workers AI Whisper
+- **Extraction:** Vercel AI SDK + Gemini 2.5 Flash Lite (env-configurable; Anthropic Haiku also wired up)
+- **Background jobs:** Inngest cron janitor (recovers stuck recordings)
+- **Image rendering:** Satori + Resvg for 512×512 round profile photos
+- **Email:** Resend
+- **Hosting:** Vercel
+
+## How a capture flows
+
+1. Phone uploads audio to R2 and mints an `interactions` row stamped with the user's id and the R2 key
+2. The same `/api/capture` request runs the pipeline inline via Next 16's `after()`: transcribe → extract contacts → write to DB → render card PNG → mark ready
+3. Phone polls `/api/cards/[id]` every 500ms (then backs off to 1500ms after 5s) until the row is ready
+4. Typical end-to-end: 3–6 seconds from tap-Stop to seeing the contact card
+
+If anything drops mid-pipeline (network blip, function timeout, deploy interruption), an Inngest cron janitor sweeps every 2 minutes, finds rows still at `status='processing'` with their capture metadata intact, and re-runs the pipeline against the same audio in R2.
 
 ## Dev
 
 ```bash
 pnpm install
-cp .env.example .env.local  # fill in real values
+cp .env.example .env.local       # fill in real values, or `vercel env pull .env.local`
+pnpm db:migrate                  # apply Drizzle migrations to your Neon DB
 pnpm dev
 ```
 
-Run tests:
-
 ```bash
-pnpm test
-pnpm typecheck
+pnpm test                        # vitest
+pnpm typecheck                   # tsc --noEmit
+pnpm db:studio                   # Drizzle Studio
 ```
 
-Inspect DB:
+## Design system
 
-```bash
-pnpm db:studio
-```
+`docs/design-system.html` — single self-contained HTML file documenting colors, type (Sora + JetBrains Mono), components, screens, animations, copy voice, anti-patterns. Open it before building any new UI. Update it when the system changes so it doesn't drift from the code.
 
-## Deploy checklist (v1)
+## Specs and plans
 
-Manual pre-flight (Tim does these once):
+Branching work is captured under `docs/superpowers/`:
 
-- [ ] Create Telegram bot via @BotFather → save `TELEGRAM_BOT_TOKEN` and the bot @username (e.g. `connectyallbot`)
-- [ ] Create Neon project → copy the pooled `DATABASE_URL`
-- [ ] Get Anthropic API key → `ANTHROPIC_API_KEY`
-- [ ] Cloudflare:
-  - Account ID → `CLOUDFLARE_ACCOUNT_ID`
-  - Workers AI API token (Account ▸ AI ▸ Workers AI) → `CLOUDFLARE_API_TOKEN`
-  - Create R2 bucket → `R2_BUCKET_NAME`
-  - R2 API tokens (S3-compatible) → `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
-  - R2 public URL or custom domain → `R2_PUBLIC_URL_BASE`
-- [ ] Inngest account → app → `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`
-- [ ] Vercel CLI installed and logged in:
-  ```bash
-  npm i -g vercel
-  vercel login
-  ```
-- [ ] Fill `.env.local` with all real values
+- `specs/` — design docs by date (`YYYY-MM-DD-<feature>-design.md`)
+- `plans/` — implementation plans matching each spec
 
-Then:
+Both directories are append-only history of what was built and why.
 
-```bash
-# Migrate the DB
-pnpm db:migrate
+## License
 
-# Build locally to validate
-pnpm build
-
-# Link the Vercel project
-vercel link  # create a new project named "connectyall"
-
-# Push every env var to Vercel production
-# (Or use: vercel env pull / vercel env add)
-for v in DATABASE_URL TELEGRAM_BOT_TOKEN TELEGRAM_BOT_USERNAME \
-         LLM_PROVIDER LLM_MODEL ANTHROPIC_API_KEY \
-         CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_API_TOKEN \
-         R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET_NAME R2_PUBLIC_URL_BASE \
-         INNGEST_EVENT_KEY INNGEST_SIGNING_KEY \
-         MAX_CAPTURES_PER_DAY BASE_URL; do
-  vercel env add "$v" production
-done
-
-# Deploy
-vercel --prod
-
-# Note the assigned URL (e.g. https://connectyall.vercel.app)
-# Update BASE_URL in Vercel env to that URL, then redeploy:
-vercel env rm BASE_URL production -y
-vercel env add BASE_URL production  # paste https://connectyall.vercel.app
-vercel --prod
-
-# Register the Telegram webhook
-BASE_URL=https://connectyall.vercel.app \
-TELEGRAM_BOT_TOKEN=<real-token> \
-  pnpm exec tsx scripts/register-webhook.ts
-```
-
-Expected output from the webhook registration: `{ ok: true, result: true, description: 'Webhook was set' }`.
-
-## Smoke test
-
-In Telegram, open `@<TELEGRAM_BOT_USERNAME>`. Tap **Start**.
-- Welcome message within 2s.
-- Walk the onboarding (name → photo → tagline → socials).
-- Record a voice memo about someone you recently met.
-- "Got it. Cooking your card..." within 1s.
-- A card image with caption arrives within ~30s.
-- Tap **Forward** → forward to a test account → confirm social links are tappable.
-
-## Architecture (one-paragraph)
-
-Next.js App Router hosts two API routes: `/api/telegram` (Telegraf webhook) and `/api/inngest` (Inngest serve handler). The webhook acks within 1s and enqueues a `capture/process` event. An Inngest function downloads the media, transcribes via Cloudflare Whisper, extracts contact data via Claude Haiku 4.5 (env-configurable LLM via `src/lib/llm.ts`), persists via Drizzle/Neon, renders a 1080×1920 PNG via Satori + Resvg, and sends a single Telegram `sendPhoto` message with the card + caption.
-
-## Costs (MVP scale)
-
-| Item | Free tier | Cost |
-|---|---|---|
-| Vercel Hobby | Yes (no commercial) | $0 |
-| Neon free | 0.5GB, auto-pause | $0 |
-| Inngest free | 50k events/mo | $0 |
-| Cloudflare Workers AI | 10k Whisper req/day | $0 |
-| Cloudflare R2 | 10GB, no egress fee | $0 |
-| Claude Haiku 4.5 | — | ~$0.0035/capture |
-| Domain | — | ~$10/year |
-
-`MAX_CAPTURES_PER_DAY=50` env var caps runaway risk.
-
-## Repo
-
-```
-src/
-├── app/
-│   ├── api/
-│   │   ├── inngest/route.ts    # Inngest serve handler
-│   │   └── telegram/route.ts   # Telegraf webhook
-│   ├── layout.tsx
-│   └── page.tsx                 # Landing
-├── lib/
-│   ├── db/                     # Drizzle schema + client
-│   ├── inngest/                # Inngest client + function
-│   ├── r2/                     # R2 client
-│   ├── telegram/               # Bot, onboarding, capture handlers, send helpers
-│   ├── env.ts
-│   └── llm.ts                  # Env-configurable LLM provider
-├── services/
-│   ├── CaptureService.ts       # Full pipeline orchestration + cap
-│   ├── CardService.ts          # buildCaption + renderCard (Satori)
-│   ├── ContactService.ts
-│   ├── ExtractionService.ts    # Claude Haiku extraction
-│   ├── TranscriptionService.ts # Cloudflare Whisper
-│   └── UserProfileService.ts
-└── test/setup.ts
-```
-
-## v2 follow-ups (flagged in code reviews)
-
-- `setSocial` is already atomic; `addInteraction` is not (insert + update in two calls).
-- `processCapture` daily-cap check has a concurrency race (two simultaneous captures both pass cap=N−1).
-- No user-visible feedback when the Inngest pipeline throws (Inngest auto-retries silently). Wrap in try/catch + send "retrying..." in v2.
-- `capturesInLast24h` uses a 24h rolling window, not a calendar day. May want to align.
-- Onboarding-vs-capture: voice memos sent mid-onboarding skip session check. Guard in v2.
-- Mock low-value schema test (`schema.test.ts`) could be replaced with a pglite integration smoke test.
+MIT. Built by [Tim Nan](https://timnan.com) as part of an open portfolio.
