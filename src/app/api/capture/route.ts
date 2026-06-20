@@ -48,7 +48,8 @@ export async function POST(req: Request) {
       mimeType: baseMime,
       interactionId,
     }).catch((err) => {
-      console.error('inline processCapture failed; janitor will retry', { interactionId, err });
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[capture] inline processCapture failed (interactionId=${interactionId}); janitor will retry within 2min — ${msg}`);
     }),
   );
 
