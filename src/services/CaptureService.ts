@@ -70,8 +70,6 @@ export async function processCapture(input: CaptureInput): Promise<void> {
     return;
   }
 
-  await db().insert(usageEvents).values({ userId: input.userId, kind: 'capture' });
-
   const audio = await downloadFromR2(input.audioR2Key);
 
   const transcript = await transcribe(audio);
@@ -111,6 +109,10 @@ export async function processCapture(input: CaptureInput): Promise<void> {
     bytes: new Uint8Array(png),
     contentType: 'image/png',
   });
+  // Record the usage event AFTER the row has reached `ready`. If the
+  // function crashed earlier, the janitor will re-run processCapture and
+  // we don't want to charge the user's daily cap twice for the same audio.
+  await db().insert(usageEvents).values({ userId: input.userId, kind: 'capture' });
 
   // Process any additional contacts — mint new stubs for each
   for (const c of restContacts) {
@@ -150,7 +152,7 @@ export async function processCapture(input: CaptureInput): Promise<void> {
 export async function findStuckProcessingCaptures(opts: {
   maxAgeSeconds: number;
   limit: number;
-}): Promise<Array<{ id: string; userId: string; audioR2Key: string; mimeType: string }>> {
+}): Promise<Array<{ id: string; userId: string; audioR2Key: string; mimeType: string; occurredAt: Date }>> {
   const cutoff = sql`now() - (${opts.maxAgeSeconds} * interval '1 second')`;
   const rows = await db()
     .select({
@@ -158,6 +160,7 @@ export async function findStuckProcessingCaptures(opts: {
       userId: interactions.userId,
       audioR2Key: interactions.audioR2Key,
       mimeType: interactions.mimeType,
+      occurredAt: interactions.occurredAt,
     })
     .from(interactions)
     .where(
@@ -172,7 +175,7 @@ export async function findStuckProcessingCaptures(opts: {
     .limit(opts.limit);
   // The runtime guard mirrors the SQL filter so the return type is narrow.
   return rows
-    .filter((r): r is { id: string; userId: string; audioR2Key: string; mimeType: string } =>
+    .filter((r): r is { id: string; userId: string; audioR2Key: string; mimeType: string; occurredAt: Date } =>
       r.userId !== null && r.audioR2Key !== null && r.mimeType !== null)
-    .map((r) => ({ id: r.id, userId: r.userId, audioR2Key: r.audioR2Key, mimeType: r.mimeType }));
+    .map((r) => ({ id: r.id, userId: r.userId, audioR2Key: r.audioR2Key, mimeType: r.mimeType, occurredAt: r.occurredAt }));
 }
