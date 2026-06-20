@@ -1,5 +1,6 @@
 import { inngest } from './client';
 import { processCapture, findStuckProcessingCaptures } from '@/services/CaptureService';
+import { markFailed } from '@/services/InteractionService';
 
 // Cron-triggered janitor. Every 2 minutes, sweep the interactions table for
 // rows that started processing more than 60 seconds ago and never reached
@@ -31,6 +32,18 @@ export const recoverStuckCapturesFn = inngest.createFunction(
         // and gets surfaced in Inngest dashboard logs.
         console.error('recover-stuck-captures: row failed', { interactionId: row.id, err });
         failed += 1;
+        // If the recording has been stuck for more than 30 minutes, give up.
+        // The user can re-record. This caps the blast radius of permanently
+        // broken rows (corrupt audio, hard model errors, etc.) so the janitor
+        // doesn't churn on them forever.
+        const ageMs = Date.now() - new Date(row.occurredAt).getTime();
+        if (ageMs > 30 * 60 * 1000) {
+          try {
+            await markFailed(row.id);
+          } catch (markErr) {
+            console.error('recover-stuck-captures: markFailed also failed', { interactionId: row.id, markErr });
+          }
+        }
       }
     }
     return { swept: stuck.length, recovered, failed };
