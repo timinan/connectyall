@@ -24,10 +24,20 @@ export const ContactSchema = z.object({
   recap: z.string(),
   user_commitments: z.array(z.string()),
   their_commitments: z.array(z.string()),
-  follow_ups: z.array(z.object({
-    topic: z.string(),
-    relative_due: z.string().nullable(),
-  })).optional().default([]),
+  // Permissive: passthrough unknown fields on each follow-up, and catch any
+  // parse failure on the whole field by defaulting to [] instead of throwing
+  // out the entire extraction. Gemini's structured-output adherence isn't 100%,
+  // and one malformed follow-up shouldn't lose the whole contact + recap.
+  follow_ups: z
+    .array(
+      z.object({
+        topic: z.string(),
+        relative_due: z.string().nullable().optional(),
+      }).passthrough(),
+    )
+    .optional()
+    .default([])
+    .catch([]),
 });
 
 export const ExtractionSchema = z.object({
@@ -98,11 +108,6 @@ DO NOT include commitments the OTHER person made:
 - "He's going to share the doc" → NOT a follow-up
 
 Keep topics short — 3 to 8 words is the sweet spot. They render in a tight UI row.
-
-FORMAT TIPS that help the downstream date parser:
-- Prefer digit form for relative_due: "in 3 days" not "in three days"
-- "in a week" works but "next week" is cleaner
-- For topics, be SPECIFIC — capture the SUBSTANCE not the action. Bad: "follow up". Good: "the staff PM role at Acme", "her funding round timeline", "the deck I owe her".
 
 If no follow-ups were mentioned, return an empty array.
 

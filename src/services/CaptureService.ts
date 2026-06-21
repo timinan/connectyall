@@ -115,7 +115,7 @@ export async function processCapture(input: CaptureInput): Promise<void> {
   const followUpsForFirst = (firstContact.follow_ups ?? [])
     .map((fu) => ({
       topic: fu.topic.trim(),
-      dueAt: resolveRelativeDate(fu.relative_due, new Date(), profile.timezone),
+      dueAt: resolveRelativeDate(fu.relative_due ?? null, new Date(), profile.timezone),
     }))
     .filter((fu) => fu.topic.length > 0);
   if (followUpsForFirst.length > 0) {
@@ -157,7 +157,7 @@ export async function processCapture(input: CaptureInput): Promise<void> {
     const followUpsForExtra = (c.follow_ups ?? [])
       .map((fu) => ({
         topic: fu.topic.trim(),
-        dueAt: resolveRelativeDate(fu.relative_due, new Date(), profile.timezone),
+        dueAt: resolveRelativeDate(fu.relative_due ?? null, new Date(), profile.timezone),
       }))
       .filter((fu) => fu.topic.length > 0);
     if (followUpsForExtra.length > 0) {
