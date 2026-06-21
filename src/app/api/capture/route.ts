@@ -2,7 +2,7 @@ import { NextResponse, after } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getServerSession } from '@/lib/auth/session';
 import { uploadBytes } from '@/lib/r2/client';
-import { mintStub } from '@/services/InteractionService';
+import { mintStub, markFailed } from '@/services/InteractionService';
 import { processCapture } from '@/services/CaptureService';
 
 export const runtime = 'nodejs';
@@ -47,9 +47,19 @@ export async function POST(req: Request) {
       audioR2Key,
       mimeType: baseMime,
       interactionId,
-    }).catch((err) => {
+    }).catch(async (err) => {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error(`[capture] inline processCapture failed (interactionId=${interactionId}); janitor will retry within 2min — ${msg}`);
+      console.error(`[capture] inline processCapture failed (interactionId=${interactionId}); marking failed — ${msg}`);
+      // Mark failed so the phone's polling stops on the next tick. The janitor
+      // would catch this eventually via the 30-min hard-fail, but that's too long
+      // for the user to wait. The inline path is the source of truth for
+      // "this recording produced a hard error."
+      try {
+        await markFailed(interactionId);
+      } catch (markErr) {
+        const m = markErr instanceof Error ? markErr.message : String(markErr);
+        console.error(`[capture] markFailed also failed (interactionId=${interactionId}) — ${m}`);
+      }
     }),
   );
 
