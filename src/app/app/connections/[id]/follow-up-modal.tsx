@@ -49,7 +49,6 @@ export function FollowUpModal({ mode, contactName, initial, onClose, onSave, onM
   const [dueAt, setDueAt] = useState<Date | null>(
     initial?.dueAt ? new Date(initial.dueAt) : (mode === 'add' ? noonOf(addDays(new Date(), 1)) : null),
   );
-  const [showCustom, setShowCustom] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -65,7 +64,6 @@ export function FollowUpModal({ mode, contactName, initial, onClose, onSave, onM
     } else {
       setDueAt(noonOf(addDays(new Date(), days)));
     }
-    setShowCustom(false);
   }
 
   async function handleSave() {
@@ -124,30 +122,27 @@ export function FollowUpModal({ mode, contactName, initial, onClose, onSave, onM
             })}
           </div>
           {dueAt !== null && (
-            <div className="flex items-center gap-2 bg-cream border border-line rounded-lg px-3 py-2">
-              <span className="font-mono text-[12px] tracking-[0.12em] font-bold uppercase text-neutral-950">
-                {formatDateDisplay(dueAt)}
-              </span>
-              <div className="flex-1" />
-              <button
-                type="button"
-                onClick={() => setShowCustom((v) => !v)}
-                className="font-mono text-[9.5px] tracking-[0.14em] font-bold uppercase text-brand"
-              >
-                CUSTOM {showCustom ? '▴' : '▾'}
-              </button>
+            <div className="relative w-full">
+              <input
+                type="date"
+                value={formatDateInputValue(dueAt)}
+                onChange={(e) => {
+                  const [y, m, d] = e.target.value.split('-').map(Number);
+                  if (y && m && d) setDueAt(new Date(y, m - 1, d, 12, 0, 0));
+                }}
+                aria-label="Pick a date"
+                className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+              />
+              <div className="flex items-center gap-2 bg-cream border border-line rounded-lg px-3 py-2 pointer-events-none">
+                <span className="font-mono text-[12px] tracking-[0.12em] font-bold uppercase text-neutral-950">
+                  {formatDateDisplay(dueAt)}
+                </span>
+                <div className="flex-1" />
+                <span className="font-mono text-[9.5px] tracking-[0.14em] font-bold uppercase text-brand">
+                  CHANGE ▾
+                </span>
+              </div>
             </div>
-          )}
-          {showCustom && dueAt !== null && (
-            <input
-              type="date"
-              value={formatDateInputValue(dueAt)}
-              onChange={(e) => {
-                const [y, m, d] = e.target.value.split('-').map(Number);
-                if (y && m && d) setDueAt(new Date(y, m - 1, d, 12, 0, 0));
-              }}
-              className="w-full mt-2 px-3 py-2 rounded-lg bg-cream border border-line text-[14px]"
-            />
           )}
         </div>
 
