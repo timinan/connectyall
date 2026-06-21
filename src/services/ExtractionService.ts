@@ -37,7 +37,18 @@ export const ContactSchema = z.object({
     )
     .optional()
     .default([])
-    .catch([]),
+    .catch((ctx) => {
+      // Detect Gemini structured-output drift in production. Each fired log line
+      // = one capture where follow_ups had a malformed shape and we silently
+      // recovered to []. Grep `[extraction] follow_ups drift` in Vercel logs to
+      // measure drift rate over time.
+      const fields = ctx.error.issues
+        .slice(0, 3)
+        .map((i) => `${i.path.join('.')}:${i.code}`)
+        .join('; ');
+      console.warn(`[extraction] follow_ups drift recovered to [] — ${fields}`);
+      return [];
+    }),
 });
 
 export const ExtractionSchema = z.object({
@@ -148,6 +159,28 @@ PHONE EXTRACTION (phones is a top-level array):
 - "she gave me her cell, +1 415 555 9999" → phones: ["+14155559999"]
 - "call him at 6 5 5 5 1 2 3 4" → phones: ["6555 1234"]
 - Normalize obvious patterns; preserve digits, "+", spaces, parens, dashes as-is otherwise
+
+SPELL-OUTS — when the speaker spells something letter-by-letter or digit-by-digit:
+
+- "his email is S dash A dash R dash A dash H at gmail dot com" → "sarah@gmail.com"
+- "her handle is S, O, S, H, A" → "sosha"
+- "phone is 4 1 5 5 5 5 1 2 3 4" → "4155551234"
+- "his linkedin is sarah dash chen" → "sarah-chen"
+- "her email is t dot nan at gmail" → "t.nan@gmail.com"
+
+The words "dot", "dash", "underscore", and "at" map to literal punctuation/symbols. Concatenate spelled-out characters with no spaces between them. Always favor a spelled-out version over an ambiguous earlier reference — the speaker is spelling because they want to be precise.
+
+CORRECTIONS — when the speaker gives a value then changes it:
+
+- "her email is sarah@gmail.com... actually it's sarah@acme.com" → "sarah@acme.com"
+- "his number is 555-1234, no wait, 555-5678" → "555-5678"
+- "her handle is @sarahc... I mean @sarah_c" → "@sarah_c"
+- "his name is John, sorry Jonathan" → "Jonathan"
+
+Cues that signal a correction: "actually", "I mean", "wait", "nevermind", "scratch that", "sorry", "no it's", "no wait". When you see one of these between two values for the SAME field, USE THE SECOND VALUE and discard the first. Don't include both. Don't combine them.
+
+If the correction is about WHICH FIELD a value belongs to:
+- "her email is sarah@gmail.com, oh wait that's her work — her personal is sarah@me.com" → emails: ["sarah@me.com"] (the corrected/personal one)
 
 NOTES vs RECAP — IMPORTANT distinction:
 
