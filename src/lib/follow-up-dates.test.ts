@@ -57,4 +57,54 @@ describe('resolveRelativeDate', () => {
     expect(result).not.toBeNull();
     expect(result!.toISOString().startsWith('2026-06-21T12:00')).toBe(true);
   });
+
+  it('parses word-form numbers — "in three days"', () => {
+    const result = resolveRelativeDate('in three days', anchor, tz);
+    expect(result!.toISOString().startsWith('2026-06-23T19:00')).toBe(true);
+  });
+
+  it('parses word-form numbers — "in two days"', () => {
+    const result = resolveRelativeDate('in two days', anchor, tz);
+    expect(result!.toISOString().startsWith('2026-06-22T19:00')).toBe(true);
+  });
+
+  it('parses "in a week"', () => {
+    const result = resolveRelativeDate('in a week', anchor, tz);
+    expect(result!.toISOString().startsWith('2026-06-27T19:00')).toBe(true);
+  });
+
+  it('parses "in a day"', () => {
+    const result = resolveRelativeDate('in a day', anchor, tz);
+    expect(result!.toISOString().startsWith('2026-06-21T19:00')).toBe(true);
+  });
+
+  it('parses "in a couple days"', () => {
+    const result = resolveRelativeDate('in a couple days', anchor, tz);
+    expect(result!.toISOString().startsWith('2026-06-22T19:00')).toBe(true);
+  });
+
+  it('parses "in a couple of days" (with "of")', () => {
+    const result = resolveRelativeDate('in a couple of days', anchor, tz);
+    expect(result!.toISOString().startsWith('2026-06-22T19:00')).toBe(true);
+  });
+
+  it('parses "in a few days" (3-day default)', () => {
+    const result = resolveRelativeDate('in a few days', anchor, tz);
+    expect(result!.toISOString().startsWith('2026-06-23T19:00')).toBe(true);
+  });
+
+  it('strips trailing time-of-day — "tomorrow morning"', () => {
+    const result = resolveRelativeDate('tomorrow morning', anchor, tz);
+    expect(result!.toISOString().startsWith('2026-06-21T19:00')).toBe(true);
+  });
+
+  it('strips trailing time-of-day — "tomorrow afternoon"', () => {
+    const result = resolveRelativeDate('tomorrow afternoon', anchor, tz);
+    expect(result!.toISOString().startsWith('2026-06-21T19:00')).toBe(true);
+  });
+
+  it('parses "this Friday"', () => {
+    const result = resolveRelativeDate('this Friday', anchor, tz);
+    expect(result!.toISOString().startsWith('2026-06-26T19:00')).toBe(true);
+  });
 });
