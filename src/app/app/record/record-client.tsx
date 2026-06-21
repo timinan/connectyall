@@ -279,8 +279,8 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
         {state === 'idle' && (
           <Top
             label={greeting}
-            headlineFirst="Who did you"
-            headlineAccent="just meet?"
+            headlineFirst="Who are you"
+            headlineAccent="connecting with?"
             sub="Tap to record. We'll pull a name, channels, and the gist — no typing."
           />
         )}
