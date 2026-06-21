@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
 import { type ChannelKind } from '../cards/[id]/channel-icons';
 import { relativeDate } from '@/lib/relative-date';
+import { useSwipeToReveal } from '@/lib/swipe-to-reveal';
 
 type Connection = {
   contactId: string;
@@ -233,6 +234,37 @@ function GlowRings() {
   );
 }
 
+// Amber "N follow-ups due today" banner. Swipe left to reveal a gray HIDE slab
+// that dismisses the banner for the current page session. Reload restores it
+// if there are still pending due-today items.
+function DueTodayBanner({ count, onDismiss }: { count: number; onDismiss: () => void }) {
+  const { offset, handlers } = useSwipeToReveal({ revealWidth: 82 });
+  return (
+    <div className="relative mt-3">
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Hide banner"
+        className="absolute right-0 top-0 bottom-0 w-[82px] bg-neutral-700 text-white font-mono text-[10px] tracking-[0.18em] font-bold uppercase rounded-r-xl"
+      >
+        HIDE
+      </button>
+      <Link
+        href="/app/connections?filter=due-today"
+        style={{ transform: `translateX(${offset}px)`, transition: offset === 0 || offset === -82 ? 'transform 0.18s' : 'none' }}
+        className="relative flex items-center justify-between bg-amber-100 border border-amber-200 rounded-xl px-3.5 py-2.5"
+        {...handlers}
+      >
+        <div className="font-mono text-[11px] tracking-[0.16em] uppercase font-bold text-amber-800 flex items-center gap-1.5">
+          <span className="text-amber-500 text-[14px]">●</span>
+          {count} FOLLOW-UP{count === 1 ? '' : 'S'} DUE TODAY
+        </div>
+        <div className="font-mono text-[10px] tracking-[0.16em] uppercase text-brand font-bold">VIEW →</div>
+      </Link>
+    </div>
+  );
+}
+
 export function ConnectionsList({
   initialConnections,
   dueTodayCount,
@@ -249,6 +281,10 @@ export function ConnectionsList({
   const [confirm, setConfirm] = useState<Connection | null>(null);
   const [hintMounted, setHintMounted] = useState(false);
   const [hintVisible, setHintVisible] = useState(false);
+  // The amber due-today banner can be swipe-left-dismissed for this session.
+  // Returns on next page load if there are still pending due-today items —
+  // this is a "hide for now" affordance, not a permanent dismissal.
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -332,17 +368,11 @@ export function ConnectionsList({
         </h1>
       </div>
 
-      {dueTodayCount > 0 && !filterDueToday && (
-        <Link
-          href="/app/connections?filter=due-today"
-          className="mt-3 flex items-center justify-between bg-amber-100 border border-amber-200 rounded-xl px-3.5 py-2.5"
-        >
-          <div className="font-mono text-[11px] tracking-[0.16em] uppercase font-bold text-amber-800 flex items-center gap-1.5">
-            <span className="text-amber-500 text-[14px]">●</span>
-            {dueTodayCount} FOLLOW-UP{dueTodayCount === 1 ? '' : 'S'} DUE TODAY
-          </div>
-          <div className="font-mono text-[10px] tracking-[0.16em] uppercase text-brand font-bold">VIEW →</div>
-        </Link>
+      {dueTodayCount > 0 && !filterDueToday && !bannerDismissed && (
+        <DueTodayBanner
+          count={dueTodayCount}
+          onDismiss={() => setBannerDismissed(true)}
+        />
       )}
 
       {rows.length > 0 && !filterDueToday && (
