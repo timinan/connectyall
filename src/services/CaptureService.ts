@@ -11,6 +11,7 @@ import { renderCard } from './CardService';
 import { uploadBytes, downloadObject } from '../lib/r2/client';
 import { createManyForInteraction as createManyFollowUps } from './FollowUpsService';
 import { resolveRelativeDate } from '../lib/follow-up-dates';
+import { startDiagnostics, updateDiagnostics, finishDiagnostics } from './DiagnosticsService';
 
 type CaptureInput = {
   userId: string;         // users.id uuid
@@ -72,18 +73,62 @@ export async function processCapture(input: CaptureInput): Promise<void> {
     return;
   }
 
-  const audio = await downloadFromR2(input.audioR2Key);
+  const t0 = Date.now();
+  const diagId = await startDiagnostics({
+    interactionId: input.interactionId,
+    userId: input.userId,
+    audioBytes: 0, // patched after download
+    audioMime: input.mimeType,
+  });
 
-  const transcript = await transcribe(audio);
+  let stage = 'download';
+  let audio: Uint8Array;
+  try {
+    const sDl = Date.now();
+    audio = await downloadFromR2(input.audioR2Key);
+    await updateDiagnostics(diagId, { audioDownloadMs: Date.now() - sDl, audioBytes: audio.byteLength });
+  } catch (err) {
+    await finishDiagnostics(diagId, 'failed', Date.now() - t0, stage, err instanceof Error ? err.message : String(err));
+    throw err;
+  }
+
+  stage = 'transcribe';
+  let transcript: string;
+  try {
+    const sTr = Date.now();
+    transcript = await transcribe(audio);
+    await updateDiagnostics(diagId, { transcribeMs: Date.now() - sTr, transcriptChars: transcript.length });
+  } catch (err) {
+    await finishDiagnostics(diagId, 'failed', Date.now() - t0, stage, err instanceof Error ? err.message : String(err));
+    throw err;
+  }
 
   if (!transcript.trim()) {
+    await finishDiagnostics(diagId, 'failed', Date.now() - t0, 'transcribe', 'empty transcript');
     await markFailed(input.interactionId);
     return;
   }
 
-  const extraction = await extract({ transcript, selfIntro: profile.selfIntro });
+  stage = 'extract';
+  let extraction: Awaited<ReturnType<typeof extract>>;
+  try {
+    const sEx = Date.now();
+    extraction = await extract({ transcript, selfIntro: profile.selfIntro });
+    const firstExtracted = extraction.contacts[0];
+    await updateDiagnostics(diagId, {
+      extractMs: Date.now() - sEx,
+      llmProvider: env().LLM_PROVIDER,
+      llmModel: env().LLM_MODEL,
+      contactName: firstExtracted?.name ?? null,
+      followUpsExtracted: firstExtracted?.follow_ups?.length ?? 0,
+    });
+  } catch (err) {
+    await finishDiagnostics(diagId, 'failed', Date.now() - t0, stage, err instanceof Error ? err.message : String(err));
+    throw err;
+  }
 
   if (extraction.contacts.length === 0) {
+    await finishDiagnostics(diagId, 'failed', Date.now() - t0, 'extract', 'no contacts extracted');
     await markFailed(input.interactionId);
     return;
   }
@@ -91,26 +136,56 @@ export async function processCapture(input: CaptureInput): Promise<void> {
   const [firstContact, ...restContacts] = extraction.contacts;
 
   // Process the first contact using the pre-minted interactionId
-  const firstResult = await ensureContact(input.userId, firstContact);
-  const png = await renderCard({
-    profile: {
-      displayName: profile.displayName,
-      tagline: profile.tagline,
-      telegramUsername: profile.telegramUsername,
-      photoR2Url: profile.photoR2Url,
-      socials: profile.socials,
-    },
-  });
+  stage = 'persist';
+  let firstResult: Awaited<ReturnType<typeof ensureContact>>;
+  try {
+    const sPe = Date.now();
+    firstResult = await ensureContact(input.userId, firstContact);
+    await updateDiagnostics(diagId, { contactPersistMs: Date.now() - sPe });
+  } catch (err) {
+    await finishDiagnostics(diagId, 'failed', Date.now() - t0, stage, err instanceof Error ? err.message : String(err));
+    throw err;
+  }
+
+  stage = 'render';
+  let png: Awaited<ReturnType<typeof renderCard>>;
+  try {
+    const sRe = Date.now();
+    png = await renderCard({
+      profile: {
+        displayName: profile.displayName,
+        tagline: profile.tagline,
+        telegramUsername: profile.telegramUsername,
+        photoR2Url: profile.photoR2Url,
+        socials: profile.socials,
+      },
+    });
+    await updateDiagnostics(diagId, { renderMs: Date.now() - sRe });
+  } catch (err) {
+    await finishDiagnostics(diagId, 'failed', Date.now() - t0, stage, err instanceof Error ? err.message : String(err));
+    throw err;
+  }
+
   await markReady(input.interactionId, firstResult.id, {
     ...firstContact,
     was_live_recording: extraction.was_live_recording,
     photo_file_id: null,
   });
-  await uploadBytes({
-    key: `cards/${input.interactionId}.png`,
-    bytes: new Uint8Array(png),
-    contentType: 'image/png',
-  });
+
+  stage = 'upload';
+  try {
+    const sUp = Date.now();
+    await uploadBytes({
+      key: `cards/${input.interactionId}.png`,
+      bytes: new Uint8Array(png),
+      contentType: 'image/png',
+    });
+    await updateDiagnostics(diagId, { cardUploadMs: Date.now() - sUp });
+  } catch (err) {
+    await finishDiagnostics(diagId, 'failed', Date.now() - t0, stage, err instanceof Error ? err.message : String(err));
+    throw err;
+  }
+
   // Persist any follow-ups the LLM extracted for the first contact.
   const followUpsForFirst = (firstContact.follow_ups ?? [])
     .map((fu) => ({
@@ -126,6 +201,9 @@ export async function processCapture(input: CaptureInput): Promise<void> {
       followUps: followUpsForFirst,
     });
   }
+
+  await finishDiagnostics(diagId, 'ready', Date.now() - t0);
+
   // Record the usage event AFTER the row has reached `ready`. If the
   // function crashed earlier, the janitor will re-run processCapture and
   // we don't want to charge the user's daily cap twice for the same audio.
