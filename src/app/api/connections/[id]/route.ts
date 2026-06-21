@@ -4,6 +4,7 @@ import { getServerSession } from '@/lib/auth/session';
 import { db } from '@/lib/db/client';
 import { contacts, interactions } from '@/lib/db/schema';
 import { env } from '@/lib/env';
+import { listForContact } from '@/services/FollowUpsService';
 
 const NULLISH = new Set(['null', 'none', 'n/a', 'undefined', '']);
 function nullify(v: string | null | undefined): string | null {
@@ -50,6 +51,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const latestRecap = (latest?.structuredData as { recap?: string } | null)?.recap ?? null;
 
+  const followUps = await listForContact(contactId);
+
   return NextResponse.json({
     contact: {
       id: contact.id,
@@ -74,5 +77,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     latestRecap,
     previousMeetings: previous,
     shareUrl: latest ? `${env().BASE_URL}/c/${latest.id}` : null,
+    followUps,
   });
 }
