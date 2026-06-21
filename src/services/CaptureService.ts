@@ -9,6 +9,8 @@ import { createContact, findByNameAndCompany } from './ContactService';
 import { mintStub, markReady, markFailed } from './InteractionService';
 import { renderCard } from './CardService';
 import { uploadBytes, downloadObject } from '../lib/r2/client';
+import { createManyForInteraction as createManyFollowUps } from './FollowUpsService';
+import { resolveRelativeDate } from '../lib/follow-up-dates';
 
 type CaptureInput = {
   userId: string;         // users.id uuid
@@ -109,6 +111,21 @@ export async function processCapture(input: CaptureInput): Promise<void> {
     bytes: new Uint8Array(png),
     contentType: 'image/png',
   });
+  // Persist any follow-ups the LLM extracted for the first contact.
+  const followUpsForFirst = (firstContact.follow_ups ?? [])
+    .map((fu) => ({
+      topic: fu.topic.trim(),
+      dueAt: resolveRelativeDate(fu.relative_due, new Date(), profile.timezone),
+    }))
+    .filter((fu) => fu.topic.length > 0);
+  if (followUpsForFirst.length > 0) {
+    await createManyFollowUps({
+      userId: input.userId,
+      contactId: firstResult.id,
+      interactionId: input.interactionId,
+      followUps: followUpsForFirst,
+    });
+  }
   // Record the usage event AFTER the row has reached `ready`. If the
   // function crashed earlier, the janitor will re-run processCapture and
   // we don't want to charge the user's daily cap twice for the same audio.
@@ -137,6 +154,20 @@ export async function processCapture(input: CaptureInput): Promise<void> {
       bytes: new Uint8Array(extraPng),
       contentType: 'image/png',
     });
+    const followUpsForExtra = (c.follow_ups ?? [])
+      .map((fu) => ({
+        topic: fu.topic.trim(),
+        dueAt: resolveRelativeDate(fu.relative_due, new Date(), profile.timezone),
+      }))
+      .filter((fu) => fu.topic.length > 0);
+    if (followUpsForExtra.length > 0) {
+      await createManyFollowUps({
+        userId: input.userId,
+        contactId: contact.id,
+        interactionId: extraId,
+        followUps: followUpsForExtra,
+      });
+    }
   }
 }
 
