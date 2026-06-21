@@ -163,6 +163,53 @@ describe('processCapture', () => {
     expect(markFailedMock).toHaveBeenCalledWith('interaction-uuid-1');
     expect(transcribeMock).not.toHaveBeenCalled();
   });
+
+  it('creates follow-ups for the first contact after markReady', async () => {
+    const createManyMock = vi.fn().mockResolvedValue(undefined);
+    vi.doMock('./FollowUpsService', () => ({
+      createManyForInteraction: createManyMock,
+    }));
+    vi.resetModules();
+    const { processCapture: processCaptureFresh } = await import('./CaptureService');
+
+    // Set up mocks for a normal-happy-path run with one follow-up extracted.
+    countMock.mockResolvedValueOnce([{ count: 0 }]);
+    getByIdMock.mockResolvedValueOnce({
+      id: 'u-1', displayName: 'Tim', tagline: null,
+      telegramUsername: null, photoR2Url: null, socials: {}, selfIntro: null,
+      timezone: 'America/Vancouver',
+    });
+    transcribeMock.mockResolvedValueOnce('met sarah and need to follow up in 3 days');
+    extractMock.mockResolvedValueOnce({
+      contacts: [{
+        name: 'Sarah Chen', role: null, company: null,
+        emails: [], phones: [], preferred_channel: null,
+        links: {}, context: 'met',
+        recap: 'something',
+        user_commitments: [], their_commitments: [],
+        follow_ups: [{ topic: 'the role', relative_due: 'in 3 days' }],
+      }],
+      was_live_recording: false,
+    });
+    findByNameAndCompanyMock.mockResolvedValueOnce(null);
+    createContactMock.mockResolvedValueOnce({ id: 'c-1' });
+
+    await processCaptureFresh({
+      userId: 'u-1',
+      audioR2Key: 'k',
+      mimeType: 'audio/webm',
+      interactionId: 'i-1',
+    });
+
+    expect(createManyMock).toHaveBeenCalledWith(expect.objectContaining({
+      userId: 'u-1',
+      contactId: 'c-1',
+      interactionId: 'i-1',
+      followUps: expect.arrayContaining([
+        expect.objectContaining({ topic: 'the role' }),
+      ]),
+    }));
+  });
 });
 
 describe('findStuckProcessingCaptures', () => {
