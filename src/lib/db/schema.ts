@@ -1,5 +1,5 @@
 import {
-  pgTable, bigint, text, jsonb, timestamp, uuid, numeric, index, pgEnum, uniqueIndex, boolean,
+  pgTable, bigint, text, jsonb, timestamp, uuid, numeric, index, pgEnum, uniqueIndex, boolean, integer,
 } from 'drizzle-orm/pg-core';
 
 export const sourceEnum = pgEnum('source', ['voice', 'audio', 'video', 'manual']);
@@ -116,6 +116,41 @@ export const followUps = pgTable(
 
 export type FollowUp = typeof followUps.$inferSelect;
 export type NewFollowUp = typeof followUps.$inferInsert;
+
+export const captureDiagnostics = pgTable(
+  'capture_diagnostics',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    interactionId: uuid('interaction_id').references(() => interactions.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    recordedAt: timestamp('recorded_at', { withTimezone: true }).defaultNow().notNull(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+    outcome: text('outcome').default('pending').notNull(),
+    audioDownloadMs: integer('audio_download_ms'),
+    transcribeMs: integer('transcribe_ms'),
+    extractMs: integer('extract_ms'),
+    contactPersistMs: integer('contact_persist_ms'),
+    renderMs: integer('render_ms'),
+    cardUploadMs: integer('card_upload_ms'),
+    totalMs: integer('total_ms'),
+    audioBytes: integer('audio_bytes'),
+    audioMime: text('audio_mime'),
+    transcriptChars: integer('transcript_chars'),
+    llmProvider: text('llm_provider'),
+    llmModel: text('llm_model'),
+    contactName: text('contact_name'),
+    followUpsExtracted: integer('follow_ups_extracted'),
+    followUpsDrifted: boolean('follow_ups_drifted').default(false),
+    errorStage: text('error_stage'),
+    errorMessage: text('error_message'),
+  },
+  (t) => ({
+    recordedAtIdx: index('capture_diagnostics_recorded_at_idx').on(t.recordedAt),
+    outcomeIdx: index('capture_diagnostics_outcome_idx').on(t.outcome),
+  }),
+);
+
+export type CaptureDiagnostic = typeof captureDiagnostics.$inferSelect;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

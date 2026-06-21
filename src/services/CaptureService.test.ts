@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+const startDiagnosticsMock = vi.hoisted(() => vi.fn().mockResolvedValue('diag-1'));
+const updateDiagnosticsMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const finishDiagnosticsMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+vi.mock('./DiagnosticsService', () => ({
+  startDiagnostics: startDiagnosticsMock,
+  updateDiagnostics: updateDiagnosticsMock,
+  finishDiagnostics: finishDiagnosticsMock,
+}));
+
 const {
   countMock,
   limitMock,
