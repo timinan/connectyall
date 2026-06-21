@@ -20,6 +20,11 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  /* Prevent iOS Safari's rubber-band overscroll past the document bounds.
+     Without this, pages can scroll past the bottom nav into empty cream
+     space. `contain` (rather than `none`) still lets internal scroll
+     containers work normally. */
+  overscroll-behavior-y: contain;
 }
 
 /* Force the exact brand hex on the utility classes. Tailwind v4 routes hex
