@@ -5,7 +5,7 @@ import { APP_CONTAINER } from '../_layout-constants';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
 
-const ADMIN_EMAIL = 'tim.nan.91@gmail.com';
+const ADMIN_EMAILS = new Set(['tim.nan.91@gmail.com', 'timmy.nan@gmail.com']);
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +24,7 @@ function fmtTime(d: Date): string {
 export default async function DiagnosticsPage() {
   const session = await getServerSession();
   if (!session) redirect('/app/sign-in');
-  if (session.user.email !== ADMIN_EMAIL) redirect('/app');
+  if (!session.user.email || !ADMIN_EMAILS.has(session.user.email)) redirect('/app');
 
   const summary = await getDiagnosticsSummary(7);
 
