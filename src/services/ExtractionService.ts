@@ -99,6 +99,11 @@ DO NOT include commitments the OTHER person made:
 
 Keep topics short — 3 to 8 words is the sweet spot. They render in a tight UI row.
 
+FORMAT TIPS that help the downstream date parser:
+- Prefer digit form for relative_due: "in 3 days" not "in three days"
+- "in a week" works but "next week" is cleaner
+- For topics, be SPECIFIC — capture the SUBSTANCE not the action. Bad: "follow up". Good: "the staff PM role at Acme", "her funding round timeline", "the deck I owe her".
+
 If no follow-ups were mentioned, return an empty array.
 
 LINKS EXTRACTION (be aggressive about this — these are the most valuable field):
