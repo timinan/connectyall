@@ -23,13 +23,6 @@ type Connection = {
 
 type SortKey = 'recent' | 'first' | 'last';
 
-// Initials colors — alternating brand purple / black, deterministic per name
-const INITIALS_COLORS = ['#7C5CFF', '#0A0A0A'];
-function pickInitialsColor(seed: string): string {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return INITIALS_COLORS[h % INITIALS_COLORS.length];
-}
 function makeInitials(name: string): string {
   const trimmed = name.trim();
   if (!trimmed) return '?';
@@ -76,10 +69,11 @@ const HINT_TIMEOUT_MS = 6000;
 
 type RowProps = {
   c: Connection;
+  index: number;
   onAskDelete: (c: Connection) => void;
 };
 
-function ConnectionRow({ c, onAskDelete }: RowProps) {
+function ConnectionRow({ c, index, onAskDelete }: RowProps) {
   const [translateX, setTranslateX] = useState(0);
   const [animating, setAnimating] = useState(false);
   const startX = useRef<number | null>(null);
@@ -91,7 +85,7 @@ function ConnectionRow({ c, onAskDelete }: RowProps) {
   const subText = subParts.join(' · ');
   const tag = c.preferredChannel ? CHANNEL_TAG[c.preferredChannel] : null;
   const initials = makeInitials(c.name);
-  const initialsColor = pickInitialsColor(c.name);
+  const initialsColor = index % 2 === 0 ? '#0F0F12' : '#7C5CFF'; // black, brand purple
 
   function onTouchStart(e: React.TouchEvent) {
     startX.current = e.touches[0].clientX;
@@ -297,9 +291,18 @@ export function ConnectionsList({
   }, [rows, query, sort]);
 
   const finalVisible = useMemo(() => {
-    if (!filterDueToday) return visible;
-    return visible.filter(c => c.hasDueTodayFollowUp);
-  }, [visible, filterDueToday]);
+    if (filterDueToday) return visible.filter(c => c.hasDueTodayFollowUp);
+    // Default behavior: promote contacts with a due-today/overdue follow-up to
+    // the top of the list. The user's explicit choices override this:
+    //   - if they're typing a search query, don't reshuffle the matches
+    //   - if they've picked a non-default sort, honor it as-is
+    if (sort === 'recent' && !query.trim()) {
+      const due = visible.filter(c => c.hasDueTodayFollowUp);
+      const rest = visible.filter(c => !c.hasDueTodayFollowUp);
+      return [...due, ...rest];
+    }
+    return visible;
+  }, [visible, filterDueToday, sort, query]);
 
   async function deleteContact(id: string) {
     const res = await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
@@ -420,8 +423,8 @@ export function ConnectionsList({
 
       {finalVisible && finalVisible.length > 0 && (
         <ul className="mt-4 space-y-2">
-          {finalVisible.map((c) => (
-            <ConnectionRow key={c.contactId} c={c} onAskDelete={setConfirm} />
+          {finalVisible.map((c, idx) => (
+            <ConnectionRow key={c.contactId} c={c} index={idx} onAskDelete={setConfirm} />
           ))}
         </ul>
       )}
