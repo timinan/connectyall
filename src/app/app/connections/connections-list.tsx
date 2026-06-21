@@ -17,6 +17,7 @@ type Connection = {
   preferredChannel: ChannelKind | null;
   lastTouchedAt: string;
   meetingsCount: number;
+  hasDueTodayFollowUp: boolean;
 };
 
 type SortKey = 'recent' | 'first' | 'last';
@@ -157,7 +158,12 @@ function ConnectionRow({ c, onAskDelete }: RowProps) {
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-[15px] text-neutral-950 truncate">{c.name}</p>
+          <p className="font-bold text-[15px] text-neutral-950 truncate">
+            <div className="flex items-center gap-1.5">
+              <span>{c.name}</span>
+              {c.hasDueTodayFollowUp && <span className="text-amber-500 text-[10px]">●</span>}
+            </div>
+          </p>
           {subText && (
             <p className="font-mono text-[10px] tracking-[0.12em] text-muted font-semibold uppercase truncate mt-1">
               {subText}
@@ -232,7 +238,13 @@ function GlowRings() {
   );
 }
 
-export function ConnectionsList({ initialConnections }: { initialConnections: Connection[] }) {
+export function ConnectionsList({
+  initialConnections,
+  dueTodayCount,
+}: {
+  initialConnections: Connection[];
+  dueTodayCount: number;
+}) {
   const [rows, setRows] = useState<Connection[]>(initialConnections);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('recent');
@@ -301,6 +313,19 @@ export function ConnectionsList({ initialConnections }: { initialConnections: Co
           Your <span className="text-brand">connections</span>
         </h1>
       </div>
+
+      {dueTodayCount > 0 && (
+        <Link
+          href="/app/connections?filter=due-today"
+          className="mt-3 flex items-center justify-between bg-amber-100 border border-amber-200 rounded-xl px-3.5 py-2.5"
+        >
+          <div className="font-mono text-[11px] tracking-[0.16em] uppercase font-bold text-amber-800 flex items-center gap-1.5">
+            <span className="text-amber-500 text-[14px]">●</span>
+            {dueTodayCount} FOLLOW-UP{dueTodayCount === 1 ? '' : 'S'} DUE TODAY
+          </div>
+          <div className="font-mono text-[10px] tracking-[0.16em] uppercase text-brand font-bold">VIEW →</div>
+        </Link>
+      )}
 
       {rows.length > 0 && (
         <div className="mt-4 flex items-center gap-2">
