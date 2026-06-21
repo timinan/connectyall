@@ -104,6 +104,7 @@ export function FollowUpsCard({ contactId, contactName, initial }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: input.topic, dueAt: input.dueAt?.toISOString() ?? null }),
       });
+      if (!res.ok) return;
       const { followUp } = await res.json();
       setRows((rs) => rs.map(r => r.id === editing.id ? followUp : r));
     } else {
@@ -112,6 +113,7 @@ export function FollowUpsCard({ contactId, contactName, initial }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contactId, topic: input.topic, dueAt: input.dueAt?.toISOString() ?? null }),
       });
+      if (!res.ok) return;
       const { followUp } = await res.json();
       setRows((rs) => [...rs, followUp]);
     }
@@ -124,12 +126,14 @@ export function FollowUpsCard({ contactId, contactName, initial }: Props) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'done' }),
     });
+    if (!res.ok) return;
     const { followUp } = await res.json();
     setRows((rs) => rs.map(r => r.id === editing.id ? followUp : r));
   }
 
   async function remove(fu: FollowUp) {
-    await fetch(`/api/follow-ups/${fu.id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/follow-ups/${fu.id}`, { method: 'DELETE' });
+    if (!res.ok) return;
     setRows((rs) => rs.filter(r => r.id !== fu.id));
     setConfirmDelete(null);
   }

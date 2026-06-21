@@ -106,7 +106,7 @@ export function FollowUpModal({ mode, contactName, initial, onClose, onSave, onM
             {QUICK_PICKS.map((p) => {
               const isSelected =
                 (p.days === null && dueAt === null) ||
-                (p.days !== null && dueAt !== null && Math.round((dueAt.getTime() - new Date().getTime()) / 86_400_000) === p.days - 1);
+                (p.days !== null && dueAt !== null && Math.round((dueAt.getTime() - new Date().getTime()) / 86_400_000) === p.days);
               return (
                 <button
                   key={p.label}
