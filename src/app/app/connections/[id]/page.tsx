@@ -13,6 +13,8 @@ import { APP_CONTAINER } from '../../_layout-constants';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
 import { buildShareMessage } from '@/lib/share-message';
+import { FollowUpsCard } from './follow-ups-card';
+import type { FollowUp } from '@/lib/db/schema';
 
 const socialUrl = {
   linkedin: linkedinUrl,
@@ -55,6 +57,7 @@ type Data = {
   latestRecap: string | null;
   previousMeetings: Array<{ interactionId: string; occurredAt: string; recap: string | null }>;
   shareUrl: string | null;
+  followUps: FollowUp[];
 };
 
 // Shared card surface style for the refreshed visual language.
@@ -905,6 +908,11 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
       )}
+      <FollowUpsCard
+        contactId={data.contact.id}
+        contactName={contactName}
+        initial={data.followUps ?? []}
+      />
       {data.previousMeetings.length > 0 && (
         <div className={`${CARD_BASE} px-5 py-4 space-y-3`}>
           <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">
