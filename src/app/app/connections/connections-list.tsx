@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { LuSearch, LuX, LuTrash2, LuPlus, LuMic } from 'react-icons/lu';
 import { APP_CONTAINER_FLEX } from '../_layout-constants';
 import { PageHeader } from '@/components/page-header';
@@ -245,6 +246,9 @@ export function ConnectionsList({
   initialConnections: Connection[];
   dueTodayCount: number;
 }) {
+  const searchParams = useSearchParams();
+  const filterDueToday = searchParams.get('filter') === 'due-today';
+
   const [rows, setRows] = useState<Connection[]>(initialConnections);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('recent');
@@ -292,6 +296,11 @@ export function ConnectionsList({
     return sorted;
   }, [rows, query, sort]);
 
+  const finalVisible = useMemo(() => {
+    if (!filterDueToday) return visible;
+    return visible.filter(c => c.hasDueTodayFollowUp);
+  }, [visible, filterDueToday]);
+
   async function deleteContact(id: string) {
     const res = await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
     if (!res.ok) {
@@ -310,7 +319,11 @@ export function ConnectionsList({
 
       <div className="mt-4 bg-surface border-l-4 border-brand rounded-r-xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
         <h1 className="text-4xl font-black leading-[1.02] tracking-tight">
-          Your <span className="text-brand">connections</span>
+          {filterDueToday ? (
+            <>Due <span className="text-brand">today.</span></>
+          ) : (
+            <>Your <span className="text-brand">connections</span></>
+          )}
         </h1>
       </div>
 
@@ -327,7 +340,7 @@ export function ConnectionsList({
         </Link>
       )}
 
-      {rows.length > 0 && (
+      {rows.length > 0 && !filterDueToday && (
         <div className="mt-4 flex items-center gap-2">
           <div className="relative flex-1">
             <LuSearch size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
@@ -389,7 +402,7 @@ export function ConnectionsList({
         </div>
       )}
 
-      {visible && visible.length === 0 && rows.length > 0 && (
+      {finalVisible && finalVisible.length === 0 && rows.length > 0 && (
         <p className="text-muted text-sm text-center py-6">No matches for &ldquo;{query}&rdquo;.</p>
       )}
 
@@ -405,12 +418,23 @@ export function ConnectionsList({
         </button>
       )}
 
-      {visible && visible.length > 0 && (
+      {finalVisible && finalVisible.length > 0 && (
         <ul className="mt-4 space-y-2">
-          {visible.map((c) => (
+          {finalVisible.map((c) => (
             <ConnectionRow key={c.contactId} c={c} onAskDelete={setConfirm} />
           ))}
         </ul>
+      )}
+
+      {filterDueToday && (
+        <div className="text-center mt-4">
+          <Link
+            href="/app/connections"
+            className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted font-bold"
+          >
+            ← BACK TO ALL CONNECTIONS
+          </Link>
+        </div>
       )}
 
       {confirm && (
