@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql, and, lte } from 'drizzle-orm';
 import { getServerSession } from '@/lib/auth/session';
 import { db } from '@/lib/db/client';
-import { contacts, interactions } from '@/lib/db/schema';
+import { contacts, interactions, followUps as followUpsTable, users } from '@/lib/db/schema';
+import type { ChannelKind } from '@/app/app/cards/[id]/channel-icons';
+import { endOfTodayUtc } from '@/services/FollowUpsService';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,5 +30,31 @@ export async function GET() {
     .orderBy(desc(contacts.lastTouchedAt))
     .limit(100);
 
-  return NextResponse.json({ connections: rows });
+  const userRow = await db()
+    .select({ timezone: users.timezone })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+  const userTimezone = userRow[0]?.timezone ?? 'UTC';
+
+  const cutoff = endOfTodayUtc(userTimezone);
+  const dueRows = await db()
+    .select({ contactId: followUpsTable.contactId })
+    .from(followUpsTable)
+    .where(and(
+      eq(followUpsTable.userId, session.user.id),
+      eq(followUpsTable.status, 'pending'),
+      lte(followUpsTable.dueAt, cutoff),
+    ));
+  const dueContactIds = new Set(dueRows.map(r => r.contactId));
+  const dueTodayCount = dueRows.length;
+
+  const initialConnections = rows.map((r) => ({
+    ...r,
+    preferredChannel: r.preferredChannel as ChannelKind | null,
+    lastTouchedAt: r.lastTouchedAt.toISOString(),
+    hasDueTodayFollowUp: dueContactIds.has(r.contactId),
+  }));
+
+  return NextResponse.json({ connections: initialConnections, dueTodayCount });
 }
