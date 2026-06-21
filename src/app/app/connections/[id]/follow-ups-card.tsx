@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import type { FollowUp } from '@/lib/db/schema';
 import { FollowUpModal } from './follow-up-modal';
-import { useSwipeToReveal } from '@/lib/swipe-to-reveal';
+import { LuX } from 'react-icons/lu';
 
 type Props = {
   contactId: string;
@@ -38,7 +38,6 @@ function FollowUpRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const { offset, handlers, reset } = useSwipeToReveal({ revealWidth: 82 });
   const meta = statusMeta(fu);
   const isDone = fu.status === 'done';
 
@@ -52,37 +51,33 @@ function FollowUpRow({
     'text-neutral-400';
 
   return (
-    <div className="relative">
+    <div className="flex items-start gap-2.5 py-2.5">
+      <div className={`font-mono text-[9.5px] tracking-[0.14em] uppercase font-bold min-w-[86px] flex items-center gap-1 pt-1 ${toneClass}`}>
+        <span className={dotClass}>●</span>
+        {meta.label}
+      </div>
+      <button
+        type="button"
+        onClick={onEdit}
+        className={`flex-1 min-w-0 text-left text-[13.5px] leading-snug line-clamp-2 ${isDone ? 'line-through text-muted' : 'text-neutral-950'}`}
+      >
+        {fu.topic}
+      </button>
+      <button
+        type="button"
+        onClick={onEdit}
+        className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full bg-brand text-white font-mono text-[10px] tracking-[0.14em] font-bold uppercase hover:opacity-90 transition-opacity"
+      >
+        EDIT
+      </button>
       <button
         type="button"
         onClick={onDelete}
-        className="absolute right-0 top-0 bottom-0 w-[82px] bg-red-500 text-white font-mono text-[10px] tracking-[0.18em] font-bold uppercase rounded-r-md"
+        aria-label="Delete follow-up"
+        className="flex-shrink-0 text-neutral-500 hover:text-neutral-950 p-2"
       >
-        DELETE
+        <LuX size={16} />
       </button>
-      <div
-        style={{ transform: `translateX(${offset}px)`, transition: offset === 0 || offset === -82 ? 'transform 0.18s' : 'none' }}
-        className="relative bg-white flex items-center gap-2.5 py-2.5"
-        {...handlers}
-      >
-        <div className={`font-mono text-[9.5px] tracking-[0.14em] uppercase font-bold min-w-[86px] flex items-center gap-1 ${toneClass}`}>
-          <span className={dotClass}>●</span>
-          {meta.label}
-        </div>
-        <div
-          className={`flex-1 text-[13.5px] leading-tight ${isDone ? 'line-through text-muted' : 'text-neutral-950'}`}
-          onClick={() => { reset(); onEdit(); }}
-        >
-          {fu.topic}
-        </div>
-        <button
-          type="button"
-          onClick={() => { reset(); onEdit(); }}
-          className="font-mono text-[10px] tracking-[0.14em] font-bold uppercase px-3 py-1.5 rounded-full bg-[#E9DDFF] text-brand"
-        >
-          EDIT
-        </button>
-      </div>
     </div>
   );
 }
