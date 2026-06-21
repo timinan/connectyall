@@ -314,7 +314,9 @@ export function ConnectionsList({
     setConfirm(null);
   }
 
-  const status = `${rows.length} ${rows.length === 1 ? 'PERSON' : 'PEOPLE'}`;
+  const status = filterDueToday
+    ? `${dueTodayCount} FOLLOW-UP${dueTodayCount === 1 ? '' : 'S'}`
+    : `${rows.length} ${rows.length === 1 ? 'PERSON' : 'PEOPLE'}`;
 
   return (
     <div className={APP_CONTAINER_FLEX}>
@@ -330,7 +332,7 @@ export function ConnectionsList({
         </h1>
       </div>
 
-      {dueTodayCount > 0 && (
+      {dueTodayCount > 0 && !filterDueToday && (
         <Link
           href="/app/connections?filter=due-today"
           className="mt-3 flex items-center justify-between bg-amber-100 border border-amber-200 rounded-xl px-3.5 py-2.5"
