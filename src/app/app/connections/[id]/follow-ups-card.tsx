@@ -88,10 +88,6 @@ export function FollowUpsCard({ contactId, contactName, initial }: Props) {
   const [adding, setAdding] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<FollowUp | null>(null);
 
-  const hasOverdue = rows.some(r => r.status === 'pending' && r.dueAt && new Date(r.dueAt) < new Date());
-  const hasDueSoon = rows.some(r => r.status === 'pending');
-  const dotColor = hasOverdue ? 'text-red-500' : hasDueSoon ? 'text-amber-500' : 'text-neutral-400';
-
   async function save(input: { topic: string; dueAt: Date | null }) {
     if (editing) {
       const res = await fetch(`/api/follow-ups/${editing.id}`, {
@@ -138,8 +134,8 @@ export function FollowUpsCard({ contactId, contactName, initial }: Props) {
 
   return (
     <div className="rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-4 py-3.5">
-      <div className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-muted font-bold flex items-center gap-1">
-        <span className={dotColor}>●</span> FOLLOW-UPS
+      <div className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-muted font-bold">
+        FOLLOW-UPS
       </div>
 
       {rows.length === 0 && (
