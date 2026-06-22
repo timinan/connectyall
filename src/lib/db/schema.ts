@@ -143,10 +143,14 @@ export const captureDiagnostics = pgTable(
     followUpsDrifted: boolean('follow_ups_drifted').default(false),
     errorStage: text('error_stage'),
     errorMessage: text('error_message'),
+    userFeedbackRating: text('user_feedback_rating'),
+    userFeedbackText: text('user_feedback_text'),
+    feedbackSubmittedAt: timestamp('feedback_submitted_at', { withTimezone: true }),
   },
   (t) => ({
     recordedAtIdx: index('capture_diagnostics_recorded_at_idx').on(t.recordedAt),
     outcomeIdx: index('capture_diagnostics_outcome_idx').on(t.outcome),
+    feedbackIdx: index('capture_diagnostics_feedback_idx').on(t.userFeedbackRating, t.feedbackSubmittedAt),
   }),
 );
 
