@@ -12,6 +12,7 @@ import { ChannelIcon, channelAction, type ChannelKind } from '../../cards/[id]/c
 import { APP_CONTAINER } from '../../_layout-constants';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
+import { RecordingFeedbackModal } from '@/components/recording-feedback-modal';
 import { buildShareMessage } from '@/lib/share-message';
 import { FollowUpsCard } from './follow-ups-card';
 import type { FollowUp } from '@/lib/db/schema';
@@ -544,6 +545,38 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
   const [localNotes, setLocalNotes] = useState<string | null | undefined>(undefined);
   const [localRecap, setLocalRecap] = useState<string | null>(null);
 
+  // Recording-quality feedback. If the user just landed here from a fresh
+  // recording, ask "did we get this right?" the first time they try to leave
+  // (Save, or tap Record/Profile in bottom nav). Once they answer or skip, we
+  // stop intercepting.
+  const [feedbackPending, setFeedbackPending] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!data?.latestInteractionId) return;
+    const last = window.sessionStorage.getItem('lastCaptureInteractionId');
+    if (last && last === data.latestInteractionId) setFeedbackPending(true);
+  }, [data?.latestInteractionId]);
+
+  function clearFeedbackFlag() {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem('lastCaptureInteractionId');
+    }
+    setFeedbackPending(false);
+  }
+
+  function resolveFeedback() {
+    clearFeedbackFlag();
+    setShowFeedback(false);
+    const next = pendingNavHref;
+    setPendingNavHref(null);
+    if (next) {
+      router.refresh();
+      router.push(next);
+    }
+  }
+
   async function refresh() {
     const res = await fetch(`/api/connections/${id}`, { cache: 'no-store' });
     if (res.status === 404) {
@@ -928,6 +961,11 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
       <button
         type="button"
         onClick={() => {
+          if (feedbackPending) {
+            setPendingNavHref('/app/connections');
+            setShowFeedback(true);
+            return;
+          }
           // Invalidate the connections list router cache so the new/updated
           // contact shows up immediately when we land on /app/connections
           // instead of stale-prefetched data.
@@ -938,7 +976,23 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
       >
         Save
       </button>
-      <BottomNav />
+      <BottomNav
+        onBeforeNavigate={(href) => {
+          if (feedbackPending && (href === '/app/record' || href === '/app/profile')) {
+            setPendingNavHref(href);
+            setShowFeedback(true);
+            return false;
+          }
+          return true;
+        }}
+      />
+      {showFeedback && data?.latestInteractionId && (
+        <RecordingFeedbackModal
+          interactionId={data.latestInteractionId}
+          onResolved={resolveFeedback}
+          onSkip={resolveFeedback}
+        />
+      )}
     </div>
   );
 }

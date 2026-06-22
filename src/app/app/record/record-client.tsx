@@ -254,6 +254,11 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
         return;
       }
       if (payload.status === 'ready') {
+        // Mark this capture as "fresh" so the detail page can prompt for
+        // recording-quality feedback before the user leaves.
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem('lastCaptureInteractionId', interactionId);
+        }
         // Invalidate the connections-list router cache now that a new contact
         // exists, so taps on the Connections tab from anywhere show it without
         // a manual refresh.

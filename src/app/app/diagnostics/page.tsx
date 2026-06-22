@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getServerSession } from '@/lib/auth/session';
-import { getDiagnosticsSummary } from '@/services/DiagnosticsService';
+import { getDiagnosticsSummary, getFlaggedCaptures } from '@/services/DiagnosticsService';
 import { APP_CONTAINER } from '../_layout-constants';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
@@ -26,7 +26,10 @@ export default async function DiagnosticsPage() {
   if (!session) redirect('/app/sign-in');
   if (!session.user.email || !ADMIN_EMAILS.has(session.user.email)) redirect('/app');
 
-  const summary = await getDiagnosticsSummary(7);
+  const [summary, flagged] = await Promise.all([
+    getDiagnosticsSummary(7),
+    getFlaggedCaptures(30),
+  ]);
 
   return (
     <div className={APP_CONTAINER}>
@@ -83,6 +86,37 @@ export default async function DiagnosticsPage() {
             <div className="text-[12.5px] text-muted mt-0.5">
               {s.contactName ? `${s.contactName} · ` : ''}transcribe {fmtMs(s.transcribeMs ?? 0)} · extract {fmtMs(s.extractMs ?? 0)}
             </div>
+          </div>
+        ))}
+      </div>
+
+      {/* User-flagged captures */}
+      <div className="rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-4 py-3.5">
+        <div className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-muted font-bold mb-3">USER-FLAGGED CAPTURES · LAST 30 DAYS</div>
+        {flagged.length === 0 && <div className="text-[13.5px] text-muted">No flagged recordings yet. ✨</div>}
+        {flagged.map((f) => (
+          <div key={f.interactionId} className="border-t border-line/60 py-3 first:border-0 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted">
+                {fmtTime(f.submittedAt)}{f.contactName ? ` · ${f.contactName}` : ''}
+              </div>
+            </div>
+            {f.comment && (
+              <div className="text-[13px] text-neutral-950 italic leading-snug">&ldquo;{f.comment}&rdquo;</div>
+            )}
+            {!f.comment && (
+              <div className="text-[12.5px] text-muted italic">(no comment)</div>
+            )}
+            <audio
+              controls
+              preload="none"
+              className="w-full h-9"
+              src={`/api/admin/recording-audio/${f.interactionId}`}
+            />
+            <details className="text-[12px] text-muted">
+              <summary className="font-mono text-[10px] tracking-[0.14em] uppercase font-bold cursor-pointer">SHOW EXTRACTED DATA</summary>
+              <pre className="mt-2 p-2 rounded bg-cream text-[11px] text-neutral-700 overflow-x-auto whitespace-pre-wrap break-words">{JSON.stringify(f.structuredData, null, 2)}</pre>
+            </details>
           </div>
         ))}
       </div>
