@@ -12,6 +12,8 @@ import { ChannelIcon, channelAction, type ChannelKind } from '../../cards/[id]/c
 import { APP_CONTAINER } from '../../_layout-constants';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
+import { TutorialCoach } from '@/components/tutorial-coach';
+import { useTutorialState, useStepDismissed } from '@/lib/use-tutorial-state';
 import { buildShareMessage } from '@/lib/share-message';
 import { FollowUpsCard } from './follow-ups-card';
 import type { FollowUp } from '@/lib/db/schema';
@@ -544,6 +546,13 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
   const [localNotes, setLocalNotes] = useState<string | null | undefined>(undefined);
   const [localRecap, setLocalRecap] = useState<string | null>(null);
 
+  // First-time tutorial — fires the final coach mark over the channels card,
+  // gated on the user not having completed onboarding yet.
+  const tutorial = useTutorialState();
+  const [step4Dismissed, dismissStep4] = useStepDismissed('connection_send');
+  const channelsCardRef = useRef<HTMLDivElement | null>(null);
+  const showStep4 = !tutorial.loading && !tutorial.completed && !step4Dismissed;
+
   async function refresh() {
     const res = await fetch(`/api/connections/${id}`, { cache: 'no-store' });
     if (res.status === 404) {
@@ -728,7 +737,7 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
 
       {/* Inline-editable contact fields with per-row actions */}
       {contact && (
-        <div className={`${CARD_BASE} px-5 py-4 space-y-1`}>
+        <div ref={channelsCardRef} className={`${CARD_BASE} px-5 py-4 space-y-1`}>
           <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold pb-1">CHANNELS</div>
           {/* Emails */}
           {contact.emails.map((email, i) => (
@@ -939,6 +948,20 @@ export default function ConnectionPage({ params }: { params: Promise<{ id: strin
         Save
       </button>
       <BottomNav />
+      {showStep4 && (
+        <TutorialCoach
+          step={4}
+          totalSteps={4}
+          title="Send them your card"
+          body={<>Tap <strong>Send</strong> on any channel to message them a link. They get your details too — that&apos;s the whole point. Try it whenever you&apos;re ready.</>}
+          ctaLabel="Done"
+          onDismiss={async () => { dismissStep4(); await tutorial.complete(); }}
+          onSkip={async () => { dismissStep4(); await tutorial.complete(); }}
+          position={{ top: 240, left: 'center', arrow: 'bottom-c' }}
+          anchorRef={channelsCardRef}
+          anchorRadius={22}
+        />
+      )}
     </div>
   );
 }

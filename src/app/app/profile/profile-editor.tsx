@@ -7,6 +7,8 @@ import { LuCamera, LuX, LuCheck, LuPencil, LuStar } from 'react-icons/lu';
 import { ChannelIcon, type ChannelKind } from '../cards/[id]/channel-icons';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
+import { TutorialCoach } from '@/components/tutorial-coach';
+import { useTutorialState, useStepDismissed } from '@/lib/use-tutorial-state';
 import { signOut } from '@/lib/auth/client';
 
 type Profile = {
@@ -94,6 +96,18 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
   const [deleteText, setDeleteText] = useState('');
   const [deleting, setDeleting] = useState(false);
 
+  const tutorial = useTutorialState();
+  const [step1Dismissed, dismissStep1] = useStepDismissed('profile_welcome');
+  const [showStep2, setShowStep2] = useState(false);
+  const nameCardRef = useRef<HTMLDivElement | null>(null);
+  const recordTabRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!showStep2) return;
+    recordTabRef.current = document.querySelector<HTMLElement>('[data-tutorial-anchor="record-tab"]');
+  }, [showStep2]);
+
+  const showStep1 = !tutorial.loading && !tutorial.completed && !step1Dismissed && !showStep2;
+
   async function saveBasics(updates: { displayName?: string; tagline?: string | null; shortBlurb?: string | null }) {
     setSaving(true);
     const res = await fetch('/api/profile', {
@@ -113,7 +127,17 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
   }
 
   async function continueToRecord() {
+    if (!tutorial.loading && !tutorial.completed) {
+      setShowStep2(true);
+      return;
+    }
     router.push('/app/record');
+  }
+
+  async function skipTutorial() {
+    dismissStep1();
+    setShowStep2(false);
+    await tutorial.complete();
   }
 
   async function uploadPhoto(file: File) {
@@ -215,7 +239,7 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
         </div>
 
       <div className="relative z-10 space-y-4">
-        <div className="rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-5 py-4 space-y-3">
+        <div ref={nameCardRef} className="rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-5 py-4 space-y-3">
           <div className="space-y-1">
             <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">NAME</div>
             <EditableLine
@@ -337,6 +361,36 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
       )}
 
       <BottomNav />
+
+      {showStep1 && (
+        <TutorialCoach
+          step={1}
+          totalSteps={4}
+          title="Welcome to Connectyall"
+          body={<>Let&apos;s get you set up. Please enter your profile info below. Once you&apos;re ready, click <strong>save</strong> and we&apos;ll continue.</>}
+          ctaLabel="Got it"
+          onDismiss={dismissStep1}
+          onSkip={skipTutorial}
+          position={{ top: 220, left: 'center', arrow: 'top-c' }}
+          anchorRef={nameCardRef}
+          anchorRadius={22}
+        />
+      )}
+
+      {showStep2 && (
+        <TutorialCoach
+          step={2}
+          totalSteps={4}
+          title="Excellent — you're ready to connect"
+          body={<>We&apos;ve just set up your profile and you&apos;re ready to connect with others. Now tap the <strong>record tab</strong> to start.</>}
+          ctaLabel="Got it"
+          onDismiss={() => { setShowStep2(false); router.push('/app/record'); }}
+          onSkip={skipTutorial}
+          position={{ bottom: 110, left: 'center', arrow: 'bottom-c' }}
+          anchorRef={recordTabRef}
+          anchorRadius={999}
+        />
+      )}
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { LuMic } from 'react-icons/lu';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
+import { TutorialCoach } from '@/components/tutorial-coach';
+import { useTutorialState, useStepDismissed } from '@/lib/use-tutorial-state';
 import { getGreetingLabel } from '@/lib/greeting';
 import { APP_CONTAINER_FLEX } from '../_layout-constants';
 
@@ -125,6 +127,16 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
   const timerRef = useRef<number | null>(null);
+  const micRef = useRef<HTMLButtonElement | null>(null);
+
+  const tutorial = useTutorialState();
+  const [step3Dismissed, dismissStep3] = useStepDismissed('record_mic');
+  const showStep3 =
+    !tutorial.loading &&
+    !tutorial.completed &&
+    !step3Dismissed &&
+    state === 'idle' &&
+    (tutorial.state?.connectionsCount ?? 0) === 0;
 
   // Stop everything still running and reset visual state — called both when
   // bailing on an error AND when the user taps Try again.
@@ -308,6 +320,7 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
               <GlowRings tone={state === 'recording' ? 'red' : 'brand'} />
               {state === 'idle' && (
                 <button
+                  ref={micRef}
                   onClick={start}
                   className="relative z-10 w-[150px] h-[150px] rounded-full bg-brand text-white flex items-center justify-center shadow-[0_14px_36px_rgba(124,92,255,0.40)]"
                   aria-label="Tap to record"
@@ -369,6 +382,20 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
             setError(null);
             resetToIdle();
           }}
+        />
+      )}
+      {showStep3 && (
+        <TutorialCoach
+          step={3}
+          totalSteps={4}
+          title="Talk it out"
+          body="Tap the mic and tell us about who you met. Name, where, anything worth remembering. We'll turn it into a contact card."
+          ctaLabel="Got it"
+          onDismiss={dismissStep3}
+          onSkip={async () => { dismissStep3(); await tutorial.complete(); }}
+          position={{ top: 200, left: 'center', arrow: 'bottom-c' }}
+          anchorRef={micRef}
+          anchorRadius={999}
         />
       )}
     </div>

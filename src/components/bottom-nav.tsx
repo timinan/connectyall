@@ -54,11 +54,13 @@ export function BottomNav() {
     >
       {TABS.map(({ href, icon: Icon, label }) => {
         const isTarget = href === targetHref;
+        const anchorId = href === '/app/record' ? 'record-tab' : undefined;
         return isTarget ? (
           <Link
             key={href}
             href={href}
             prefetch
+            data-tutorial-anchor={anchorId}
             onClick={(e) => handleClick(e, href)}
             className="inline-flex items-center gap-1.5 px-4 h-10 rounded-full bg-brand text-white text-sm font-semibold active:scale-95 transition-transform"
           >
@@ -70,6 +72,7 @@ export function BottomNav() {
             key={href}
             href={href}
             prefetch
+            data-tutorial-anchor={anchorId}
             onClick={(e) => handleClick(e, href)}
             aria-label={label}
             className="w-10 h-10 rounded-full flex items-center justify-center text-zinc-400 hover:text-white active:scale-90 transition-transform"
