@@ -7,6 +7,7 @@ import { db } from '@/lib/db/client';
 import { contacts, interactions, users } from '@/lib/db/schema';
 import { linkedinHandle, xHandle, telegramHandle, instagramHandle, messengerHandle } from '@/lib/social-urls';
 import { deleteObject, listObjects } from '@/lib/r2/client';
+import { normalizeVocabulary } from '@/lib/personalization';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,7 @@ const ProfileSchema = z.object({
   tagline: z.string().max(140).nullable().optional(),
   shortBlurb: z.string().max(100).nullable().optional(),
   selfIntro: z.string().max(280).nullable().optional(),
+  vocabulary: z.string().max(500).nullable().optional(),
 });
 
 const ChannelEnum = z.enum(['x', 'linkedin', 'email', 'website', 'telegram', 'whatsapp', 'wechat', 'line', 'phone', 'instagram', 'messenger']);
@@ -92,6 +94,9 @@ export async function PUT(req: Request) {
   if (parsed.data.tagline !== undefined) updates.tagline = parsed.data.tagline;
   if (parsed.data.shortBlurb !== undefined) updates.shortBlurb = parsed.data.shortBlurb;
   if (parsed.data.selfIntro !== undefined) updates.selfIntro = parsed.data.selfIntro;
+  if (parsed.data.vocabulary !== undefined) {
+    updates.vocabulary = parsed.data.vocabulary === null ? null : normalizeVocabulary(parsed.data.vocabulary);
+  }
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'no fields to update' }, { status: 400 });
   }

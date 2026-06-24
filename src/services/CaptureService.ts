@@ -12,6 +12,9 @@ import { uploadBytes, downloadObject } from '../lib/r2/client';
 import { createManyForInteraction as createManyFollowUps } from './FollowUpsService';
 import { resolveRelativeDate } from '../lib/follow-up-dates';
 import { startDiagnostics, updateDiagnostics, finishDiagnostics } from './DiagnosticsService';
+import { listRecentCorrections } from './CorrectionsService';
+import { listExamples as listCalibrationExamples } from './CalibrationService';
+import { normalizeVocabulary, buildWhisperInitialPrompt } from '../lib/personalization';
 
 type CaptureInput = {
   userId: string;         // users.id uuid
@@ -92,11 +95,13 @@ export async function processCapture(input: CaptureInput): Promise<void> {
     throw err;
   }
 
+  const vocabulary = normalizeVocabulary(profile.vocabulary);
+
   stage = 'transcribe';
   let transcript: string;
   try {
     const sTr = Date.now();
-    transcript = await transcribe(audio);
+    transcript = await transcribe(audio, { initialPrompt: buildWhisperInitialPrompt(vocabulary) });
     await updateDiagnostics(diagId, { transcribeMs: Date.now() - sTr, transcriptChars: transcript.length });
   } catch (err) {
     await finishDiagnostics(diagId, 'failed', Date.now() - t0, stage, err instanceof Error ? err.message : String(err));
@@ -109,11 +114,25 @@ export async function processCapture(input: CaptureInput): Promise<void> {
     return;
   }
 
+  // Load personalization context in parallel with the extraction setup.
+  const [recentCorrections, calibrationExamples] = await Promise.all([
+    listRecentCorrections(input.userId, 10).catch(() => []),
+    listCalibrationExamples(input.userId, 3).catch(() => []),
+  ]);
+
   stage = 'extract';
   let extraction: Awaited<ReturnType<typeof extract>>;
   try {
     const sEx = Date.now();
-    extraction = await extract({ transcript, selfIntro: profile.selfIntro });
+    extraction = await extract({
+      transcript,
+      selfIntro: profile.selfIntro,
+      vocabulary,
+      corrections: recentCorrections.map((c) => ({
+        field: c.field, originalText: c.originalText, correctedText: c.correctedText,
+      })),
+      examples: calibrationExamples.map((e) => ({ transcript: e.transcript, expectedJson: e.expectedJson })),
+    });
     const firstExtracted = extraction.contacts[0];
     await updateDiagnostics(diagId, {
       extractMs: Date.now() - sEx,

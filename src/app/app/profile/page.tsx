@@ -17,6 +17,7 @@ export default async function ProfilePage() {
         displayName: user.displayName,
         tagline: user.tagline,
         shortBlurb: user.shortBlurb,
+        vocabulary: user.vocabulary,
         socials: user.socials ?? {},
         telegramUsername: user.telegramUsername,
         photoR2Url: user.photoR2Url,
