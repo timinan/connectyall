@@ -13,6 +13,7 @@ type Profile = {
   displayName: string;
   tagline: string | null;
   shortBlurb: string | null;
+  vocabulary: string | null;
   socials: { x?: string; linkedin?: string; email?: string; website?: string; whatsapp?: string; wechat?: string; line?: string; phone?: string; instagram?: string; messenger?: string };
   telegramUsername: string | null;
   photoR2Url: string | null;
@@ -20,6 +21,7 @@ type Profile = {
 };
 
 const SHORT_BLURB_MAX = 100;
+const VOCABULARY_MAX = 500;
 
 type ProfileChannel = 'x' | 'linkedin' | 'email' | 'website' | 'telegram' | 'whatsapp' | 'wechat' | 'line' | 'phone' | 'instagram' | 'messenger';
 
@@ -94,7 +96,7 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
   const [deleteText, setDeleteText] = useState('');
   const [deleting, setDeleting] = useState(false);
 
-  async function saveBasics(updates: { displayName?: string; tagline?: string | null; shortBlurb?: string | null }) {
+  async function saveBasics(updates: { displayName?: string; tagline?: string | null; shortBlurb?: string | null; vocabulary?: string | null }) {
     setSaving(true);
     const res = await fetch('/api/profile', {
       method: 'PUT',
@@ -108,6 +110,7 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
         ...(updates.displayName !== undefined ? { displayName: updates.displayName } : {}),
         ...(updates.tagline !== undefined ? { tagline: updates.tagline } : {}),
         ...(updates.shortBlurb !== undefined ? { shortBlurb: updates.shortBlurb } : {}),
+        ...(updates.vocabulary !== undefined ? { vocabulary: updates.vocabulary } : {}),
       } : p);
     }
   }
@@ -243,6 +246,19 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
               onSave={(v) => saveBasics({ shortBlurb: v || null })}
             />
           </div>
+        </div>
+
+        <div className="rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-5 py-4 space-y-2">
+          <div className="font-mono text-[11px] tracking-[0.2em] uppercase text-muted font-semibold">TUNING · WORDS YOU SAY OFTEN</div>
+          <p className="text-[13px] text-neutral-600 leading-relaxed">
+            Names, companies, and handles you talk about a lot. We use them to transcribe and extract more accurately when you record.
+          </p>
+          <EditableBlurb
+            value={profile?.vocabulary ?? ''}
+            placeholder="Sarah Lee, V (the founder), Pinto Money, @timnan"
+            maxLength={VOCABULARY_MAX}
+            onSave={(v) => saveBasics({ vocabulary: v.trim() ? v : null })}
+          />
         </div>
 
         <div className="rounded-3xl bg-surface border border-line shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-5 py-4 space-y-2">

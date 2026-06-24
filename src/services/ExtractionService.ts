@@ -2,6 +2,11 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 import { getLLM } from '../lib/llm';
 import { withRetry } from '../lib/retry';
+import {
+  buildExtractionPersonalizationBlock,
+  type CorrectionForPrompt,
+  type ExampleForPrompt,
+} from '../lib/personalization';
 
 export const ContactSchema = z.object({
   name: z.string(),
@@ -257,13 +262,21 @@ function normalizeContacts(contacts: ExtractedContact[]): ExtractedContact[] {
 export async function extract(input: {
   transcript: string;
   selfIntro?: string | null;
+  vocabulary?: string | null;
+  corrections?: CorrectionForPrompt[];
+  examples?: ExampleForPrompt[];
 }): Promise<ExtractionResult> {
   const userContext = input.selfIntro ? `About the speaker: ${input.selfIntro}\n\n` : '';
+  const personalization = buildExtractionPersonalizationBlock({
+    vocabulary: input.vocabulary ?? null,
+    corrections: input.corrections ?? [],
+    examples: input.examples ?? [],
+  });
   const result = await withRetry(
     () => generateObject({
       model: getLLM(),
       schema: ExtractionSchema,
-      system: SYSTEM_PROMPT,
+      system: `${SYSTEM_PROMPT}${personalization}`,
       prompt: `${userContext}Transcript:\n${input.transcript}`,
     }),
     {

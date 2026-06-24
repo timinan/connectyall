@@ -99,4 +99,28 @@ describe('transcribe (with retry)', () => {
     await expect(promise).resolves.toBe('');
     expect(f).toHaveBeenCalledTimes(1);
   });
+
+  it('uses octet-stream body when no initialPrompt is set', async () => {
+    const f = globalThis.fetch as ReturnType<typeof vi.fn>;
+    f.mockResolvedValueOnce(jsonResponse(okBody));
+    const promise = transcribe(new Uint8Array([9, 9, 9]));
+    await vi.runAllTimersAsync();
+    await promise;
+    const [, init] = f.mock.calls[0];
+    expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/octet-stream');
+    expect(init.body).toBeInstanceOf(Blob);
+  });
+
+  it('sends JSON body with initial_prompt when initialPrompt is set', async () => {
+    const f = globalThis.fetch as ReturnType<typeof vi.fn>;
+    f.mockResolvedValueOnce(jsonResponse(okBody));
+    const promise = transcribe(new Uint8Array([1, 2, 3]), { initialPrompt: 'Names: Sarah Lee, V.' });
+    await vi.runAllTimersAsync();
+    await promise;
+    const [, init] = f.mock.calls[0];
+    expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
+    const parsed = JSON.parse(init.body as string);
+    expect(parsed.initial_prompt).toBe('Names: Sarah Lee, V.');
+    expect(parsed.audio).toEqual([1, 2, 3]);
+  });
 });
