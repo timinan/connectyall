@@ -22,6 +22,7 @@ export const users = pgTable('users', {
   shortBlurb: text('short_blurb'),
   photoR2Url: text('photo_r2_url'),
   selfIntro: text('self_intro'),
+  vocabulary: text('vocabulary'),
   socials: jsonb('socials').$type<Socials>().default({}).notNull(),
   timezone: text('timezone').default('UTC').notNull(),
   consentAcknowledgedAt: timestamp('consent_acknowledged_at', { withTimezone: true }),
@@ -151,6 +152,45 @@ export const captureDiagnostics = pgTable(
 );
 
 export type CaptureDiagnostic = typeof captureDiagnostics.$inferSelect;
+
+export const userCorrections = pgTable(
+  'user_corrections',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    field: text('field').notNull(),
+    originalText: text('original_text').notNull(),
+    correctedText: text('corrected_text').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    usedCount: integer('used_count').default(1).notNull(),
+  },
+  (t) => ({
+    userCreatedIdx: index('user_corrections_user_id_created_at_idx').on(t.userId, t.createdAt),
+    uniqueTripleIdx: uniqueIndex('user_corrections_unique_triple_idx').on(
+      t.userId, t.field, t.originalText, t.correctedText,
+    ),
+  }),
+);
+
+export type UserCorrection = typeof userCorrections.$inferSelect;
+export type NewUserCorrection = typeof userCorrections.$inferInsert;
+
+export const userCalibrationExamples = pgTable(
+  'user_calibration_examples',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    transcript: text('transcript').notNull(),
+    expectedJson: jsonb('expected_json').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    userCreatedIdx: index('user_calibration_examples_user_id_idx').on(t.userId, t.createdAt),
+  }),
+);
+
+export type UserCalibrationExample = typeof userCalibrationExamples.$inferSelect;
+export type NewUserCalibrationExample = typeof userCalibrationExamples.$inferInsert;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
