@@ -181,3 +181,51 @@ export async function getDiagnosticsSummary(days: number): Promise<DiagnosticsSu
     slowest: slowestResult.rows.map((r) => ({ recordedAt: r.recorded_at, totalMs: r.total_ms, transcribeMs: r.transcribe_ms, extractMs: r.extract_ms, contactName: r.contact_name })),
   };
 }
+
+// =========================================================================
+// USER-FLAGGED CAPTURES — recording quality feedback from beta users
+// =========================================================================
+
+export type FlaggedCapture = {
+  interactionId: string;
+  submittedAt: Date;
+  contactName: string | null;
+  comment: string | null;
+  audioMime: string | null;
+  structuredData: unknown;
+};
+
+export async function getFlaggedCaptures(days: number, limit = 30): Promise<FlaggedCapture[]> {
+  const cutoff = sql`now() - (${days} * interval '1 day')`;
+  type Row = {
+    interaction_id: string;
+    feedback_submitted_at: Date;
+    contact_name: string | null;
+    user_feedback_text: string | null;
+    audio_mime: string | null;
+    structured_data: unknown;
+  };
+  const result = await db().execute<Row>(sql`
+    SELECT
+      cd.interaction_id,
+      cd.feedback_submitted_at,
+      cd.contact_name,
+      cd.user_feedback_text,
+      cd.audio_mime,
+      i.structured_data
+    FROM capture_diagnostics cd
+    LEFT JOIN interactions i ON i.id = cd.interaction_id
+    WHERE cd.user_feedback_rating = 'incorrect'
+      AND cd.feedback_submitted_at >= ${cutoff}
+    ORDER BY cd.feedback_submitted_at DESC
+    LIMIT ${limit}
+  `);
+  return result.rows.map((r) => ({
+    interactionId: r.interaction_id,
+    submittedAt: r.feedback_submitted_at,
+    contactName: r.contact_name,
+    comment: r.user_feedback_text,
+    audioMime: r.audio_mime,
+    structuredData: r.structured_data,
+  }));
+}

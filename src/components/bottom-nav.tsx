@@ -11,7 +11,7 @@ const TABS = [
   { href: '/app/connections', icon: LuUsers, label: 'Connections', match: '/app/connections' },
 ] as const;
 
-export function BottomNav() {
+export function BottomNav({ onBeforeNavigate }: { onBeforeNavigate?: (href: string) => boolean } = {}) {
   const pathname = usePathname();
   const router = useRouter();
   // Optimistic "just tapped" so the new pill renders before the route commits.
@@ -28,6 +28,12 @@ export function BottomNav() {
 
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
     if (pathname.startsWith(href)) return;
+    // Allow callers (e.g. connection detail page) to intercept nav and run
+    // their own flow first — return false to block, true to proceed.
+    if (onBeforeNavigate && !onBeforeNavigate(href)) {
+      e.preventDefault();
+      return;
+    }
     const currentIndex = TABS.findIndex((t) => pathname.startsWith(t.match));
     const nextIndex = TABS.findIndex((t) => t.href === href);
     const direction: 'left' | 'right' = nextIndex > currentIndex ? 'right' : 'left';
