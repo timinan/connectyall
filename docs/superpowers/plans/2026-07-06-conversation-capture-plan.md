@@ -19,6 +19,21 @@
 - Commit style: short lowercase subjects, no AI credits. `pnpm typecheck && pnpm test -- --run` before every push.
 - Record-page UI copy stays in the mono-caption design language; no new screens.
 
+## Risks & mitigations (read before starting any task)
+
+| # | Risk | Likelihood | Mitigation |
+|---|------|-----------|------------|
+| R1 | **Nova-3 REST contract differs from the plan** — response JSON paths are undocumented, and the endpoint may reject a raw binary body (some partner models want multipart). | Medium | Task 1 exists precisely for this: the live curl fixture is the source of truth, and the Task 3 parser already handles both envelope shapes. If the binary body 400s, retry the curl as `multipart/form-data` (`-F "audio=@sample.webm;type=audio/webm"`) and adapt `callNova3` to `FormData`. If `keyterm` as a query param errors, drop keyterms silently — vocabulary still shapes extraction downstream. Do not proceed past Task 1 with an unverified shape. |
+| R2 | **Diarization quality on one shared phone mic** — two voices on the same far-field mic can merge into one speaker or flip labels mid-utterance. | Medium | The CONVERSATION MODE prompt attributes by content (Q&A pairing), not labels alone, so label noise degrades gracefully; worst case equals today's memo-mode quality. If QA shows `speaker_count` frequently wrong, do NOT try to fix diarization — flag to Tim and consider content-only conversation detection as a follow-up. |
+| R3 | **Whisper-path regression** — Tasks 2/3/6 rewrite the hot path every production capture flows through. | Low likelihood, high blast radius | Provider defaults to `whisper`; existing TranscriptionService tests must pass with only return-shape assertions changed; production never sees nova3 until Tim flips the env var. Never edit `callWhisper` itself. |
+| R4 | **Migration collision** — PR #19 holds 0015 and `first-time-flow` holds 0014; 0019 may be taken or leave gaps by build time. | Medium | Renumber to next-free `00NN` at build time; the `_journal.json` tag must match the filename exactly; verify `pnpm db:migrate` prints `[✓] migrations applied successfully!` (silence = journal entry missing = silent skip). |
+| R5 | **Env var lands on the wrong Vercel scope** — setting `TRANSCRIBE_PROVIDER=nova3` on Production flips real users without review. | Low | Task 9 sets it via `vercel env add TRANSCRIBE_PROVIDER preview` (preview scope ONLY); afterwards run `vercel env ls` and confirm Production has no `TRANSCRIBE_PROVIDER` row. |
+| R6 | **Double-stop crash** — `MediaRecorder.stop()` on an inactive recorder throws; the auto-stop timeout racing a manual stop is the trigger. | Medium | Task 7's guard (`recorderRef.current?.state === 'recording'`) plus clearing the timeout in `stop()`, `resetToIdle()`, and unmount. Manually QA: stop at 1:59 and confirm nothing fires when the timeout window passes. |
+| R7 | **Latency regression on nova3** — assumed fast, not yet measured on Cloudflare's hosting. | Low | `transcribeMs` + `transcribe_provider` diagnostics make it measurable per-capture on `/app/diagnostics`; if p50 transcribe worsens materially vs whisper rows, report numbers to Tim before any prod flip. Rollback is the env var. |
+| R8 | **Inngest sync footgun** — testing on preview without re-pointing Inngest leaves the janitor on prod code (or vice versa after merge). | Medium | Task 9 syncs to the preview; after any eventual prod deploy run `curl -X PUT https://connectyall.vercel.app/api/inngest` (session-state playbook rule). |
+| R9 | **PR #20 not merged when this builds** — the plan consumes `vocabulary`, `normalizeVocabulary`, `buildWhisperInitialPrompt`. | Low | Hard precondition (see Branch note above): do not start on a main that lacks PR #20; if #20 is abandoned, Tasks 4 and 6 need rescoping by Tim first. |
+| R10 | **Multi-contact conversations** — a 3-person exchange yields two contacts; persistence handles it, but the share/redirect flow assumes one primary contact. | Low | Out of scope per spec; the prompt's N-speaker rules are best-effort. If QA surfaces broken UX here, log it for Tim rather than expanding scope. |
+
 ---
 
 ### Task 1: Pin the Nova-3 response shape (live curl, no code)
