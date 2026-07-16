@@ -76,6 +76,12 @@ function decodeUploadError(status: number, raw: string): RecError {
       body: 'Your session expired. Sign in again to keep recording.',
     };
   }
+  if (status === 429 || /daily capture limit/i.test(apiMessage)) {
+    return {
+      title: "You've hit today's limit",
+      body: "You've reached the maximum number of captures for today. Come back tomorrow to keep going.",
+    };
+  }
   if (status === 413 || /too large/i.test(apiMessage)) {
     return {
       title: 'Recording too long',
