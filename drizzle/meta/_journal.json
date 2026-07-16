@@ -120,6 +120,13 @@
       "when": 1782400200000,
       "tag": "0018_user_calibration_examples",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1782500000000,
+      "tag": "0021_capture_diagnostics_transcribe_provider",
+      "breakpoints": true
     }
   ]
 }

@@ -45,6 +45,8 @@ export async function updateDiagnostics(
     transcriptChars: number;
     llmProvider: string;
     llmModel: string;
+    transcribeProvider: string;
+    speakerCount: number | null;
     contactName: string;
     followUpsExtracted: number;
     followUpsDrifted: boolean;

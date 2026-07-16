@@ -139,6 +139,8 @@ export const captureDiagnostics = pgTable(
     transcriptChars: integer('transcript_chars'),
     llmProvider: text('llm_provider'),
     llmModel: text('llm_model'),
+    transcribeProvider: text('transcribe_provider'),
+    speakerCount: integer('speaker_count'),
     contactName: text('contact_name'),
     followUpsExtracted: integer('follow_ups_extracted'),
     followUpsDrifted: boolean('follow_ups_drifted').default(false),

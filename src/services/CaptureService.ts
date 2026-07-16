@@ -14,7 +14,7 @@ import { resolveRelativeDate } from '../lib/follow-up-dates';
 import { startDiagnostics, updateDiagnostics, finishDiagnostics } from './DiagnosticsService';
 import { listRecentCorrections } from './CorrectionsService';
 import { listExamples as listCalibrationExamples } from './CalibrationService';
-import { normalizeVocabulary, buildWhisperInitialPrompt } from '../lib/personalization';
+import { normalizeVocabulary, buildWhisperInitialPrompt, keytermsFromVocabulary } from '../lib/personalization';
 
 type CaptureInput = {
   userId: string;         // users.id uuid
@@ -102,9 +102,18 @@ export async function processCapture(input: CaptureInput): Promise<void> {
   let tr: Awaited<ReturnType<typeof transcribe>>;
   try {
     const sTr = Date.now();
-    tr = await transcribe(audio, { initialPrompt: buildWhisperInitialPrompt(vocabulary) });
+    tr = await transcribe(audio, {
+      initialPrompt: buildWhisperInitialPrompt(vocabulary),
+      mimeType: input.mimeType,
+      keyterms: keytermsFromVocabulary(vocabulary),
+    });
     transcript = tr.text;
-    await updateDiagnostics(diagId, { transcribeMs: Date.now() - sTr, transcriptChars: transcript.length });
+    await updateDiagnostics(diagId, {
+      transcribeMs: Date.now() - sTr,
+      transcriptChars: transcript.length,
+      transcribeProvider: env().TRANSCRIBE_PROVIDER,
+      speakerCount: tr.segments ? new Set(tr.segments.map((s) => s.speaker)).size : null,
+    });
   } catch (err) {
     await finishDiagnostics(diagId, 'failed', Date.now() - t0, stage, err instanceof Error ? err.message : String(err));
     throw err;
@@ -128,6 +137,8 @@ export async function processCapture(input: CaptureInput): Promise<void> {
     const sEx = Date.now();
     extraction = await extract({
       transcript,
+      segments: tr.segments,
+      userName: profile.displayName,
       selfIntro: profile.selfIntro,
       vocabulary,
       corrections: recentCorrections.map((c) => ({
