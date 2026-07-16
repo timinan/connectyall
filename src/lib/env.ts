@@ -5,6 +5,7 @@ const schema = z
     DATABASE_URL: z.string().url(),
     LLM_PROVIDER: z.enum(['anthropic', 'google', 'openai']).default('anthropic'),
     LLM_MODEL: z.string().default('claude-haiku-4-5'),
+    TRANSCRIBE_PROVIDER: z.enum(['whisper', 'nova3']).default('whisper'),
     ANTHROPIC_API_KEY: z.string().optional(),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),

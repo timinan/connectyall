@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import fixture from './__fixtures__/nova3-response.json';
 
 vi.mock('../lib/env', () => ({
   env: () => ({
     CLOUDFLARE_ACCOUNT_ID: 'acct',
     CLOUDFLARE_API_TOKEN: 'tok',
+    TRANSCRIBE_PROVIDER: 'whisper',
   }),
 }));
 
-import { transcribe } from './TranscriptionService';
+import { transcribe, parseNova3Response } from './TranscriptionService';
 
 const okBody = { success: true, result: { text: 'hello world' } };
 const errBody = { success: false, errors: [{ message: 'kaboom' }] };
@@ -130,5 +132,24 @@ describe('transcribe (with retry)', () => {
     const parsed = JSON.parse(init.body as string);
     expect(parsed.initial_prompt).toBe('Names: Sarah Lee, V.');
     expect(parsed.audio).toEqual([1, 2, 3]);
+  });
+});
+
+describe('parseNova3Response', () => {
+  it('extracts transcript text', () => {
+    const r = parseNova3Response(fixture);
+    expect(r.text.length).toBeGreaterThan(0);
+  });
+  it('builds speaker segments, merging consecutive same-speaker utterances', () => {
+    const r = parseNova3Response(fixture);
+    expect(r.segments).not.toBeNull();
+    expect(r.segments![0]).toEqual({ speaker: expect.any(Number), text: expect.any(String) });
+    for (let i = 1; i < r.segments!.length; i++) {
+      expect(r.segments![i].speaker).not.toBe(r.segments![i - 1].speaker); // merged
+    }
+  });
+  it('survives malformed input', () => {
+    expect(parseNova3Response({})).toEqual({ text: '', segments: null });
+    expect(parseNova3Response(null)).toEqual({ text: '', segments: null });
   });
 });
