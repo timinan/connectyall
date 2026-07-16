@@ -99,9 +99,10 @@ export async function processCapture(input: CaptureInput): Promise<void> {
 
   stage = 'transcribe';
   let transcript: string;
+  let tr: Awaited<ReturnType<typeof transcribe>>;
   try {
     const sTr = Date.now();
-    const tr = await transcribe(audio, { initialPrompt: buildWhisperInitialPrompt(vocabulary) });
+    tr = await transcribe(audio, { initialPrompt: buildWhisperInitialPrompt(vocabulary) });
     transcript = tr.text;
     await updateDiagnostics(diagId, { transcribeMs: Date.now() - sTr, transcriptChars: transcript.length });
   } catch (err) {
