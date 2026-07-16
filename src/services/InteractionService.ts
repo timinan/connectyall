@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../lib/db/client';
 import { interactions, contacts, type NewInteraction } from '../lib/db/schema';
 
@@ -52,6 +52,24 @@ export async function markFailed(interactionId: string): Promise<boolean> {
     .where(and(eq(interactions.id, interactionId), eq(interactions.status, 'processing')))
     .returning({ id: interactions.id });
   return updated.length > 0;
+}
+
+const CLAIM_TTL_SECONDS = 120;
+
+// Atomic claim: exactly one runner (inline after() or janitor) may own a
+// processing row at a time. A claim older than the TTL is treated as a dead
+// run (crashed function) and can be taken over.
+export async function claimCapture(interactionId: string): Promise<boolean> {
+  const claimed = await db()
+    .update(interactions)
+    .set({ claimedAt: new Date() })
+    .where(and(
+      eq(interactions.id, interactionId),
+      eq(interactions.status, 'processing'),
+      sql`(claimed_at IS NULL OR claimed_at < now() - (${CLAIM_TTL_SECONDS} * interval '1 second'))`,
+    ))
+    .returning({ id: interactions.id });
+  return claimed.length > 0;
 }
 
 export async function getStatus(

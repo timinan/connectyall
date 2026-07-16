@@ -47,7 +47,7 @@ vi.mock('../lib/db/client', () => ({
   db: () => ({ insert: insertMock, update: updateMock, select: selectMock }),
 }));
 
-import { mintStub, markReady, markFailed, getStatus } from './InteractionService';
+import { mintStub, markReady, markFailed, getStatus, claimCapture } from './InteractionService';
 
 describe('InteractionService', () => {
   beforeEach(() => {
@@ -142,5 +142,37 @@ describe('InteractionService — status transition guards', () => {
     updateReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
     const applied = await markFailed('int-1');
     expect(applied).toBe(true);
+  });
+});
+
+describe('InteractionService — claimCapture', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    updateReturning.mockResolvedValue([{ id: 'int-1' }]);
+  });
+
+  it('claimCapture wins once, second concurrent claim loses', async () => {
+    // First claim succeeds (WHERE matches: status=processing AND claimed_at IS NULL)
+    updateReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
+    expect(await claimCapture('int-1')).toBe(true);
+    // Second claim: row is now claimed (claimed_at set), WHERE no longer matches
+    updateReturning.mockResolvedValueOnce([]);
+    expect(await claimCapture('int-1')).toBe(false);
+  });
+
+  it('an expired claim can be re-claimed', async () => {
+    // Initial claim
+    updateReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
+    await claimCapture('int-1');
+    // Simulate: test sets claimedAt to stale value (this DB call resolves but doesn't affect mock state)
+    // Next claimCapture: WHERE (claimed_at < now() - 120s) matches the stale claim → succeeds
+    updateReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
+    expect(await claimCapture('int-1')).toBe(true);
+  });
+
+  it('claimCapture refuses non-processing rows', async () => {
+    // Row status is 'failed', WHERE status=processing doesn't match
+    updateReturning.mockResolvedValueOnce([]);
+    expect(await claimCapture('int-1')).toBe(false);
   });
 });

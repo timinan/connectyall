@@ -99,6 +99,13 @@
       "when": 1782200000000,
       "tag": "0013_capture_diagnostics",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1782900000000,
+      "tag": "0019_interactions_claimed_at",
+      "breakpoints": true
     }
   ]
 }
