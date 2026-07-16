@@ -1,7 +1,9 @@
 import { env } from '../lib/env';
 import { withRetry } from '../lib/retry';
 
-export type TranscribeOptions = { initialPrompt?: string };
+export type TranscriptSegment = { speaker: number; text: string };
+export type TranscriptResult = { text: string; segments: TranscriptSegment[] | null };
+export type TranscribeOptions = { initialPrompt?: string; mimeType?: string; keyterms?: string[] };
 
 // Single Whisper call. Retried by withRetry() in transcribe() below.
 // When an initialPrompt is set, we switch to Cloudflare's JSON body form
@@ -56,15 +58,18 @@ async function callWhisper(audio: Uint8Array, opts: TranscribeOptions = {}): Pro
   return json.result?.text ?? '';
 }
 
-export async function transcribe(audio: Uint8Array, opts: TranscribeOptions = {}): Promise<string> {
-  return withRetry(() => callWhisper(audio, opts), {
-    maxAttempts: 3, // 1 try + 2 retries
-    baseDelayMs: 500,
-    shouldRetry: (err) => {
-      // Retry transient network failures (no HTTP response) and 5xx.
-      if (err instanceof TypeError) return true; // fetch network error
-      const status = (err as { status?: number })?.status;
-      return typeof status === 'number' && status >= 500;
-    },
-  });
+const retryOpts = {
+  maxAttempts: 3, // 1 try + 2 retries
+  baseDelayMs: 500,
+  shouldRetry: (err: unknown) => {
+    // Retry transient network failures (no HTTP response) and 5xx.
+    if (err instanceof TypeError) return true; // fetch network error
+    const status = (err as { status?: number })?.status;
+    return typeof status === 'number' && status >= 500;
+  },
+};
+
+export async function transcribe(audio: Uint8Array, opts: TranscribeOptions = {}): Promise<TranscriptResult> {
+  const text = await withRetry(() => callWhisper(audio, opts), retryOpts);
+  return { text, segments: null };
 }

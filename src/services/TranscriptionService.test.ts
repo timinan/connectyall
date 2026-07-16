@@ -30,7 +30,9 @@ describe('transcribe (with retry)', () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse(okBody));
     const promise = transcribe(new Uint8Array([1, 2, 3]));
     await vi.runAllTimersAsync();
-    await expect(promise).resolves.toBe('hello world');
+    const result = await promise;
+    expect(result.text).toBe('hello world');
+    expect(result.segments).toBeNull();
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
@@ -40,7 +42,9 @@ describe('transcribe (with retry)', () => {
     f.mockResolvedValueOnce(jsonResponse(okBody));
     const promise = transcribe(new Uint8Array([1]));
     await vi.runAllTimersAsync();
-    await expect(promise).resolves.toBe('hello world');
+    const result = await promise;
+    expect(result.text).toBe('hello world');
+    expect(result.segments).toBeNull();
     expect(f).toHaveBeenCalledTimes(2);
   });
 
@@ -50,7 +54,9 @@ describe('transcribe (with retry)', () => {
     f.mockResolvedValueOnce(jsonResponse(okBody));
     const promise = transcribe(new Uint8Array([1]));
     await vi.runAllTimersAsync();
-    await expect(promise).resolves.toBe('hello world');
+    const result = await promise;
+    expect(result.text).toBe('hello world');
+    expect(result.segments).toBeNull();
     expect(f).toHaveBeenCalledTimes(2);
   });
 
@@ -96,7 +102,9 @@ describe('transcribe (with retry)', () => {
     f.mockResolvedValueOnce(jsonResponse({ success: true, result: {} }));
     const promise = transcribe(new Uint8Array([1]));
     await vi.runAllTimersAsync();
-    await expect(promise).resolves.toBe('');
+    const result = await promise;
+    expect(result.text).toBe('');
+    expect(result.segments).toBeNull();
     expect(f).toHaveBeenCalledTimes(1);
   });
 
