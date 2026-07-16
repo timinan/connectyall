@@ -20,7 +20,7 @@ type CaptureInput = {
   interactionId: string;  // pre-minted by /api/capture, always required now
 };
 
-async function capturesInLast24h(userId: string): Promise<number> {
+export async function capturesInLast24h(userId: string): Promise<number> {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const rows = await db()
     .select({ count: sql<number>`count(*)::int` })

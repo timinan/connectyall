@@ -72,6 +72,14 @@ export async function claimCapture(interactionId: string): Promise<boolean> {
   return claimed.length > 0;
 }
 
+export async function countProcessingForUser(userId: string): Promise<number> {
+  const rows = await db()
+    .select({ n: sql<number>`count(*)::int` })
+    .from(interactions)
+    .where(and(eq(interactions.userId, userId), eq(interactions.status, 'processing')));
+  return rows[0]?.n ?? 0;
+}
+
 export async function getStatus(
   interactionId: string
 ): Promise<{ id: string; status: 'processing' | 'ready' | 'failed'; contactId: string | null; structuredData: unknown } | null> {

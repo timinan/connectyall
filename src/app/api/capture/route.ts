@@ -2,8 +2,9 @@ import { NextResponse, after } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getServerSession } from '@/lib/auth/session';
 import { uploadBytes } from '@/lib/r2/client';
-import { mintStub, markFailed } from '@/services/InteractionService';
-import { processCapture } from '@/services/CaptureService';
+import { mintStub, markFailed, countProcessingForUser } from '@/services/InteractionService';
+import { capturesInLast24h, processCapture } from '@/services/CaptureService';
+import { env } from '@/lib/env';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,6 +15,14 @@ const ALLOWED_MIME = ['audio/webm', 'audio/ogg', 'audio/mp3', 'audio/mpeg', 'aud
 export async function POST(req: Request) {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
+  const [done, inFlight] = await Promise.all([
+    capturesInLast24h(session.user.id),
+    countProcessingForUser(session.user.id),
+  ]);
+  if (done + inFlight >= env().MAX_CAPTURES_PER_DAY) {
+    return NextResponse.json({ error: 'daily capture limit reached' }, { status: 429 });
+  }
 
   const form = await req.formData();
   const file = form.get('audio');
