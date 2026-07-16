@@ -7,6 +7,7 @@ import {
   type CorrectionForPrompt,
   type ExampleForPrompt,
 } from '../lib/personalization';
+import { type TranscriptSegment } from './TranscriptionService';
 
 export const ContactSchema = z.object({
   name: z.string(),
@@ -245,6 +246,26 @@ If no explicit preference but ONLY ONE channel was mentioned, mark that as prefe
 If multiple channels mentioned with no preference signal, return null.
 If no contact channels were mentioned at all, return null.`;
 
+const CONVERSATION_MODE_SECTION = (userName: string | null | undefined) => `
+
+CONVERSATION MODE:
+The transcript below is a live conversation with speaker labels, recorded by the app user while talking to someone they just met.
+- Identify which speaker is the app user${userName ? ` (their name is "${userName}")` : ''}: they ask for the other person's details, introduce them, or refer to themselves by that name. NEVER create a contact for the app user.
+- Extract the OTHER speaker(s) as the contact(s).
+- Attribute answers to questions: if one speaker asks "what's your number?" and the other answers with digits, the number belongs to the ANSWERING speaker.
+- If both people exchange their own details, capture only the non-user speaker's details.
+- Greetings and small talk are not contact data. The recap covers what they genuinely chatted about, same rules as a memo.
+
+Example:
+Speaker 0: So great meeting you! What was the best way to reach you?
+Speaker 1: I'm on Telegram, it's bella underscore n v. Bella, B-E-L-L-A.
+Speaker 0: Got it. I'm Tim by the way, tim at connectyall dot app.
+→ One contact: name "Bella", telegram "@bella_nv". Speaker 0 is the user; their email is NOT captured.`;
+
+function renderSegments(segments: TranscriptSegment[]): string {
+  return segments.map((s) => `Speaker ${s.speaker}: ${s.text}`).join('\n');
+}
+
 // Normalize: some LLMs return the literal string "null" or "None" for missing fields
 const NULLISH = new Set(['null', 'none', 'n/a', 'undefined', '']);
 
@@ -261,6 +282,8 @@ function normalizeContacts(contacts: ExtractedContact[]): ExtractedContact[] {
 
 export async function extract(input: {
   transcript: string;
+  segments?: TranscriptSegment[] | null;
+  userName?: string | null;
   selfIntro?: string | null;
   vocabulary?: string | null;
   corrections?: CorrectionForPrompt[];
@@ -272,12 +295,14 @@ export async function extract(input: {
     corrections: input.corrections ?? [],
     examples: input.examples ?? [],
   });
+  const distinct = new Set((input.segments ?? []).map((s) => s.speaker)).size;
+  const conversation = distinct >= 2;
   const result = await withRetry(
     () => generateObject({
       model: getLLM(),
       schema: ExtractionSchema,
-      system: `${SYSTEM_PROMPT}${personalization}`,
-      prompt: `${userContext}Transcript:\n${input.transcript}`,
+      system: `${SYSTEM_PROMPT}${personalization}${conversation ? CONVERSATION_MODE_SECTION(input.userName) : ''}`,
+      prompt: `${userContext}Transcript:\n${conversation ? renderSegments(input.segments!) : input.transcript}`,
     }),
     {
       maxAttempts: 3, // 1 try + 2 retries

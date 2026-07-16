@@ -96,6 +96,46 @@ describe('extract (with retry)', () => {
   });
 });
 
+describe('extract — conversation mode', () => {
+  let capturedSystem: string;
+  let capturedPrompt: string;
+
+  beforeEach(() => {
+    generateObjectMock.mockReset();
+    generateObjectMock.mockImplementation(async (args: { system: string; prompt: string }) => {
+      capturedSystem = args.system;
+      capturedPrompt = args.prompt;
+      return { object: { contacts: [], was_live_recording: false } };
+    });
+  });
+
+  it('two-speaker segments render a labeled transcript and CONVERSATION MODE section', async () => {
+    await extract({
+      transcript: 'flat text',
+      segments: [
+        { speaker: 0, text: 'What was your number again?' },
+        { speaker: 1, text: 'It is 604-555-1234.' },
+      ],
+      userName: 'Tim Nan',
+    });
+    expect(capturedSystem).toContain('CONVERSATION MODE');
+    expect(capturedSystem).toContain('Tim Nan');
+    expect(capturedPrompt).toContain('Speaker 0: What was your number again?');
+    expect(capturedPrompt).toContain('Speaker 1: It is 604-555-1234.');
+  });
+
+  it('single-speaker segments fall back to memo mode', async () => {
+    await extract({ transcript: 'flat text', segments: [{ speaker: 0, text: 'flat text' }] });
+    expect(capturedSystem).not.toContain('CONVERSATION MODE');
+    expect(capturedPrompt).toContain('Transcript:\nflat text');
+  });
+
+  it('null segments unchanged from today', async () => {
+    await extract({ transcript: 'flat text' });
+    expect(capturedSystem).not.toContain('CONVERSATION MODE');
+  });
+});
+
 describe('extract — follow_ups field', () => {
   beforeEach(() => generateObjectMock.mockReset());
 
