@@ -160,6 +160,12 @@ export type NewContact = typeof contacts.$inferInsert;
 export type Interaction = typeof interactions.$inferSelect;
 export type NewInteraction = typeof interactions.$inferInsert;
 
+export const rateLimits = pgTable('rate_limit', {
+  key: text('key').primaryKey(),
+  count: integer('count').notNull(),
+  lastRequest: bigint('last_request', { mode: 'number' }).notNull(),
+});
+
 export const sessions = pgTable('sessions', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
