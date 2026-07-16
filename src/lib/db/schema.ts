@@ -71,6 +71,7 @@ export const interactions = pgTable(
     userId: uuid('user_id'),
     audioR2Key: text('audio_r2_key'),
     mimeType: text('mime_type'),
+    claimedAt: timestamp('claimed_at', { withTimezone: true }),
   },
   (t) => ({
     contactIdx: index('interactions_contact_id_idx').on(t.contactId),

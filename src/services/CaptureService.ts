@@ -6,7 +6,7 @@ import { transcribe } from './TranscriptionService';
 import { extract, type ExtractedContact } from './ExtractionService';
 import { getById } from './UserProfileService';
 import { createContact, findByNameAndCompany } from './ContactService';
-import { mintStub, markReady, markFailed } from './InteractionService';
+import { mintStub, markReady, markFailed, claimCapture } from './InteractionService';
 import { renderCard } from './CardService';
 import { uploadBytes, downloadObject } from '../lib/r2/client';
 import { createManyForInteraction as createManyFollowUps } from './FollowUpsService';
@@ -70,6 +70,11 @@ export async function processCapture(input: CaptureInput): Promise<void> {
   const profile = await getById(input.userId);
   if (!profile) {
     await markFailed(input.interactionId);
+    return;
+  }
+
+  if (!(await claimCapture(input.interactionId))) {
+    console.log(`[capture] skipping — row claimed by another runner or already resolved (interactionId=${input.interactionId})`);
     return;
   }
 
