@@ -88,7 +88,7 @@ function decodeUploadError(status: number, raw: string): RecError {
       body: 'That recording is over 20 MB. Try a shorter memo (under about a minute).',
     };
   }
-  if (/unsupported mime/i.test(apiMessage)) {
+  if (/unsupported mime/i.test(apiMessage) || /not a recognized audio/i.test(apiMessage)) {
     return {
       title: 'Audio format not supported',
       body: "Your browser saved the recording in a format we can't read yet. Try a different browser or device.",

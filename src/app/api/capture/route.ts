@@ -5,6 +5,7 @@ import { uploadBytes } from '@/lib/r2/client';
 import { mintStub, markFailed, countProcessingForUser } from '@/services/InteractionService';
 import { capturesInLast24h, processCapture } from '@/services/CaptureService';
 import { env } from '@/lib/env';
+import { sniffAudioMime } from '@/lib/audio-sniff';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,6 +37,8 @@ export async function POST(req: Request) {
   const ext = baseMime.split('/').pop() ?? 'webm';
   const audioR2Key = `captures/${session.user.id}/${randomUUID()}.${ext}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
+  const sniffed = sniffAudioMime(bytes);
+  if (!sniffed) return NextResponse.json({ error: 'not a recognized audio file' }, { status: 400 });
   await uploadBytes({ key: audioR2Key, bytes, contentType: baseMime });
 
   // Mint the stub WITH capture metadata. If the inline pipeline drops, the
