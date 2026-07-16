@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../lib/db/client';
 import { interactions, contacts, type NewInteraction } from '../lib/db/schema';
 
@@ -34,26 +34,24 @@ export async function mintStub(
   return row.id;
 }
 
-export async function markReady(
-  interactionId: string,
-  contactId: string,
-  structuredData: unknown
-): Promise<void> {
-  await db()
+export async function markReady(interactionId: string, contactId: string, structuredData: unknown): Promise<boolean> {
+  const updated = await db()
     .update(interactions)
     .set({ contactId, structuredData, status: 'ready' })
-    .where(eq(interactions.id, interactionId));
-  await db()
-    .update(contacts)
-    .set({ lastTouchedAt: new Date() })
-    .where(eq(contacts.id, contactId));
+    .where(and(eq(interactions.id, interactionId), eq(interactions.status, 'processing')))
+    .returning({ id: interactions.id });
+  if (updated.length === 0) return false;
+  await db().update(contacts).set({ lastTouchedAt: new Date() }).where(eq(contacts.id, contactId));
+  return true;
 }
 
-export async function markFailed(interactionId: string): Promise<void> {
-  await db()
+export async function markFailed(interactionId: string): Promise<boolean> {
+  const updated = await db()
     .update(interactions)
     .set({ status: 'failed' })
-    .where(eq(interactions.id, interactionId));
+    .where(and(eq(interactions.id, interactionId), eq(interactions.status, 'processing')))
+    .returning({ id: interactions.id });
+  return updated.length > 0;
 }
 
 export async function getStatus(
