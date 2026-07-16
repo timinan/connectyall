@@ -82,13 +82,14 @@ export async function countProcessingForUser(userId: string): Promise<number> {
 
 export async function getStatus(
   interactionId: string
-): Promise<{ id: string; status: 'processing' | 'ready' | 'failed'; contactId: string | null; structuredData: unknown } | null> {
+): Promise<{ id: string; status: 'processing' | 'ready' | 'failed'; contactId: string | null; structuredData: unknown; userId: string | null } | null> {
   const rows = await db()
     .select({
       id: interactions.id,
       status: interactions.status,
       contactId: interactions.contactId,
       structuredData: interactions.structuredData,
+      userId: interactions.userId,
     })
     .from(interactions)
     .where(eq(interactions.id, interactionId))

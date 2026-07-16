@@ -77,9 +77,21 @@ describe('InteractionService', () => {
   });
 
   it('getStatus returns the row', async () => {
-    selectLimit.mockResolvedValueOnce([{ id: 'int-1', status: 'ready' }]);
+    selectLimit.mockResolvedValueOnce([{ id: 'int-1', status: 'ready', userId: 'user-1' }]);
     const r = await getStatus('int-1');
     expect(r?.status).toBe('ready');
+  });
+
+  it('getStatus includes userId for ownership checks', async () => {
+    selectLimit.mockResolvedValueOnce([{ id: 'int-1', status: 'processing', contactId: null, structuredData: {}, userId: 'user-abc' }]);
+    const r = await getStatus('int-1');
+    expect(r?.userId).toBe('user-abc');
+  });
+
+  it('getStatus returns null userId for legacy bot-era rows', async () => {
+    selectLimit.mockResolvedValueOnce([{ id: 'int-2', status: 'ready', contactId: null, structuredData: {}, userId: null }]);
+    const r = await getStatus('int-2');
+    expect(r?.userId).toBeNull();
   });
 });
 

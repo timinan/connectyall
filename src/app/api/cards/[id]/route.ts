@@ -25,6 +25,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const stub = await getStatus(id);
   if (!stub) return NextResponse.json({ error: 'not found' }, { status: 404 });
 
+  if (stub.userId !== session.user.id) return NextResponse.json({ error: 'not found' }, { status: 404 });
+
   if (stub.status !== 'ready') {
     return NextResponse.json({ status: stub.status });
   }
