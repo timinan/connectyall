@@ -3,8 +3,9 @@ import { z } from 'zod';
 import { getServerSession } from '@/lib/auth/session';
 import { updateContactField } from '@/services/ContactService';
 import { db } from '@/lib/db/client';
-import { contacts } from '@/lib/db/schema';
+import { contacts, interactions } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { deleteObject } from '@/lib/r2/client';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -67,9 +68,18 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
+  // Delete R2 objects before the DB row so the cascade doesn't race us.
+  // Best-effort: missing objects throw but must not block the contact delete.
+  const interactionRows = await db()
+    .select({ id: interactions.id, audioR2Key: interactions.audioR2Key })
+    .from(interactions)
+    .where(eq(interactions.contactId, id));
+  for (const row of interactionRows) {
+    try { await deleteObject(`cards/${row.id}.png`); } catch { /* already gone, ignore */ }
+    if (row.audioR2Key) { try { await deleteObject(row.audioR2Key); } catch { /* ignore */ } }
+  }
+
   // interactions are cascaded by the FK on contact_id.
-  // R2 card PNGs for the contact's past interactions are not cleaned up here —
-  // that cleanup will land in the privacy-hardening branch.
   await db().delete(contacts).where(eq(contacts.id, id));
   return NextResponse.json({ ok: true });
 }
