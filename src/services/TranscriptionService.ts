@@ -122,8 +122,9 @@ const retryOpts = {
   maxAttempts: 3, // 1 try + 2 retries
   baseDelayMs: 500,
   shouldRetry: (err: unknown) => {
-    // Retry transient network failures (no HTTP response) and 5xx.
+    // Retry transient network failures (no HTTP response), timeouts, and 5xx.
     if (err instanceof TypeError) return true; // fetch network error
+    if (err instanceof DOMException && (err.name === 'TimeoutError' || err.name === 'AbortError')) return true;
     const status = (err as { status?: number })?.status;
     return typeof status === 'number' && status >= 500;
   },
