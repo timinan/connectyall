@@ -68,7 +68,7 @@ export const interactions = pgTable(
     structuredData: jsonb('structured_data').notNull(),
     status: interactionStatusEnum('status').default('ready').notNull(),
     occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),
-    userId: uuid('user_id'),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
     audioR2Key: text('audio_r2_key'),
     mimeType: text('mime_type'),
     claimedAt: timestamp('claimed_at', { withTimezone: true }),

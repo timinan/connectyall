@@ -113,6 +113,13 @@
       "when": 1782900100000,
       "tag": "0020_rate_limit_table",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1782900200000,
+      "tag": "0022_interactions_user_fk",
+      "breakpoints": true
     }
   ]
 }
