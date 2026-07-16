@@ -37,8 +37,12 @@ export const recoverStuckCapturesFn = inngest.createFunction(
         const ageMs = Date.now() - new Date(row.occurredAt).getTime();
         if (ageMs > 30 * 60 * 1000) {
           try {
-            await markFailed(row.id);
-            console.error(`[janitor] giving up after 30min (interactionId=${row.id})`);
+            const applied = await markFailed(row.id);
+            if (!applied) {
+              console.log(`[capture] markFailed skipped — row already resolved (interactionId=${row.id})`);
+            } else {
+              console.error(`[janitor] giving up after 30min (interactionId=${row.id})`);
+            }
           } catch (markErr) {
             const markMsg = markErr instanceof Error ? markErr.message : String(markErr);
             console.error(`[janitor] markFailed also failed (interactionId=${row.id}) — ${markMsg}`);

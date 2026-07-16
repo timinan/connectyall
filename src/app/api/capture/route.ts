@@ -55,7 +55,8 @@ export async function POST(req: Request) {
       // for the user to wait. The inline path is the source of truth for
       // "this recording produced a hard error."
       try {
-        await markFailed(interactionId);
+        const applied = await markFailed(interactionId);
+        if (!applied) console.log(`[capture] markFailed skipped — row already resolved (interactionId=${interactionId})`);
       } catch (markErr) {
         const m = markErr instanceof Error ? markErr.message : String(markErr);
         console.error(`[capture] markFailed also failed (interactionId=${interactionId}) — ${m}`);
