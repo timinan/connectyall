@@ -47,7 +47,7 @@ vi.mock('../lib/db/client', () => ({
   db: () => ({ insert: insertMock, update: updateMock, select: selectMock }),
 }));
 
-import { mintStub, markReady, markFailed, getStatus, claimCapture } from './InteractionService';
+import { mintStub, markReady, markFailed, getStatus, claimCapture, countProcessingForUser } from './InteractionService';
 
 describe('InteractionService', () => {
   beforeEach(() => {
@@ -174,5 +174,23 @@ describe('InteractionService — claimCapture', () => {
     // Row status is 'failed', WHERE status=processing doesn't match
     updateReturning.mockResolvedValueOnce([]);
     expect(await claimCapture('int-1')).toBe(false);
+  });
+});
+
+describe('InteractionService — countProcessingForUser', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns the count from the query result', async () => {
+    // countProcessingForUser: db().select().from().where() — no .limit(), so selectWhere resolves
+    selectWhere.mockResolvedValueOnce([{ n: 3 }]);
+    const count = await countProcessingForUser('user-abc');
+    expect(count).toBe(3);
+    expect(selectMock).toHaveBeenCalled();
+  });
+
+  it('returns 0 when the result row is missing', async () => {
+    selectWhere.mockResolvedValueOnce([]);
+    const count = await countProcessingForUser('user-abc');
+    expect(count).toBe(0);
   });
 });
