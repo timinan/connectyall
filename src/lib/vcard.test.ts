@@ -34,6 +34,14 @@ describe('buildVCard', () => {
   });
 });
 
+describe('CRLF injection hygiene', () => {
+  it('newlines in fields cannot inject vcard properties', () => {
+    const v = buildContactVCard({ name: 'Mallory\r\nTEL:+1555000000', emails: [], phones: [], telegram: null, x: null, linkedin: null, website: null });
+    expect(v).not.toContain('\r\nTEL:+1555000000');
+    expect(v).toContain('FN:Mallory TEL:+1555000000'); // folded onto one line
+  });
+});
+
 describe('N: field name splitting', () => {
   it('splits two-part name into given + family', () => {
     const v = buildVCard({
