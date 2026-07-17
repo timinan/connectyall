@@ -2,14 +2,17 @@ import { inngest } from './client';
 import { processCapture, findStuckProcessingCaptures } from '@/services/CaptureService';
 import { markFailed } from '@/services/InteractionService';
 
-// Cron-triggered janitor. Every 2 minutes, sweep the interactions table for
-// rows that started processing more than 60 seconds ago and never reached
-// 'ready' or 'failed'. Re-run the pipeline for each. Audio in R2 + the
-// capture metadata on the row are the durable handoff from the fast path
-// (`/api/capture` running processCapture inline via `after()`) to here.
+// Cron-triggered janitor. Sweep the interactions table for rows that started
+// processing more than 60 seconds ago and never reached 'ready' or 'failed'.
+// Re-run the pipeline for each. Audio in R2 + the capture metadata on the row
+// are the durable handoff from the fast path (`/api/capture` running
+// processCapture inline via `after()`) to here.
 export const recoverStuckCapturesFn = inngest.createFunction(
   { id: 'recover-stuck-captures', name: 'Recover stuck captures' },
-  { cron: '*/2 * * * *' }, // every 2 minutes
+  // Cadence must exceed Neon's autosuspend delay or the DB never sleeps and
+  // burns the free-plan compute allowance. Users already see failures within
+  // ~60s via the inline markFailed; this sweep is only crash recovery.
+  { cron: '*/15 * * * *' },
   async ({ step }) => {
     const stuck = await step.run('find-stuck', () =>
       findStuckProcessingCaptures({ maxAgeSeconds: 60, limit: 20 }),
