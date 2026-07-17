@@ -22,6 +22,7 @@ const schema = z
     RESEND_FROM_EMAIL: z.string().min(1),
     BETTER_AUTH_SECRET: z.string().min(16),
     BETTER_AUTH_URL: z.string().url(),
+    ADMIN_EMAILS: z.string().default('timmy.nan@gmail.com,tim.nan.91@gmail.com'),
   })
   .superRefine((data, ctx) => {
     if (data.LLM_PROVIDER === 'anthropic' && !data.ANTHROPIC_API_KEY) {

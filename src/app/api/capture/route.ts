@@ -2,8 +2,10 @@ import { NextResponse, after } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { getServerSession } from '@/lib/auth/session';
 import { uploadBytes } from '@/lib/r2/client';
-import { mintStub, markFailed } from '@/services/InteractionService';
-import { processCapture } from '@/services/CaptureService';
+import { mintStub, markFailed, countProcessingForUser } from '@/services/InteractionService';
+import { capturesInLast24h, processCapture } from '@/services/CaptureService';
+import { env } from '@/lib/env';
+import { sniffAudioMime } from '@/lib/audio-sniff';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,6 +16,14 @@ const ALLOWED_MIME = ['audio/webm', 'audio/ogg', 'audio/mp3', 'audio/mpeg', 'aud
 export async function POST(req: Request) {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
+  const [done, inFlight] = await Promise.all([
+    capturesInLast24h(session.user.id),
+    countProcessingForUser(session.user.id),
+  ]);
+  if (done + inFlight >= env().MAX_CAPTURES_PER_DAY) {
+    return NextResponse.json({ error: 'daily capture limit reached' }, { status: 429 });
+  }
 
   const form = await req.formData();
   const file = form.get('audio');
@@ -27,6 +37,8 @@ export async function POST(req: Request) {
   const ext = baseMime.split('/').pop() ?? 'webm';
   const audioR2Key = `captures/${session.user.id}/${randomUUID()}.${ext}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
+  const sniffed = sniffAudioMime(bytes);
+  if (!sniffed) return NextResponse.json({ error: 'not a recognized audio file' }, { status: 400 });
   await uploadBytes({ key: audioR2Key, bytes, contentType: baseMime });
 
   // Mint the stub WITH capture metadata. If the inline pipeline drops, the
@@ -55,7 +67,8 @@ export async function POST(req: Request) {
       // for the user to wait. The inline path is the source of truth for
       // "this recording produced a hard error."
       try {
-        await markFailed(interactionId);
+        const applied = await markFailed(interactionId);
+        if (!applied) console.log(`[capture] markFailed skipped — row already resolved (interactionId=${interactionId})`);
       } catch (markErr) {
         const m = markErr instanceof Error ? markErr.message : String(markErr);
         console.error(`[capture] markFailed also failed (interactionId=${interactionId}) — ${m}`);

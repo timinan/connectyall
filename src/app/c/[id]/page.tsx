@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const found = await getInteractionWithContact(id);
-  if (!found) return { title: 'Connectyall' };
+  if (!found) return { title: 'Connectyall', robots: { index: false, follow: false } };
   const sender = await getById(found.contact.userId);
   const title = `Card from ${sender?.displayName ?? 'Connectyall'}`;
   const description = sender?.shortBlurb ?? (found.interaction.structuredData as { recap?: string } | null)?.recap ?? '';
@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return {
     title,
     description,
+    robots: { index: false, follow: false },
     openGraph: {
       title,
       description,

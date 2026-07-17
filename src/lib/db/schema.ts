@@ -68,9 +68,10 @@ export const interactions = pgTable(
     structuredData: jsonb('structured_data').notNull(),
     status: interactionStatusEnum('status').default('ready').notNull(),
     occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),
-    userId: uuid('user_id'),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
     audioR2Key: text('audio_r2_key'),
     mimeType: text('mime_type'),
+    claimedAt: timestamp('claimed_at', { withTimezone: true }),
   },
   (t) => ({
     contactIdx: index('interactions_contact_id_idx').on(t.contactId),
@@ -158,6 +159,12 @@ export type Contact = typeof contacts.$inferSelect;
 export type NewContact = typeof contacts.$inferInsert;
 export type Interaction = typeof interactions.$inferSelect;
 export type NewInteraction = typeof interactions.$inferInsert;
+
+export const rateLimits = pgTable('rate_limit', {
+  key: text('key').primaryKey(),
+  count: integer('count').notNull(),
+  lastRequest: bigint('last_request', { mode: 'number' }).notNull(),
+});
 
 export const sessions = pgTable('sessions', {
   id: uuid('id').defaultRandom().primaryKey(),

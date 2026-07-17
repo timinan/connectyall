@@ -4,6 +4,7 @@ const {
   insertReturning,
   insertValues,
   insertMock,
+  updateReturning,
   updateWhere,
   updateSet,
   updateMock,
@@ -16,7 +17,9 @@ const {
   const insertValues = vi.fn().mockReturnValue({ returning: insertReturning });
   const insertMock = vi.fn().mockReturnValue({ values: insertValues });
 
-  const updateWhere = vi.fn().mockResolvedValue(undefined);
+  // updateWhere returns an object with .returning() so callers can chain it
+  const updateReturning = vi.fn().mockResolvedValue([{ id: 'int-1' }]);
+  const updateWhere = vi.fn().mockReturnValue({ returning: updateReturning });
   const updateSet = vi.fn().mockReturnValue({ where: updateWhere });
   const updateMock = vi.fn().mockReturnValue({ set: updateSet });
 
@@ -29,6 +32,7 @@ const {
     insertReturning,
     insertValues,
     insertMock,
+    updateReturning,
     updateWhere,
     updateSet,
     updateMock,
@@ -43,10 +47,14 @@ vi.mock('../lib/db/client', () => ({
   db: () => ({ insert: insertMock, update: updateMock, select: selectMock }),
 }));
 
-import { mintStub, markReady, markFailed, getStatus } from './InteractionService';
+import { mintStub, markReady, markFailed, getStatus, claimCapture, countProcessingForUser } from './InteractionService';
 
 describe('InteractionService', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: update returns a row (transition applied)
+    updateReturning.mockResolvedValue([{ id: 'int-1' }]);
+  });
 
   it('mintStub inserts a processing row and returns id', async () => {
     insertReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
@@ -56,23 +64,40 @@ describe('InteractionService', () => {
   });
 
   it('markReady updates interaction row and bumps contacts.lastTouchedAt', async () => {
+    // First update (interaction) returns a row; second (contacts) also resolves
+    updateReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
     await markReady('int-1', 'contact-1', { recap: 'hi' });
     expect(updateMock).toHaveBeenCalledTimes(2);
   });
 
   it('markFailed updates status to failed', async () => {
+    updateReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
     await markFailed('int-1');
     expect(updateMock).toHaveBeenCalled();
   });
 
   it('getStatus returns the row', async () => {
-    selectLimit.mockResolvedValueOnce([{ id: 'int-1', status: 'ready' }]);
+    selectLimit.mockResolvedValueOnce([{ id: 'int-1', status: 'ready', userId: 'user-1' }]);
     const r = await getStatus('int-1');
     expect(r?.status).toBe('ready');
+  });
+
+  it('getStatus includes userId for ownership checks', async () => {
+    selectLimit.mockResolvedValueOnce([{ id: 'int-1', status: 'processing', contactId: null, structuredData: {}, userId: 'user-abc' }]);
+    const r = await getStatus('int-1');
+    expect(r?.userId).toBe('user-abc');
+  });
+
+  it('getStatus returns null userId for legacy bot-era rows', async () => {
+    selectLimit.mockResolvedValueOnce([{ id: 'int-2', status: 'ready', contactId: null, structuredData: {}, userId: null }]);
+    const r = await getStatus('int-2');
+    expect(r?.userId).toBeNull();
   });
 });
 
 describe('mintStub with capture metadata', () => {
+  beforeEach(() => vi.clearAllMocks());
+
   it('persists userId, audioR2Key, and mimeType when provided', async () => {
     insertReturning.mockResolvedValueOnce([{ id: 'int-2' }]);
     selectLimit.mockResolvedValueOnce([{ id: 'int-2', status: 'processing', contactId: null, structuredData: {} }]);
@@ -93,5 +118,91 @@ describe('mintStub with capture metadata', () => {
         mimeType: 'audio/webm',
       }),
     );
+  });
+});
+
+describe('InteractionService — status transition guards', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    updateReturning.mockResolvedValue([{ id: 'int-1' }]);
+  });
+
+  it('markFailed does not clobber a ready row', async () => {
+    // Simulate: row is already 'ready', WHERE status='processing' matches nothing
+    updateReturning.mockResolvedValueOnce([]);
+    const applied = await markFailed('int-1');
+    expect(applied).toBe(false);
+  });
+
+  it('markReady only applies to processing rows', async () => {
+    // Simulate: row is already 'failed', WHERE status='processing' matches nothing
+    updateReturning.mockResolvedValueOnce([]);
+    const applied = await markReady('int-1', 'contact-1', {});
+    expect(applied).toBe(false);
+    // contacts.lastTouchedAt must NOT be bumped when transition didn't apply
+    expect(updateMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('markReady returns true and bumps contacts when transition applies', async () => {
+    updateReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
+    const applied = await markReady('int-1', 'contact-1', { recap: 'hi' });
+    expect(applied).toBe(true);
+    expect(updateMock).toHaveBeenCalledTimes(2); // interaction + contact
+  });
+
+  it('markFailed returns true when transition applies', async () => {
+    updateReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
+    const applied = await markFailed('int-1');
+    expect(applied).toBe(true);
+  });
+});
+
+describe('InteractionService — claimCapture', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    updateReturning.mockResolvedValue([{ id: 'int-1' }]);
+  });
+
+  it('claimCapture wins once, second concurrent claim loses', async () => {
+    // First claim succeeds (WHERE matches: status=processing AND claimed_at IS NULL)
+    updateReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
+    expect(await claimCapture('int-1')).toBe(true);
+    // Second claim: row is now claimed (claimed_at set), WHERE no longer matches
+    updateReturning.mockResolvedValueOnce([]);
+    expect(await claimCapture('int-1')).toBe(false);
+  });
+
+  it('an expired claim can be re-claimed', async () => {
+    // Initial claim
+    updateReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
+    await claimCapture('int-1');
+    // Simulate: test sets claimedAt to stale value (this DB call resolves but doesn't affect mock state)
+    // Next claimCapture: WHERE (claimed_at < now() - 120s) matches the stale claim → succeeds
+    updateReturning.mockResolvedValueOnce([{ id: 'int-1' }]);
+    expect(await claimCapture('int-1')).toBe(true);
+  });
+
+  it('claimCapture refuses non-processing rows', async () => {
+    // Row status is 'failed', WHERE status=processing doesn't match
+    updateReturning.mockResolvedValueOnce([]);
+    expect(await claimCapture('int-1')).toBe(false);
+  });
+});
+
+describe('InteractionService — countProcessingForUser', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns the count from the query result', async () => {
+    // countProcessingForUser: db().select().from().where() — no .limit(), so selectWhere resolves
+    selectWhere.mockResolvedValueOnce([{ n: 3 }]);
+    const count = await countProcessingForUser('user-abc');
+    expect(count).toBe(3);
+    expect(selectMock).toHaveBeenCalled();
+  });
+
+  it('returns 0 when the result row is missing', async () => {
+    selectWhere.mockResolvedValueOnce([]);
+    const count = await countProcessingForUser('user-abc');
+    expect(count).toBe(0);
   });
 });

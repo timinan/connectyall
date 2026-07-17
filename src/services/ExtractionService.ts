@@ -265,6 +265,9 @@ export async function extract(input: {
       schema: ExtractionSchema,
       system: SYSTEM_PROMPT,
       prompt: `${userContext}Transcript:\n${input.transcript}`,
+      // 45s timeout: a hung Gemini upstream previously burned the whole function budget
+      // silently; now it fails fast enough for one retry to fit inside the function ceiling.
+      abortSignal: AbortSignal.timeout(45_000),
     }),
     {
       maxAttempts: 3, // 1 try + 2 retries

@@ -3,6 +3,8 @@ import { linkedinUrl, xUrl, telegramUrl, websiteUrl, whatsappUrl, wechatUrl, lin
 
 const CRLF = '\r\n';
 
+const clean = (s: string) => s.replace(/[\r\n]+/g, ' ').trim();
+
 function splitName(fullName: string): { given: string; family: string } {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return { given: '', family: '' };
@@ -16,10 +18,10 @@ export function buildVCard(input: {
   socials: Socials;
   telegramUsername: string | null;
 }): string {
-  const { given, family } = splitName(input.displayName);
-  const lines: string[] = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${input.displayName}`, `N:${family};${given};;;`];
-  if (input.tagline) lines.push(`TITLE:${input.tagline}`);
-  if (input.socials.email) lines.push(`EMAIL;TYPE=INTERNET:${input.socials.email}`);
+  const { given, family } = splitName(clean(input.displayName));
+  const lines: string[] = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${clean(input.displayName)}`, `N:${family};${given};;;`];
+  if (input.tagline) lines.push(`TITLE:${clean(input.tagline)}`);
+  if (input.socials.email) lines.push(`EMAIL;TYPE=INTERNET:${clean(input.socials.email)}`);
   if (input.socials.website) lines.push(`URL;TYPE=Website:${websiteUrl(input.socials.website)}`);
   if (input.socials.x) lines.push(`URL;TYPE=Twitter:${xUrl(input.socials.x)}`);
   if (input.socials.linkedin) lines.push(`URL;TYPE=LinkedIn:${linkedinUrl(input.socials.linkedin)}`);
@@ -45,12 +47,12 @@ export function buildContactVCard(input: {
   company?: string | null;
   role?: string | null;
 }): string {
-  const { given, family } = splitName(input.name);
-  const lines: string[] = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${input.name}`, `N:${family};${given};;;`];
-  if (input.company) lines.push(`ORG:${input.company}`);
-  if (input.role) lines.push(`TITLE:${input.role}`);
-  for (const email of input.emails) lines.push(`EMAIL;TYPE=INTERNET:${email}`);
-  for (const phone of input.phones) lines.push(`TEL:${phone}`);
+  const { given, family } = splitName(clean(input.name));
+  const lines: string[] = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${clean(input.name)}`, `N:${family};${given};;;`];
+  if (input.company) lines.push(`ORG:${clean(input.company)}`);
+  if (input.role) lines.push(`TITLE:${clean(input.role)}`);
+  for (const email of input.emails) lines.push(`EMAIL;TYPE=INTERNET:${clean(email)}`);
+  for (const phone of input.phones) lines.push(`TEL:${clean(phone)}`);
   if (input.telegram) lines.push(`URL;TYPE=Telegram:${telegramUrl(input.telegram)}`);
   if (input.x) lines.push(`URL;TYPE=Twitter:${xUrl(input.x)}`);
   if (input.linkedin) lines.push(`URL;TYPE=LinkedIn:${linkedinUrl(input.linkedin)}`);

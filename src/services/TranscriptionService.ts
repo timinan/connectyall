@@ -5,9 +5,8 @@ import { withRetry } from '../lib/retry';
 async function callWhisper(audio: Uint8Array): Promise<string> {
   const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN } = env();
   const url = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/openai/whisper`;
-  // No fetch timeout here — the Vercel 60s function ceiling is the safety net
-  // on hung-upstream. Retries don't help against a hang; they only help against
-  // a clean reject or 5xx response.
+  // 30s timeout: a hung Whisper upstream previously burned the whole function budget
+  // silently; now it fails fast enough for one retry to fit inside the function ceiling.
   const res = await fetch(url, {
     method: 'POST',
     headers: {
@@ -15,6 +14,7 @@ async function callWhisper(audio: Uint8Array): Promise<string> {
       'Content-Type': 'application/octet-stream',
     },
     body: new Blob([audio as Uint8Array<ArrayBuffer>], { type: 'application/octet-stream' }),
+    signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) {
     // 4xx → non-retryable HardError; 5xx → retryable TransientError. Both carry
@@ -43,6 +43,7 @@ export async function transcribe(audio: Uint8Array): Promise<string> {
     shouldRetry: (err) => {
       // Retry transient network failures (no HTTP response) and 5xx.
       if (err instanceof TypeError) return true; // fetch network error
+      if (err instanceof DOMException && (err.name === 'TimeoutError' || err.name === 'AbortError')) return true;
       const status = (err as { status?: number })?.status;
       return typeof status === 'number' && status >= 500;
     },

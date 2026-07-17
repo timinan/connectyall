@@ -24,6 +24,7 @@ const {
   markReadyMock,
   markFailedMock,
   mintStubMock,
+  claimCaptureMock,
 } = vi.hoisted(() => {
   const countMock = vi.fn().mockResolvedValue([{ count: 0 }]);
   const limitMock = vi.fn().mockResolvedValue([]);
@@ -39,12 +40,13 @@ const {
   const markReadyMock = vi.fn().mockResolvedValue(undefined);
   const markFailedMock = vi.fn().mockResolvedValue(undefined);
   const mintStubMock = vi.fn().mockResolvedValue('extra-interaction-id');
+  const claimCaptureMock = vi.fn().mockResolvedValue(true);
   return {
     countMock, limitMock, insertValuesMock, insertMock,
     transcribeMock, extractMock, getByIdMock,
     createContactMock, findByNameAndCompanyMock,
     renderCardMock, uploadBytesMock,
-    markReadyMock, markFailedMock, mintStubMock,
+    markReadyMock, markFailedMock, mintStubMock, claimCaptureMock,
   };
 });
 
@@ -75,6 +77,7 @@ vi.mock('./InteractionService', () => ({
   markReady: markReadyMock,
   markFailed: markFailedMock,
   mintStub: mintStubMock,
+  claimCapture: claimCaptureMock,
 }));
 
 vi.mock('./ContactService', () => ({

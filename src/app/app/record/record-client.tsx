@@ -76,13 +76,19 @@ function decodeUploadError(status: number, raw: string): RecError {
       body: 'Your session expired. Sign in again to keep recording.',
     };
   }
+  if (status === 429 || /daily capture limit/i.test(apiMessage)) {
+    return {
+      title: "You've hit today's limit",
+      body: "You've reached the maximum number of captures for today. Come back tomorrow to keep going.",
+    };
+  }
   if (status === 413 || /too large/i.test(apiMessage)) {
     return {
       title: 'Recording too long',
       body: 'That recording is over 20 MB. Try a shorter memo (under about a minute).',
     };
   }
-  if (/unsupported mime/i.test(apiMessage)) {
+  if (/unsupported mime/i.test(apiMessage) || /not a recognized audio/i.test(apiMessage)) {
     return {
       title: 'Audio format not supported',
       body: "Your browser saved the recording in a format we can't read yet. Try a different browser or device.",

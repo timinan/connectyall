@@ -31,6 +31,7 @@ export function auth() {
         session: schema.sessions,
         account: schema.accounts,
         verification: schema.verifications,
+        rateLimit: schema.rateLimits,
       },
     }),
     user: {
@@ -57,6 +58,17 @@ export function auth() {
         },
       },
     },
+    rateLimit: {
+      enabled: true,
+      window: 60,
+      max: 20,
+      // DB-backed so limits survive pod restarts on serverless (per plan preference).
+      storage: 'database',
+      customRules: {
+        '/email-otp/send-verification-otp': { window: 60, max: 2 },
+        '/sign-in/email-otp': { window: 60, max: 5 },
+      },
+    },
     plugins: [
       emailOTP({
         sendVerificationOTP: async ({ email, otp }) => {
@@ -64,6 +76,7 @@ export function auth() {
         },
         otpLength: 6,
         expiresIn: 60 * 10, // 10 minutes
+        allowedAttempts: 5, // invalidates the code after 5 wrong guesses
       }),
     ],
   });
