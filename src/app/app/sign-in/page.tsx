@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { signIn, authClient } from '@/lib/auth/client';
 import { PageHeader } from '@/components/page-header';
 import { LANDING_CONTAINER_FLEX } from '../_layout-constants';
@@ -14,6 +14,26 @@ export default function SignInPage() {
   const [otp, setOtp] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const pingEnabled = process.env.NEXT_PUBLIC_PING_ENABLED === '1';
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('error')) {
+      setErrorMsg('Ping sign-in didn\'t complete. Try again, or use the email code instead.');
+      window.history.replaceState(null, '', '/app/sign-in');
+    }
+  }, []);
+
+  async function signInWithPing() {
+    setErrorMsg(null);
+    const { error } = await signIn.oauth2({
+      providerId: 'pingone',
+      callbackURL: '/app',
+      errorCallbackURL: '/app/sign-in?error=ping',
+    });
+    if (error) setErrorMsg(error.message ?? 'Ping sign-in failed');
+  }
 
   async function sendCode(e: React.FormEvent) {
     e.preventDefault();
@@ -128,6 +148,20 @@ export default function SignInPage() {
               </form>
             )}
           </div>
+          {step === 'email' && pingEnabled && (
+            <div className="relative z-10 w-full max-w-[320px] flex flex-col gap-3">
+              <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium text-center">
+                <span className="text-brand mr-1">●</span> OR
+              </div>
+              <button
+                type="button"
+                onClick={signInWithPing}
+                className="w-full h-16 px-5 rounded-full bg-surface border border-line text-neutral-950 font-mono text-[13px] tracking-[0.18em] font-bold uppercase hover:border-brand transition shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)]"
+              >
+                Sign in with Ping
+              </button>
+            </div>
+          )}
           {step === 'email' && (
             <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium text-center">
               <span className="text-brand mr-1">●</span> CODE ARRIVES IN 2 SECONDS
