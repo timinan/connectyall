@@ -31,6 +31,16 @@ Approach chosen (from brainstorming): **hybrid**. Session issuance stays on Bett
 
 Deliverable: `docs/ping-setup.md` in the repo recording every console step with the values redacted — doubles as interview talking material.
 
+## Part 0.5 — Custom domain `connectyall.timnan.xyz`
+
+Tim bought `timnan.xyz` (Porkbun, 2026-09-14) for the Ping trial's business email (`tim@timnan.xyz`, Porkbun forwarding → gmail). As part of this work, connectyall production also gets `connectyall.timnan.xyz` — a nicer URL on the interview screen:
+
+- Vercel: add `connectyall.timnan.xyz` to the project domains (CLI or dashboard).
+- Porkbun DNS: CNAME `connectyall` → `cname.vercel-dns.com`. HTTPS is automatic.
+- `connectyall.vercel.app` keeps working; **`BASE_URL` stays on `connectyall.vercel.app`** so previously shared `/c/<id>` links remain canonical. Switching `BASE_URL` (and `BETTER_AUTH_URL` prod value) to the new domain is a deliberate later step, out of scope here.
+- Ping OIDC redirect URIs registered in the PingOne console should include both hosts plus the preview host used for the demo.
+- Path-based hosting (`timnan.xyz/connectyall`) was considered and rejected: requires Next `basePath` + proxying, breaks existing share links and PWA install. Root `timnan.xyz` stays free for a future portfolio landing page.
+
 ## Part 1 — Sign in with Ping (OIDC via Better Auth genericOAuth)
 
 - **Server** (`src/lib/auth/server.ts`): add Better Auth's `genericOAuth` plugin with one provider entry `pingone`: discovery URL `https://auth.pingone.com/{PING_ENV_ID}/as/.well-known/openid-configuration`, client ID/secret from env, scopes `openid profile email`. Better Auth handles the redirect, PKCE, code exchange, ID-token handling, and account linking.
