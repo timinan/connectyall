@@ -91,6 +91,18 @@ export function auth() {
                   // PingOne app is configured with Token Auth Method =
                   // Client Secret Basic; better-auth defaults to 'post'.
                   authentication: 'basic',
+                  // PingOne's userinfo/ID token may omit `name`, which
+                  // better-auth requires. Fall back to given+family name,
+                  // then the email prefix (same rule as the OTP create hook).
+                  mapProfileToUser: (profile) => {
+                    const first = profile.given_name as string | undefined;
+                    const last = profile.family_name as string | undefined;
+                    const name =
+                      (profile.name as string | undefined) ??
+                      ([first, last].filter(Boolean).join(' ') ||
+                        (profile.email as string | undefined)?.split('@')[0]);
+                    return { name };
+                  },
                 },
               ],
             }),
