@@ -88,6 +88,9 @@ export function auth() {
                   clientSecret: env().PING_CLIENT_SECRET!,
                   scopes: ['openid', 'profile', 'email'],
                   pkce: true,
+                  // PingOne app is configured with Token Auth Method =
+                  // Client Secret Basic; better-auth defaults to 'post'.
+                  authentication: 'basic',
                 },
               ],
             }),
