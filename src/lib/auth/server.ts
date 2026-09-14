@@ -15,6 +15,12 @@ export function auth() {
   cached = betterAuth({
     baseURL: env().BETTER_AUTH_URL,
     secret: env().BETTER_AUTH_SECRET,
+    // Provider-denied OAuth callbacks (?error=...) redirect here before the
+    // per-request errorCallbackURL in state is ever parsed — without this,
+    // users land on Better Auth's raw /api/auth/error page.
+    onAPIError: {
+      errorURL: '/app/sign-in',
+    },
     advanced: {
       database: {
         generateId: () => randomUUID(),
