@@ -1,10 +1,10 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { emailOTP } from 'better-auth/plugins';
+import { emailOTP, genericOAuth } from 'better-auth/plugins';
 import { randomUUID } from 'node:crypto';
 import { db } from '../db/client';
 import * as schema from '../db/schema';
-import { env } from '../env';
+import { env, pingEnabled } from '../env';
 import { sendOTPEmail } from '../email/resend';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,6 +57,12 @@ export function auth() {
         },
       },
     },
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ['pingone'],
+      },
+    },
     plugins: [
       emailOTP({
         sendVerificationOTP: async ({ email, otp }) => {
@@ -65,6 +71,22 @@ export function auth() {
         otpLength: 6,
         expiresIn: 60 * 10, // 10 minutes
       }),
+      ...(pingEnabled(env())
+        ? [
+            genericOAuth({
+              config: [
+                {
+                  providerId: 'pingone',
+                  discoveryUrl: `https://auth.pingone.ca/${env().PING_ENV_ID}/as/.well-known/openid-configuration`,
+                  clientId: env().PING_CLIENT_ID!,
+                  clientSecret: env().PING_CLIENT_SECRET!,
+                  scopes: ['openid', 'profile', 'email'],
+                  pkce: true,
+                },
+              ],
+            }),
+          ]
+        : []),
     ],
   });
   return cached;
