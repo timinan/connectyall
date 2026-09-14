@@ -43,7 +43,7 @@ Tim bought `timnan.xyz` (Porkbun, 2026-09-14) for the Ping trial's business emai
 
 ## Part 1 — Sign in with Ping (OIDC via Better Auth genericOAuth)
 
-- **Server** (`src/lib/auth/server.ts`): add Better Auth's `genericOAuth` plugin with one provider entry `pingone`: discovery URL `https://auth.pingone.com/{PING_ENV_ID}/as/.well-known/openid-configuration`, client ID/secret from env, scopes `openid profile email`. Better Auth handles the redirect, PKCE, code exchange, ID-token handling, and account linking.
+- **Server** (`src/lib/auth/server.ts`): add Better Auth's `genericOAuth` plugin with one provider entry `pingone`: discovery URL `https://auth.pingone.ca/{PING_ENV_ID}/as/.well-known/openid-configuration`, client ID/secret from env, scopes `openid profile email`. Better Auth handles the redirect, PKCE, code exchange, ID-token handling, and account linking.
 - **Account linking by email**: enable Better Auth's trusted-provider linking for `pingone` so a Ping sign-in with an email that already exists attaches to that user instead of erroring or duplicating. (PingOne verifies email on registration, so trusting it is acceptable for this demo; noted as a talking point.)
 - **Client** (`src/lib/auth/client.ts`): add `genericOAuthClient()` plugin; sign-in page calls `signIn.oauth2({ providerId: 'pingone' })`.
 - **UI** (`src/app/sign-in/…`): a `SIGN IN WITH PING` mono-pill button below the email-OTP form, separated by a small `● OR` mono label. Styling follows `docs/design-system.html` Concept-1 button language exactly — secondary/outline treatment so OTP stays the visually primary path. Hidden unless `NEXT_PUBLIC_PING_ENABLED=1`, so main can merge without Ping appearing in prod.
