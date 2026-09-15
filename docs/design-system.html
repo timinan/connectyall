@@ -432,6 +432,9 @@ APP_CONTAINER_FLEX  = 'px-4 py-6 pb-28 sm:px-6 sm:max-w-xl sm:mx-auto w-full min
 LANDING_CONTAINER_FLEX = 'px-4 py-6 pb-8 sm:px-6 sm:max-w-xl sm:mx-auto w-full min-h-[100dvh] flex flex-col';</code></pre>
 
 <p>Picking the wrong container drifts the logo + status pill 8px between tabs. Tim flagged this twice during the UI refresh; the fix both times was to stop hand-rolling padding and use the shared constant.</p>
+
+<h3>Desktop phone frame (2026-09-16)</h3>
+<p>The app is phone-first, so on viewports &ge;640px the root layout renders everything inside a centered <strong>430px column</strong> (<code>.phone-frame</code> in <code>globals.css</code>, wrapper div in <code>src/app/layout.tsx</code>) on a near-black stage (<code>#0F0F12</code>, the nav-pill color, set on <code>html</code>). The column keeps the cream background and gets a soft purple-tinted shadow. Plain dark gutters by design &mdash; no device chrome, no rounded corners (Tim's call). On real phones both rules are inert. Fixed elements (bottom-nav pill, modal scrims) are viewport-centered and therefore align with the column automatically; scrims covering the gutters is correct. The container constants' <code>sm:max-w-xl</code> yields to the 430px frame, so page alignment rules are unchanged.</p>
 </section>
 
 <!-- ============================================================ -->
