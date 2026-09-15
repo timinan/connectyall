@@ -20,6 +20,21 @@ These came up concretely in our integration, not as trivia:
 
 ## 3. What we built, as a case study
 
+### The app in brief
+
+Connectyall is a phone-first PWA for people who meet someone and want to stay in touch: you record a short voice memo about who you just met, and the app turns it into a contact card with a recap, extracted contact channels, dated follow-up reminders, and a shareable landing page with a vCard. It's a real shipped product at connectyall.timnan.xyz, not a demo repo.
+
+The AI pipeline behind a capture:
+
+- **Whisper (Cloudflare Workers AI)** transcribes the voice memo. When a user has set custom vocabulary, the app passes it as an initial prompt so unusual names and product terms transcribe correctly.
+- **Gemini 2.5 Flash Lite (via the Vercel AI SDK)** does structured extraction from the transcript: the person's name, role, company, emails and phones (including spelled-out forms like "S-A-R-A-H at gmail dot com"), social handles, notes, a recap phrased to read naturally in the share message, and follow-up commitments with relative dates ("call them in two weeks"). The provider is env-swappable; Claude Haiku is the configured alternative.
+- **Deepgram Nova-3** (also on Cloudflare Workers AI) is built but dark behind a provider switch, for diarized two-speaker conversation capture.
+- Non-LLM supporting cast: Satori + Resvg render the share image server-side, Inngest runs background jobs, Neon Postgres + Drizzle hold the data.
+
+Relevant to this document: the app already deals with structured-output drift, prompt versioning, and per-user personalization of model behavior — so identity was integrated into a product that takes AI plumbing seriously.
+
+### The integration
+
 Connectyall (Next.js, Better Auth for sessions, email-OTP sign-in) gained a "Sign in with Ping" button. PingOne owns the login journey: password, passkey MFA with enrollment during sign-on, and self-service registration. The app consumes the OIDC result and links accounts by verified email. The DaVinci widget embed is planned as phase 2. Division of labor was the design principle: the identity platform owns identity, the app owns sessions, and nobody hand-rolls token verification.
 
 Elapsed time from "create a trial account" to "working passkey login in production": roughly one working day, of which the code itself was perhaps an hour. The other hours went to friction. That ratio is the DX story.
