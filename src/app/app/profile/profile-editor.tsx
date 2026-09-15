@@ -113,6 +113,16 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
   }
 
   async function continueToRecord() {
+    // Record page gates on onboardedAt, which only a profile PUT stamps.
+    // OAuth users arrive with a name pre-filled and may never edit a field,
+    // so stamp onboarding explicitly before leaving.
+    if (!profile?.onboardedAt) {
+      await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+    }
     router.push('/app/record');
   }
 

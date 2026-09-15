@@ -92,9 +92,9 @@ export async function PUT(req: Request) {
   if (parsed.data.tagline !== undefined) updates.tagline = parsed.data.tagline;
   if (parsed.data.shortBlurb !== undefined) updates.shortBlurb = parsed.data.shortBlurb;
   if (parsed.data.selfIntro !== undefined) updates.selfIntro = parsed.data.selfIntro;
-  if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: 'no fields to update' }, { status: 400 });
-  }
+  // An empty partial is still meaningful: it stamps onboardedAt. OAuth
+  // sign-ups arrive with a name already set and may leave the profile
+  // untouched before continuing.
   await db().update(users).set({ ...updates, onboardedAt: new Date() }).where(eq(users.id, session.user.id));
   const user = await getById(session.user.id);
   return NextResponse.json({ user });
