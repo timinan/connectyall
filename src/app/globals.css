@@ -149,3 +149,24 @@ body {
   /* Bottom nav doesn't slide with the rest — it stays in place. */
   animation: none;
 }
+
+/* Desktop phone frame: the app is phone-first, so on wide screens render it
+   as a centered 430px column on a dark stage. On real phones (<640px) both
+   rules are inert and nothing changes. Plain gutters by design — no device
+   chrome (Tim, 2026-09-16). */
+@media (min-width: 640px) {
+  html {
+    background: #0F0F12;
+  }
+  .phone-frame-body {
+    background: transparent;
+  }
+  .phone-frame {
+    width: 100%;
+    max-width: 430px;
+    margin-left: auto;
+    margin-right: auto;
+    background: #F2F2F8;
+    box-shadow: 0 0 60px rgba(124, 92, 255, 0.10), 0 0 24px rgba(0, 0, 0, 0.5);
+  }
+}

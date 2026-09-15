@@ -49,8 +49,10 @@ export default function RootLayout({
       lang="en"
       className={`${sora.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-cream text-neutral-950">
-        {children}
+      <body className="min-h-full flex flex-col bg-cream text-neutral-950 phone-frame-body">
+        <div className="phone-frame flex flex-col flex-1 min-h-[100dvh]">
+          {children}
+        </div>
       </body>
     </html>
   );
