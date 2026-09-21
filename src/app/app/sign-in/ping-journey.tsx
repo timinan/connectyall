@@ -153,6 +153,12 @@ export function PingJourney({ onBackToOtp }: { onBackToOtp: () => void }) {
           }
 
           if (c?.type === 'FlowCollector') {
+            // Passkey retired 2026-09-22 (Tim: more trouble than it's worth).
+            // Also remove Passkey as a first factor in the PingOne DaVinci
+            // experience; this filter just guarantees the link never renders.
+            if (/passkey|fido|biometric/i.test(`${key ?? ''} ${label ?? ''}`)) {
+              return null;
+            }
             return (
               <button
                 key={reactKey}
