@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { signIn, authClient } from '@/lib/auth/client';
 import { PageHeader } from '@/components/page-header';
 import { LANDING_CONTAINER_FLEX } from '../_layout-constants';
+import { PingJourney } from './ping-journey';
+import { pingNativeEnabled } from '@/lib/ping/config';
 
-type Step = 'email' | 'code';
+type Step = 'email' | 'code' | 'ping';
 type Status = 'idle' | 'sending' | 'verifying';
 
 export default function SignInPage() {
@@ -69,6 +71,7 @@ export default function SignInPage() {
 
   const status_label =
     step === 'email' ? <><span className="text-brand">●</span> SIGN IN</> :
+    step === 'ping' ? <><span className="text-brand">●</span> PING IDENTITY</> :
     <><span className="text-brand">●</span> ENTER CODE</>;
 
   return (
@@ -81,6 +84,14 @@ export default function SignInPage() {
             headlineFirst="Welcome."
             headlineAccent="Sign in to start."
             sub="Drop your email and we'll send a 6-digit code. No password, no magic link."
+          />
+        )}
+        {step === 'ping' && (
+          <Top
+            label="PING IDENTITY"
+            headlineFirst="Sign in"
+            headlineAccent="with Ping."
+            sub="A few quick steps and you're in. We'll hand you back the moment you're verified."
           />
         )}
         {step === 'code' && (
@@ -117,6 +128,11 @@ export default function SignInPage() {
                   {status === 'sending' ? 'Sending…' : 'Send code'}
                 </button>
               </form>
+            )}
+            {step === 'ping' && (
+              <div className="relative z-10 w-full max-w-[320px] flex flex-col gap-3">
+                <PingJourney onBackToOtp={() => setStep('email')} />
+              </div>
             )}
             {step === 'code' && (
               <form
@@ -155,7 +171,7 @@ export default function SignInPage() {
               </div>
               <button
                 type="button"
-                onClick={signInWithPing}
+                onClick={() => (pingNativeEnabled() ? setStep('ping') : signInWithPing())}
                 className="w-full h-16 px-5 rounded-full bg-surface border border-line text-neutral-950 font-mono text-[13px] tracking-[0.18em] font-bold uppercase hover:border-brand transition shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)]"
               >
                 Sign in with Ping
