@@ -225,6 +225,20 @@ describe('DavinciFlow', () => {
     expect(flow.state.errorText).toBe('Flow failed.');
   });
 
+  it('(p) a NotAllowedError (cancelled/timed-out passkey prompt) fails with a specific message', async () => {
+    collectors = [{ type: 'FidoAuthenticationCollector', output: { config: {} } }];
+    fidoResult = Object.assign(new Error('cancel'), { name: 'NotAllowedError' });
+    const flow = new DavinciFlow();
+    await flow.start();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(flow.state.status).toBe('failed');
+    expect(flow.state.errorText).toMatch(/cancelled or timed out/i);
+    expect(nextCalls).toBe(0);
+    // TRY AGAIN restarts cleanly
+    await flow.start();
+    expect(davinciCalls).toBe(2);
+  });
+
   it('(n) chooseFlow uses client.flow() with the collector key, not update+next', async () => {
     const flow = new DavinciFlow();
     await flow.start();

@@ -20,6 +20,8 @@ export interface DavinciFlowState {
 const GENERIC_FAILURE = 'Ping sign-in hit a snag. Try again or use the email code.';
 const PASSKEY_WRONG_HOST =
   'Passkeys only work on connectyall.timnan.xyz — use your password here, or sign in on the live site.';
+const PASSKEY_CANCELLED =
+  'Passkey prompt was cancelled or timed out. Try again or use the email code.';
 
 // Collectors that carry no user-facing UI — never rendered.
 const HIDDEN_COLLECTORS = new Set(['ProtectCollector', 'MetadataCollector']);
@@ -169,6 +171,17 @@ export class DavinciFlow {
       ((result as Any).code === 'SecurityError' || (result as Any).name === 'SecurityError')
     ) {
       this.patch({ errorText: PASSKEY_WRONG_HOST });
+      return false; // do NOT call next
+    }
+    if (
+      result &&
+      typeof result === 'object' &&
+      ((result as Any).code === 'NotAllowedError' || (result as Any).name === 'NotAllowedError')
+    ) {
+      // User dismissed the prompt or it timed out. The fido node has no
+      // re-trigger button, so land on the failed screen (TRY AGAIN restarts)
+      // with a message that says what actually happened.
+      this.patch({ status: 'failed', collectors: [], errorText: PASSKEY_CANCELLED });
       return false; // do NOT call next
     }
     this.client.update(col)(result);
