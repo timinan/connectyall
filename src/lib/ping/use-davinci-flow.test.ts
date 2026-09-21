@@ -20,6 +20,8 @@ let nextThrows = false;
 // start() outcome, keyed by client index; default 'continue'.
 let startResults: Any[] = [];
 let startThrows: boolean[] = [];
+let flowCalls: Any[] = [];
+let flowResult: Any = { status: 'continue' };
 
 const davinciMock = vi.fn(async () => {
   const idx = davinciCalls;
@@ -38,6 +40,10 @@ const davinciMock = vi.fn(async () => {
       const n = nextResults[nextCalls] ?? { status: 'success' };
       nextCalls++;
       return n;
+    }),
+    flow: vi.fn((action: Any) => {
+      flowCalls.push(action);
+      return async () => flowResult;
     }),
   };
 });
@@ -72,6 +78,8 @@ beforeEach(() => {
   nextThrows = false;
   startResults = [];
   startThrows = [];
+  flowCalls = [];
+  flowResult = { status: 'continue' };
   davinciMock.mockClear();
   fidoMock.mockClear();
 });
@@ -215,6 +223,24 @@ describe('DavinciFlow', () => {
     await flow.submit({ username: 'ann', password: 'pw' });
     expect(flow.state.status).toBe('failed');
     expect(flow.state.errorText).toBe('Flow failed.');
+  });
+
+  it('(n) chooseFlow uses client.flow() with the collector key, not update+next', async () => {
+    const flow = new DavinciFlow();
+    await flow.start();
+    await flow.chooseFlow({ type: 'FlowCollector', output: { key: 'passkey-flow-link' } });
+    expect(flowCalls).toEqual([{ action: 'passkey-flow-link' }]);
+    expect(updateCalls).toHaveLength(0);
+    expect(nextCalls).toBe(0);
+    expect(flow.state.status).toBe('continue');
+  });
+
+  it('(o) chooseFlow surfaces an internal_error as failed', async () => {
+    flowResult = { type: 'internal_error', error: { message: 'Missing argument.action' } };
+    const flow = new DavinciFlow();
+    await flow.start();
+    await flow.chooseFlow({ type: 'FlowCollector', output: { key: 'x' } });
+    expect(flow.state.status).toBe('failed');
   });
 
   it('(f) start after a failed node clears the dead client and retries (TRY AGAIN)', async () => {
