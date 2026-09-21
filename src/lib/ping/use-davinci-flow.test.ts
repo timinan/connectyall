@@ -171,6 +171,52 @@ describe('DavinciFlow', () => {
     expect(flow.state.errorText).toBe('Ping sign-in hit a snag. Try again or use the email code.');
   });
 
+  it('(j) an error node keeps the form and shows the server message inline (wrong password)', async () => {
+    const flow = new DavinciFlow();
+    await flow.start();
+    nextResults = [
+      {
+        status: 'error',
+        error: { message: 'Check your credentials and try again.', status: 'error' },
+      },
+    ];
+    await flow.submit({ username: 'ann', password: 'wrong' });
+    expect(flow.state.status).toBe('continue');
+    expect(flow.state.collectors).toHaveLength(2);
+    expect(flow.state.errorText).toBe('Check your credentials and try again.');
+    // the same client is reusable: a corrected submit succeeds
+    await flow.submit({ username: 'ann', password: 'right' });
+    expect(flow.state.status).toBe('success');
+  });
+
+  it('(k) an error node with no collectors left falls back to failed', async () => {
+    const flow = new DavinciFlow();
+    await flow.start();
+    collectors = [];
+    nextResults = [{ status: 'error', error: { message: 'Flow is gone.', status: 'error' } }];
+    await flow.submit({ username: 'ann', password: 'pw' });
+    expect(flow.state.status).toBe('failed');
+    expect(flow.state.errorText).toBe('Flow is gone.');
+  });
+
+  it('(l) a 401 carried on node.error.internalHttpStatus also triggers the restart', async () => {
+    const flow = new DavinciFlow();
+    await flow.start();
+    nextResults = [{ status: 'error', error: { message: 'Session expired', internalHttpStatus: 401 } }];
+    await flow.submit({ username: 'ann', password: 'pw' });
+    expect(davinciCalls).toBe(2);
+    expect(flow.state.status).toBe('continue');
+  });
+
+  it('(m) a failure node is fatal and surfaces the server message', async () => {
+    const flow = new DavinciFlow();
+    await flow.start();
+    nextResults = [{ status: 'failure', error: { message: 'Flow failed.', status: 'failure' } }];
+    await flow.submit({ username: 'ann', password: 'pw' });
+    expect(flow.state.status).toBe('failed');
+    expect(flow.state.errorText).toBe('Flow failed.');
+  });
+
   it('(f) start after a failed node clears the dead client and retries (TRY AGAIN)', async () => {
     startThrows = [true]; // first client's start() throws => failed
     const flow = new DavinciFlow();
