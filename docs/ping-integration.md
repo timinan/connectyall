@@ -35,11 +35,13 @@ Relevant to this document: the app already deals with structured-output drift, p
 
 ### The integration
 
-Connectyall (Next.js, Better Auth for sessions, email-OTP sign-in) gained a "Sign in with Ping" button. PingOne owns the login journey: password, passkey MFA with enrollment during sign-on, and self-service registration. The app consumes the OIDC result and links accounts by verified email. The DaVinci widget embed is planned as phase 2. Division of labor was the design principle: the identity platform owns identity, the app owns sessions, and nobody hand-rolls token verification.
+Connectyall (Next.js, Better Auth for sessions, email-OTP sign-in) gained a "Sign in with Ping" button. PingOne owns the login journey: password, passkey MFA with enrollment during sign-on, and self-service registration. The app consumes the OIDC result and links accounts by verified email. Division of labor was the design principle: the identity platform owns identity, the app owns sessions, and nobody hand-rolls token verification.
+
+Phase 2 took it further: the same journey now renders **natively inside the app's own sign-in page** via the `@forgerock/davinci-client` SDK, behind a feature flag. The SDK walks the DaVinci flow node by node and hands back collectors (text fields, password fields, a passkey step) that the app renders in its own design system — no redirect, no iframe. On success the SDK yields an authorization code and the app completes the same OIDC flow it already had, so the session layer didn't change at all. The redirect button remains the fallback when the flag is off.
 
 Elapsed time from "create a trial account" to "working passkey login in production": roughly one working day, of which the code itself was perhaps an hour. The other hours went to friction. That ratio is the DX story.
 
-## 4. The friction log: nine issues, and what each teaches about DX
+## 4. The friction log: fourteen issues, and what each teaches about DX
 
 **1. The trial requires a business email.** Bought a $2 domain with email forwarding to get past the form. DX lesson: the very first gate in the funnel filters out individual developers, the exact audience an SDK adoption strategy courts. Time to First Integration starts at the signup form, not the first API call.
 
@@ -59,6 +61,18 @@ Elapsed time from "create a trial account" to "working passkey login in producti
 
 **9. Custom-domain cookie topology.** Moving production to a new domain meant the auth base URL and session cookies had to move with it. Standard OAuth deployment knowledge, but the kind that belongs in a "going to production" checklist.
 
+Phase 2, the native SDK embed, added five more:
+
+**10. CORS produced a misleading error.** The app's CORS setting was "Allow any CORS-safe origin," which excludes localhost, so the SDK's very first browser call failed — with `FETCH_ERROR: Please ensure a correct Client ID`. The client ID was fine. DX lesson: when an SDK's transport layer fails, the error must say "request blocked" rather than guess at a config cause. An agent chased the client ID for a while because that's what the error named; a "check your CORS allowlist includes this origin" message is one line and would have ended it instantly. The quick-start should also state upfront that embedded SDKs require an explicit origin allowlist.
+
+**11. The SDK silently defaults `redirect_uri` to the current page URL.** The config field is documented as optional; omitting it produced `INVALID_DATA: Redirect URI mismatch` because the SDK filled in the page's own URL, which isn't a registered redirect URI. DX lesson: an "optional" field whose default is almost never what an OAuth integration wants is effectively required — the docs should say so, or the error should print the value it actually sent.
+
+**12. Calling `start()` twice invalidates the flow.** A second start silently kills the first interaction; the next step then fails with a bare 401 "Session expired." Easy to trigger from React strict-mode double-effects or a double-tapped button. DX lesson: single-use handles need either idempotent starts or an error that names the cause ("this interaction was superseded by a newer start()").
+
+**13. The passkey Relying Party ID wall.** Passkeys enrolled under Ping's hosted pages are bound to `pingone.ca`; the moment the same flow runs embedded on the app's own domain, WebAuthn throws `SecurityError` — correct per spec, invisible in any Ping doc about moving from hosted to embedded. The fix is a console setting (FIDO policy RP ID → the app's domain) plus re-enrollment, and passkeys can never be tested on localhost at all. DX lesson: "migrating from hosted to embedded" is a predictable journey that crosses a WebAuthn origin boundary; a checklist item and a purpose-built error ("this credential's RP ID doesn't match your origin") would save every integrator the same afternoon.
+
+**14. The passkey node has no submit button.** Every other DaVinci node hands the SDK collectors plus a submit collector; the FIDO node ships only the credential collector and static text. Wiring the WebAuthn ceremony to a submit action — the pattern every other node teaches — leaves the UI hanging on "Follow the directions on your screen" forever. The fix is to auto-run the ceremony when the node appears. DX lesson: when one node type breaks the interaction contract the rest of the API establishes, that exception belongs in the collector docs, ideally with a rendering recipe per collector type.
+
 ## 5. The agent-first observations, distilled
 
 Running this integration through an AI agent surfaced a pattern worth pitching in the interview:
@@ -75,8 +89,9 @@ Running this integration through an AI agent surfaced a pattern worth pitching i
 - **Authentication policy / sign-on policy**: the rule chain the hosted login runs (password step, MFA step, registration toggle).
 - **Population**: a user segment within an environment; self-registered users land in one.
 - **DaVinci**: visual orchestration; flows are node graphs (forms, connectors, branches) published behind a flow policy and embeddable via widget SDK.
-- **Hosted login vs widget**: redirect to Ping's pages (simplest, most secure defaults) vs embedding Ping-rendered UI in your page (DaVinci widget; phase 2 for us).
+- **Hosted login vs embedded**: redirect to Ping's pages (simplest, most secure defaults) vs rendering the journey inside your own page. We shipped both: hosted in phase 1, embedded via `@forgerock/davinci-client` in phase 2.
+- **Collector**: the SDK's unit of embedded UI — each DaVinci node hands back typed collectors (text, password, FIDO credential, submit action) that the app renders however it likes.
 
-## 7. What phase 2 would add
+## 7. What phase 2 taught about the orchestration SDK
 
-Building a DaVinci flow (a "verify this contact's email" journey) and embedding it via the widget SDK would exercise the orchestration product the role's roadmap centers on: flow input parameters, the API-key-to-SDK-token exchange, completion events back into app state. The same friction-log discipline applies, and it directly maps to the "Orchestration SDK across Web, iOS, Android, and Hybrid" ownership in the posting.
+Phase 2 embedded the full sign-on journey natively using the DaVinci client SDK — the orchestration product the role's roadmap centers on. The headline finding: the SDK's core loop (start → render collectors → submit → repeat until success) is genuinely pleasant, and the app never touches a token. But the distance between "the loop works" and "production sign-in works" was five console-and-contract gotchas (issues 10–14 above), none of which live in the SDK docs. The hosted-to-embedded migration is a predictable journey — CORS allowlist, redirect URI, RP ID, per-collector rendering — and it's currently assembled by trial and error. A single "embedding checklist" page, or better, machine-readable per-node rendering contracts, is the concrete phase-2 product ask. That maps directly to the "Orchestration SDK across Web, iOS, Android, and Hybrid" ownership in the posting.
