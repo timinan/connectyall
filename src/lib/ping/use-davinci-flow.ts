@@ -86,6 +86,8 @@ export class DavinciFlow {
   }
 
   start = async (): Promise<void> => {
+    // A failed node leaves a dead client set; clear it so TRY AGAIN restarts.
+    if (this.state.status === 'failed') this.client = null;
     // Guard: no-op while a flow is live or currently spinning up.
     if (this.starting || this.client) return;
     this.starting = true;
@@ -124,10 +126,19 @@ export class DavinciFlow {
     for (const col of collectors) {
       if (col.type === 'FidoAuthenticationCollector') {
         const { fido } = await import('@forgerock/davinci-client');
-        const result = await fido().authenticate(
-          col.output?.config?.publicKeyCredentialRequestOptions ?? col.output?.config,
-        );
-        if (result && typeof result === 'object' && (result as Any).code === 'SecurityError') {
+        let result: Any;
+        try {
+          result = await fido().authenticate(
+            col.output?.config?.publicKeyCredentialRequestOptions ?? col.output?.config,
+          );
+        } catch (err) {
+          result = err; // a thrown DOMException is handled like a returned error below
+        }
+        if (
+          result &&
+          typeof result === 'object' &&
+          ((result as Any).code === 'SecurityError' || (result as Any).name === 'SecurityError')
+        ) {
           this.patch({ errorText: PASSKEY_WRONG_HOST });
           return; // do NOT call next
         }
