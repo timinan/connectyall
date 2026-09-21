@@ -83,9 +83,37 @@ export class DavinciFlow {
       this.fidoInFlight = false; // fresh node: allow one auto-run
       this.patch({ status: 'continue', collectors: this.visibleCollectors(), errorText: null });
       this.maybeAutoFido();
+    } else if (node?.status === 'error') {
+      // Recoverable per the SDK contract (ErrorNode keeps its collectors):
+      // e.g. wrong password comes back as a 400 with a user-facing message.
+      // Keep the form up and show the message inline. No auto-fido here — a
+      // rejected ceremony re-running itself would loop.
+      const collectors = this.visibleCollectors();
+      const message = node?.error?.message || GENERIC_FAILURE;
+      if (collectors.length > 0) {
+        this.patch({ status: 'continue', collectors, errorText: message });
+      } else {
+        this.patch({ status: 'failed', collectors: [], errorText: message });
+      }
     } else {
-      this.patch({ status: 'failed', collectors: [], errorText: GENERIC_FAILURE });
+      // 'failure' (fatal) or anything unrecognized
+      this.patch({
+        status: 'failed',
+        collectors: [],
+        errorText: node?.error?.message || GENERIC_FAILURE,
+      });
     }
+  }
+
+  // The session-expired 401 rides on different fields depending on the path;
+  // check all the shapes the SDK emits.
+  private isExpired401(node: Any): boolean {
+    return (
+      node?.status === 'error' &&
+      (node?.internalHttpStatus === 401 ||
+        node?.error?.internalHttpStatus === 401 ||
+        node?.httpStatus === 401)
+    );
   }
 
   // A FidoAuthenticationCollector is an auto-collector: the node carries no
@@ -110,7 +138,7 @@ export class DavinciFlow {
     // and freeze the flow on 'continue'. Surface it as a recoverable failure.
     try {
       const node = await this.client.next();
-      if (node?.status === 'error' && node?.internalHttpStatus === 401) {
+      if (this.isExpired401(node)) {
         await this.restart();
         return;
       }
@@ -198,7 +226,7 @@ export class DavinciFlow {
     }
 
     const node = await this.client.next();
-    if (node?.status === 'error' && node?.internalHttpStatus === 401) {
+    if (this.isExpired401(node)) {
       await this.restart(); // exactly one automatic retry
       return;
     }
