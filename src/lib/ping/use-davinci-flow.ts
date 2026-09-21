@@ -46,6 +46,7 @@ export class DavinciFlow {
   private client: Any = null;
   private starting = false;
   private fidoInFlight = false;
+  private fidoCancelAttempted = false;
   private listeners = new Set<() => void>();
 
   constructor() {
@@ -137,7 +138,26 @@ export class DavinciFlow {
     if (!this.client) return;
     this.patch({ errorText: null });
     const ok = await this.runFido(col);
-    if (!ok) return; // SecurityError: stay on 'continue' with friendly message
+    if (!ok) {
+      // Passkeys are retired: a SecurityError here usually means a legacy
+      // device enrolled under the old RP-ID (pingone.ca). If the node offers
+      // a cancel link, take it so the flow falls back to another method
+      // instead of stranding the user on an unusable ceremony.
+      const cancel = this.state.collectors.find(
+        (c: Any) =>
+          c?.type === 'FlowCollector' &&
+          /cancel/i.test(`${c?.output?.key ?? ''} ${c?.output?.label ?? ''}`),
+      );
+      if (
+        cancel &&
+        !this.fidoCancelAttempted &&
+        this.state.errorText !== PASSKEY_CANCELLED
+      ) {
+        this.fidoCancelAttempted = true; // once per flow: no cancel->fido loop
+        await this.chooseFlow(cancel);
+      }
+      return;
+    }
     // Fire-and-forget: a throw from next() here would otherwise be swallowed
     // and freeze the flow on 'continue'. Surface it as a recoverable failure.
     try {
@@ -196,6 +216,7 @@ export class DavinciFlow {
     // Guard: no-op while a flow is live or currently spinning up.
     if (this.starting || this.client) return;
     this.starting = true;
+    this.fidoCancelAttempted = false;
     this.patch({ status: 'loading', errorText: null, collectors: [] });
     try {
       const { davinci } = await import('@forgerock/davinci-client');

@@ -239,6 +239,24 @@ describe('DavinciFlow', () => {
     expect(davinciCalls).toBe(2);
   });
 
+  it('(q) fido SecurityError on auto-run auto-cancels via the node cancel link, once', async () => {
+    collectors = [
+      { type: 'FidoAuthenticationCollector', output: { config: {} } },
+      { type: 'FlowCollector', output: { key: 'cancel-flow-link', label: 'Cancel' } },
+    ];
+    fidoThrows = true;
+    flowResult = { status: 'continue' }; // cancel lands on a fresh node
+    const flow = new DavinciFlow();
+    await flow.start();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(flowCalls).toEqual([{ action: 'cancel-flow-link' }]);
+    // the fresh node still contains fido (mock reuses collectors) but the
+    // once-per-flow guard stops a second auto-cancel loop
+    await new Promise((r) => setTimeout(r, 0));
+    expect(flowCalls).toHaveLength(1);
+    expect(flow.state.errorText).toMatch(/passkey/i);
+  });
+
   it('(n) chooseFlow uses client.flow() with the collector key, not update+next', async () => {
     const flow = new DavinciFlow();
     await flow.start();
