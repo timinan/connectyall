@@ -18,8 +18,10 @@ export interface DavinciFlowState {
 }
 
 const GENERIC_FAILURE = 'Ping sign-in hit a snag. Try again or use the email code.';
-const PASSKEY_WRONG_HOST =
-  'Passkeys only work on connectyall.timnan.xyz — use your password here, or sign in on the live site.';
+const passkeyWrongHost = () =>
+  `Passkeys only work on connectyall.timnan.xyz — this is ${
+    typeof window !== 'undefined' ? window.location.host : 'another host'
+  }. Use your password here, or sign in on the live site.`;
 const PASSKEY_CANCELLED =
   'Passkey prompt was cancelled or timed out. Try again or use the email code.';
 
@@ -170,7 +172,7 @@ export class DavinciFlow {
       typeof result === 'object' &&
       ((result as Any).code === 'SecurityError' || (result as Any).name === 'SecurityError')
     ) {
-      this.patch({ errorText: PASSKEY_WRONG_HOST });
+      this.patch({ errorText: passkeyWrongHost() });
       return false; // do NOT call next
     }
     if (
