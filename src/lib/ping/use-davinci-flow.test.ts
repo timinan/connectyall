@@ -114,13 +114,46 @@ describe('DavinciFlow', () => {
     expect(flow.state.status).toBe('continue');
   });
 
-  it('(e) fido SecurityError sets friendly passkey errorText and does not call next', async () => {
+  it('(e) fido SecurityError via submit sets friendly passkey errorText and does not call next', async () => {
+    // A mixed node (submit button + fido) still routes through submit(); guard
+    // the auto-run so this exercises the submit() path deterministically.
+    collectors = [
+      passCol,
+      { type: 'FidoAuthenticationCollector', output: { config: {} } },
+    ];
+    fidoThrows = true;
+    const flow = new DavinciFlow();
+    await flow.start();
+    await new Promise((r) => setTimeout(r, 0)); // let any auto-run settle
+    updateCalls = [];
+    await flow.submit({ password: 'pw' });
+    expect(flow.state.errorText).toMatch(/passkey/i);
+    expect(nextCalls).toBe(0);
+  });
+
+  it('(g) a node with a FidoAuthenticationCollector auto-runs the ceremony and advances', async () => {
+    collectors = [{ type: 'FidoAuthenticationCollector', output: { config: {} } }];
+    fidoResult = { code: 'ok' };
+    const flow = new DavinciFlow();
+    await flow.start();
+    // auto-submit is fired via a floating promise inside applyNode; let it settle
+    await new Promise((r) => setTimeout(r, 0));
+    // fido ran and the client was advanced without any external submit() call
+    expect(fidoMock).toHaveBeenCalled();
+    expect(updateCalls).toHaveLength(1);
+    expect(nextCalls).toBe(1);
+    expect(flow.state.status).toBe('success');
+  });
+
+  it('(h) a SecurityError on the auto-run shows passkey message and does not call next', async () => {
     collectors = [{ type: 'FidoAuthenticationCollector', output: { config: {} } }];
     fidoThrows = true;
     const flow = new DavinciFlow();
     await flow.start();
-    await flow.submit({});
+    await new Promise((r) => setTimeout(r, 0));
+    expect(fidoMock).toHaveBeenCalled();
     expect(flow.state.errorText).toMatch(/passkey/i);
+    expect(flow.state.status).toBe('continue');
     expect(nextCalls).toBe(0);
   });
 
