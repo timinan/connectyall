@@ -41,6 +41,7 @@ export class DavinciFlow {
   state: DavinciFlowState;
   private client: Any = null;
   private starting = false;
+  private fidoInFlight = false;
   private listeners = new Set<() => void>();
 
   constructor() {
@@ -79,10 +80,65 @@ export class DavinciFlow {
     if (node?.status === 'success') {
       this.patch({ status: 'success', collectors: [], errorText: null });
     } else if (node?.status === 'continue') {
+      this.fidoInFlight = false; // fresh node: allow one auto-run
       this.patch({ status: 'continue', collectors: this.visibleCollectors(), errorText: null });
+      this.maybeAutoFido();
     } else {
       this.patch({ status: 'failed', collectors: [], errorText: GENERIC_FAILURE });
     }
+  }
+
+  // A FidoAuthenticationCollector is an auto-collector: the node carries no
+  // submit button, so nothing would ever trigger the WebAuthn ceremony. Kick
+  // it off automatically, exactly once per node.
+  private maybeAutoFido() {
+    if (this.fidoInFlight) return;
+    const fidoCol = this.state.collectors.find(
+      (c) => c?.type === 'FidoAuthenticationCollector',
+    );
+    if (!fidoCol) return;
+    this.fidoInFlight = true;
+    void this.autoSubmitFido(fidoCol);
+  }
+
+  private async autoSubmitFido(col: Any): Promise<void> {
+    if (!this.client) return;
+    this.patch({ errorText: null });
+    const ok = await this.runFido(col);
+    if (!ok) return; // SecurityError: stay on 'continue' with friendly message
+    const node = await this.client.next();
+    if (node?.status === 'error' && node?.internalHttpStatus === 401) {
+      await this.restart();
+      return;
+    }
+    this.applyNode(node);
+  }
+
+  // Runs the WebAuthn ceremony for a FidoAuthenticationCollector and hands the
+  // result back to the client. Returns false (leaving status 'continue' with a
+  // friendly message) when the ceremony fails with a SecurityError — usually a
+  // wrong-host passkey attempt. Returns true when the client was updated and
+  // the caller should advance via next().
+  private async runFido(col: Any): Promise<boolean> {
+    const { fido } = await import('@forgerock/davinci-client');
+    let result: Any;
+    try {
+      result = await fido().authenticate(
+        col.output?.config?.publicKeyCredentialRequestOptions ?? col.output?.config,
+      );
+    } catch (err) {
+      result = err; // a thrown DOMException is handled like a returned error below
+    }
+    if (
+      result &&
+      typeof result === 'object' &&
+      ((result as Any).code === 'SecurityError' || (result as Any).name === 'SecurityError')
+    ) {
+      this.patch({ errorText: PASSKEY_WRONG_HOST });
+      return false; // do NOT call next
+    }
+    this.client.update(col)(result);
+    return true;
   }
 
   start = async (): Promise<void> => {
@@ -125,24 +181,8 @@ export class DavinciFlow {
 
     for (const col of collectors) {
       if (col.type === 'FidoAuthenticationCollector') {
-        const { fido } = await import('@forgerock/davinci-client');
-        let result: Any;
-        try {
-          result = await fido().authenticate(
-            col.output?.config?.publicKeyCredentialRequestOptions ?? col.output?.config,
-          );
-        } catch (err) {
-          result = err; // a thrown DOMException is handled like a returned error below
-        }
-        if (
-          result &&
-          typeof result === 'object' &&
-          ((result as Any).code === 'SecurityError' || (result as Any).name === 'SecurityError')
-        ) {
-          this.patch({ errorText: PASSKEY_WRONG_HOST });
-          return; // do NOT call next
-        }
-        this.client.update(col)(result);
+        const ok = await this.runFido(col);
+        if (!ok) return; // SecurityError: friendly message, do NOT call next
         continue;
       }
       const key = col.output?.key;
