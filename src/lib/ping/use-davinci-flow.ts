@@ -233,12 +233,26 @@ export class DavinciFlow {
     this.applyNode(node);
   };
 
+  // FlowCollectors (passkey / register / recovery links) go through the SDK's
+  // dedicated flow() initiator — update()+next() posts them as form data and
+  // DaVinci rejects it with "Validation Error".
   chooseFlow = async (collector: Any): Promise<void> => {
     if (!this.client) return;
     this.patch({ errorText: null });
-    this.client.update(collector)(collector);
-    const node = await this.client.next();
-    this.applyNode(node);
+    try {
+      const node = await this.client.flow({ action: collector.output?.key })();
+      if (node?.type === 'internal_error') {
+        this.patch({ status: 'failed', collectors: [], errorText: GENERIC_FAILURE });
+        return;
+      }
+      if (this.isExpired401(node)) {
+        await this.restart();
+        return;
+      }
+      this.applyNode(node);
+    } catch {
+      this.patch({ status: 'failed', collectors: [], errorText: GENERIC_FAILURE });
+    }
   };
 }
 
