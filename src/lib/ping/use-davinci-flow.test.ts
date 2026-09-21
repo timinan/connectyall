@@ -16,6 +16,7 @@ let nextResults: Any[] = [];
 let collectors: Any[] = [textCol, passCol];
 let fidoResult: Any = { code: 'ok' };
 let fidoThrows = false;
+let nextThrows = false;
 // start() outcome, keyed by client index; default 'continue'.
 let startResults: Any[] = [];
 let startThrows: boolean[] = [];
@@ -33,6 +34,7 @@ const davinciMock = vi.fn(async () => {
       updateCalls.push({ key: col.output?.key, value });
     }),
     next: vi.fn(async () => {
+      if (nextThrows) throw new Error('next boom');
       const n = nextResults[nextCalls] ?? { status: 'success' };
       nextCalls++;
       return n;
@@ -67,6 +69,7 @@ beforeEach(() => {
   collectors = [textCol, passCol];
   fidoResult = { code: 'ok' };
   fidoThrows = false;
+  nextThrows = false;
   startResults = [];
   startThrows = [];
   davinciMock.mockClear();
@@ -155,6 +158,17 @@ describe('DavinciFlow', () => {
     expect(flow.state.errorText).toMatch(/passkey/i);
     expect(flow.state.status).toBe('continue');
     expect(nextCalls).toBe(0);
+  });
+
+  it('(i) a throw from next() during the fido auto-run fails gracefully', async () => {
+    collectors = [{ type: 'FidoAuthenticationCollector', output: { config: {} } }];
+    fidoResult = { code: 'ok' };
+    nextThrows = true;
+    const flow = new DavinciFlow();
+    await flow.start();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(flow.state.status).toBe('failed');
+    expect(flow.state.errorText).toBe('Ping sign-in hit a snag. Try again or use the email code.');
   });
 
   it('(f) start after a failed node clears the dead client and retries (TRY AGAIN)', async () => {

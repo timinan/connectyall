@@ -106,12 +106,18 @@ export class DavinciFlow {
     this.patch({ errorText: null });
     const ok = await this.runFido(col);
     if (!ok) return; // SecurityError: stay on 'continue' with friendly message
-    const node = await this.client.next();
-    if (node?.status === 'error' && node?.internalHttpStatus === 401) {
-      await this.restart();
-      return;
+    // Fire-and-forget: a throw from next() here would otherwise be swallowed
+    // and freeze the flow on 'continue'. Surface it as a recoverable failure.
+    try {
+      const node = await this.client.next();
+      if (node?.status === 'error' && node?.internalHttpStatus === 401) {
+        await this.restart();
+        return;
+      }
+      this.applyNode(node);
+    } catch {
+      this.patch({ status: 'failed', errorText: GENERIC_FAILURE });
     }
-    this.applyNode(node);
   }
 
   // Runs the WebAuthn ceremony for a FidoAuthenticationCollector and hands the
