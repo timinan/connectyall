@@ -16,11 +16,18 @@ let nextResults: Any[] = [];
 let collectors: Any[] = [textCol, passCol];
 let fidoResult: Any = { code: 'ok' };
 let fidoThrows = false;
+// start() outcome, keyed by client index; default 'continue'.
+let startResults: Any[] = [];
+let startThrows: boolean[] = [];
 
 const davinciMock = vi.fn(async () => {
+  const idx = davinciCalls;
   davinciCalls++;
   return {
-    start: vi.fn(async () => ({ status: 'continue' })),
+    start: vi.fn(async () => {
+      if (startThrows[idx]) throw new Error('boom');
+      return startResults[idx] ?? { status: 'continue' };
+    }),
     getCollectors: vi.fn(() => collectors),
     update: vi.fn((col: Any) => (value: unknown) => {
       updateCalls.push({ key: col.output?.key, value });
@@ -36,9 +43,10 @@ const davinciMock = vi.fn(async () => {
 const fidoMock = vi.fn(() => ({
   authenticate: vi.fn(async () => {
     if (fidoThrows) {
+      // Real browsers throw a DOMException with name 'SecurityError' (no code).
       const e: Any = new Error('sec');
-      e.code = 'SecurityError';
-      return e;
+      e.name = 'SecurityError';
+      throw e;
     }
     return fidoResult;
   }),
@@ -59,6 +67,8 @@ beforeEach(() => {
   collectors = [textCol, passCol];
   fidoResult = { code: 'ok' };
   fidoThrows = false;
+  startResults = [];
+  startThrows = [];
   davinciMock.mockClear();
   fidoMock.mockClear();
 });
@@ -112,5 +122,17 @@ describe('DavinciFlow', () => {
     await flow.submit({});
     expect(flow.state.errorText).toMatch(/passkey/i);
     expect(nextCalls).toBe(0);
+  });
+
+  it('(f) start after a failed node clears the dead client and retries (TRY AGAIN)', async () => {
+    startThrows = [true]; // first client's start() throws => failed
+    const flow = new DavinciFlow();
+    await flow.start();
+    expect(flow.state.status).toBe('failed');
+    expect(davinciCalls).toBe(1);
+    // TRY AGAIN: second start() must build a fresh client and reach continue.
+    await flow.start();
+    expect(davinciCalls).toBe(2);
+    expect(flow.state.status).toBe('continue');
   });
 });
