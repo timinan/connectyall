@@ -20,6 +20,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3
         version: 3.1068.0
+      '@forgerock/davinci-client':
+        specifier: ^2.2.0
+        version: 2.2.0(react@19.2.4)
       '@neondatabase/serverless':
         specifier: ^0.10
         version: 0.10.4
@@ -1041,6 +1044,27 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
+  '@forgerock/davinci-client@2.2.0':
+    resolution: {integrity: sha512-8w0YfHD2iN93iFIN5AeT6pbkVkY0AMGNZ5Sj/kfUtPzNp86bL3YBrfsfPJW0ZEgZq3Wds218VdcOxglWAls9lA==}
+
+  '@forgerock/sdk-logger@2.2.0':
+    resolution: {integrity: sha512-Y0YPMA1PD1YyUTkPqUa9zZl3wqMvY/aq0mMYFJWYDePFIfr6bqhSetD48MEoyhbgq4atx1TO146Y0RVz8wUY9A==}
+
+  '@forgerock/sdk-oidc@2.2.0':
+    resolution: {integrity: sha512-qRod8iApFeLX/g9iN0/Mt+mZC/txzrPEgVqp+FNBL28Y+DSTihE10M3jRFYkcGLqW4Ozk/cmUt4NC4XZIvPKiw==}
+
+  '@forgerock/sdk-request-middleware@2.2.0':
+    resolution: {integrity: sha512-VG/jzXy0SEjCdap0MPPOJbV7+RwNhv+pFFs5WSWQM7Yf0BRgyiS4/jwgk+gIaM3WNhgJ0hw3vhYSR0gy4KYhQw==}
+
+  '@forgerock/sdk-types@2.2.0':
+    resolution: {integrity: sha512-fByh1R0PzSnDK1P7iV1SXzKU0MXbQqOUUQPKHT7SKkOnZs1g9shAaKtk9AvsCX9FlgCmGXZt/WtYnVYd6LJ8uw==}
+
+  '@forgerock/sdk-utilities@2.2.0':
+    resolution: {integrity: sha512-TxrvnBRGPjt5ZdwCQE0y6azKLV+WgW8sj6KfDrrFRmhu/cZ/8meK0Q5QwP079kdydCTHVJiE/RXI5G1FRptVIw==}
+
+  '@forgerock/storage@2.2.0':
+    resolution: {integrity: sha512-xCF2+n6/916b1Jc0t/4rAxzNG1BSLmQLJQ8/cffwAjZiK49FC2po4uMy5XG22AOGFlgtOBIJEWSYEy/WyTzc7Q==}
+
   '@grpc/grpc-js@1.14.4':
     resolution: {integrity: sha512-k9Dj3DV/itK9D06Y8f190Qgop7/Ui+D0njFV3LHMPwPT75DpXLQohE9Wmz0QElrJnzsjB7KPWiKJbOl7IPDArQ==}
     engines: {node: '>=12.10.0'}
@@ -1858,6 +1882,17 @@ packages:
   '@protobufjs/utf8@1.1.1':
     resolution: {integrity: sha512-oOAWABowe8EAbMyWKM0tYDKi8Yaox52D+HWZhAIJqQXbqe0xI/GV7FhLWqlEKreMkfDjshR5FKgi3mnle0h6Eg==}
 
+  '@reduxjs/toolkit@2.12.0':
+    resolution: {integrity: sha512-KiT+RzZbp6mQET+Mg+h2c97+9j1sNflUxQkIHI7Yuzf6Peu+OYpmkn6nbHWmLLWj+1ZODUJFwGZ7gx3L9R9EOw==}
+    peerDependencies:
+      react: ^16.9.0 || ^17.0.0 || ^18 || ^19
+      react-redux: ^7.2.1 || ^8.1.3 || ^9.0.0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-redux:
+        optional: true
+
   '@resvg/resvg-js-android-arm-eabi@2.6.2':
     resolution: {integrity: sha512-FrJibrAk6v29eabIPgcTUMPXiEz8ssrAk7TXxsiZzww9UTQ1Z5KAbFJs+Z0Ez+VZTYgnE5IQJqBcoSiMebtPHA==}
     engines: {node: '>= 10'}
@@ -2081,6 +2116,9 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@standard-schema/utils@0.3.0':
+    resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -3210,6 +3248,9 @@ packages:
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
+  effect@3.22.2:
+    resolution: {integrity: sha512-fm1CQXCs7GTMwpadZxwU5rnAb2bN6mbQpknq/pXBGCzSKkosNYb9k0wsoL0TfB10rSa5xOEZJjo77u/KLXSANg==}
+
   electron-to-chromium@1.5.372:
     resolution: {integrity: sha512-M3yhbAlilnwqC8D21t28UCDGHyitShTmmLRU/H+b74P6Ski16Nb9HONYEaVpMj/pwC7BEo5B95FpjODLCWbtfA==}
 
@@ -3435,6 +3476,10 @@ packages:
 
   extend@3.0.2:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
+
+  fast-check@3.23.2:
+    resolution: {integrity: sha512-h5+1OzzfCC3Ef7VbtKdcv7zsstUQwUDlYpUTvjeUsJAssPgLn7QzbboPtL5ro04Mq0rPOsMzl7q5hIbRs2wD1A==}
+    engines: {node: '>=8.0.0'}
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -3668,6 +3713,12 @@ packages:
   ignore@7.0.5:
     resolution: {integrity: sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg==}
     engines: {node: '>= 4'}
+
+  immer@10.2.0:
+    resolution: {integrity: sha512-d/+XTN3zfODyjr89gM3mPq1WNX2B8pYsu7eORitdwyA2sBubnTl3laYlBk4sXY5FUa5qTZGBDPJICVbvqzjlbw==}
+
+  immer@11.1.18:
+    resolution: {integrity: sha512-EQyQtLiYW029lyoczMl/Hh4Xu7cDecSc58JRYpHyL4tIAu3eqd1yJzQX04d2BZHDkzFFvm6qJEJWOtfDSWAXbQ==}
 
   import-fresh@3.3.1:
     resolution: {integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==}
@@ -4456,6 +4507,9 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
+  pure-rand@6.1.0:
+    resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
+
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
 
@@ -4491,6 +4545,14 @@ packages:
     resolution: {integrity: sha512-9u/XQ1pvrQtYyMpZe7DXKv2p5CNvyVwzUB6uhLAnQwHMSgKMBR62lc7AHljaeteeHXn11XTAaLLUVZYVZyuRBQ==}
     engines: {node: '>= 20.19.0'}
 
+  redux-thunk@3.1.0:
+    resolution: {integrity: sha512-NW2r5T6ksUKXCabzhL9z+h206HQw/NJkcLm1GPImRQ8IzfXwRGqjVhKJGauHirT0DAuyy6hjdnMZaRoAcy0Klw==}
+    peerDependencies:
+      redux: ^5.0.0
+
+  redux@5.0.1:
+    resolution: {integrity: sha512-M9/ELqF6fy8FwmkpnF0S3YKOqMyoWJ4+CS5Efg2ct3oY9daQvd/Pc71FpGZsVsbl3Cpb+IIcjBDUnnyBdQbq4w==}
+
   reflect.getprototypeof@1.0.10:
     resolution: {integrity: sha512-00o4I+DVrefhv+nX0ulyi3biSHCPDe+yLv5o/p6d/UVlirijB8E16FtfwSAi4g3tcqrQ4lRAqQSoFEZJehYEcw==}
     engines: {node: '>= 0.4'}
@@ -4513,6 +4575,9 @@ packages:
   require-in-the-middle@8.0.1:
     resolution: {integrity: sha512-QT7FVMXfWOYFbeRBF6nu+I6tr2Tf3u0q8RIEjNob/heKY/nh7drD/k7eeMFmSQgnTtCzLDcCu/XEnpW2wk4xCQ==}
     engines: {node: '>=9.3.0 || >=8.10.0 <9.0.0'}
+
+  reselect@5.3.0:
+    resolution: {integrity: sha512-XGoLeRAVzUTcJ1qkxPQhDJyIZ5d6zzZD9nT7AEZOaaU9UbWclhycElmhO+VD5bFeLuzhPBaOV2oXC8uG35ZSpg==}
 
   resend@6.12.4:
     resolution: {integrity: sha512-lRpJ2Hxd+ht+JPDm97juRcUp9HOMuZyxaRFRFmc9Tx8iNWiei94Dx9v6SWufgKk2667C/uCeKKspMotOHSpCSg==}
@@ -6134,6 +6199,48 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
+  '@forgerock/davinci-client@2.2.0(react@19.2.4)':
+    dependencies:
+      '@forgerock/sdk-logger': 2.2.0
+      '@forgerock/sdk-oidc': 2.2.0
+      '@forgerock/sdk-request-middleware': 2.2.0(react@19.2.4)
+      '@forgerock/sdk-types': 2.2.0
+      '@forgerock/sdk-utilities': 2.2.0
+      '@forgerock/storage': 2.2.0
+      '@reduxjs/toolkit': 2.12.0(react@19.2.4)
+      effect: 3.22.2
+      immer: 10.2.0
+    transitivePeerDependencies:
+      - react
+      - react-redux
+
+  '@forgerock/sdk-logger@2.2.0':
+    dependencies:
+      '@forgerock/sdk-types': 2.2.0
+
+  '@forgerock/sdk-oidc@2.2.0':
+    dependencies:
+      '@forgerock/sdk-types': 2.2.0
+      '@forgerock/sdk-utilities': 2.2.0
+
+  '@forgerock/sdk-request-middleware@2.2.0(react@19.2.4)':
+    dependencies:
+      '@reduxjs/toolkit': 2.12.0(react@19.2.4)
+    transitivePeerDependencies:
+      - react
+      - react-redux
+
+  '@forgerock/sdk-types@2.2.0': {}
+
+  '@forgerock/sdk-utilities@2.2.0':
+    dependencies:
+      '@forgerock/sdk-types': 2.2.0
+      effect: 3.22.2
+
+  '@forgerock/storage@2.2.0':
+    dependencies:
+      '@forgerock/sdk-types': 2.2.0
+
   '@grpc/grpc-js@1.14.4':
     dependencies:
       '@grpc/proto-loader': 0.8.1
@@ -7099,6 +7206,17 @@ snapshots:
 
   '@protobufjs/utf8@1.1.1': {}
 
+  '@reduxjs/toolkit@2.12.0(react@19.2.4)':
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      '@standard-schema/utils': 0.3.0
+      immer: 11.1.18
+      redux: 5.0.1
+      redux-thunk: 3.1.0(redux@5.0.1)
+      reselect: 5.3.0
+    optionalDependencies:
+      react: 19.2.4
+
   '@resvg/resvg-js-android-arm-eabi@2.6.2':
     optional: true
 
@@ -7262,6 +7380,8 @@ snapshots:
   '@stablelib/base64@1.0.1': {}
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@standard-schema/utils@0.3.0': {}
 
   '@swc/helpers@0.5.15':
     dependencies:
@@ -8183,6 +8303,11 @@ snapshots:
 
   eastasianwidth@0.2.0: {}
 
+  effect@3.22.2:
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      fast-check: 3.23.2
+
   electron-to-chromium@1.5.372: {}
 
   emoji-regex@10.6.0: {}
@@ -8615,6 +8740,10 @@ snapshots:
 
   extend@3.0.2: {}
 
+  fast-check@3.23.2:
+    dependencies:
+      pure-rand: 6.1.0
+
   fast-deep-equal@3.1.3: {}
 
   fast-glob@3.3.1:
@@ -8852,6 +8981,10 @@ snapshots:
   ignore@5.3.2: {}
 
   ignore@7.0.5: {}
+
+  immer@10.2.0: {}
+
+  immer@11.1.18: {}
 
   import-fresh@3.3.1:
     dependencies:
@@ -9615,6 +9748,8 @@ snapshots:
 
   punycode@2.3.1: {}
 
+  pure-rand@6.1.0: {}
+
   queue-microtask@1.2.3: {}
 
   rc9@3.0.1:
@@ -9649,6 +9784,12 @@ snapshots:
       util-deprecate: 1.0.2
 
   readdirp@5.0.0: {}
+
+  redux-thunk@3.1.0(redux@5.0.1):
+    dependencies:
+      redux: 5.0.1
+
+  redux@5.0.1: {}
 
   reflect.getprototypeof@1.0.10:
     dependencies:
@@ -9688,6 +9829,8 @@ snapshots:
       module-details-from-path: 1.0.4
     transitivePeerDependencies:
       - supports-color
+
+  reselect@5.3.0: {}
 
   resend@6.12.4:
     dependencies:
