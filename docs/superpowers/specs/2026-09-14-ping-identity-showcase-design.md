@@ -52,21 +52,19 @@ Tim bought `timnan.xyz` (Porkbun, 2026-09-14) for the Ping trial's business emai
 
 MFA/passkeys require **zero app code**: the authentication policy attached to the app connection makes PingOne's hosted login demand a passkey during the redirect. The demo shows enrollment on first sign-in and a passkey prompt on the second.
 
-## Part 2 — DaVinci flow + widget embed
+## Part 2 — Native Ping login via DaVinci + JS Orchestration SDK (REVISED 2026-09-21; supersedes the earlier "verify a connection's email" widget plan)
 
-**Flow (built in the DaVinci canvas): "Verify a connection's email."** Connectyall-flavored: contacts are captured from voice memos, so transcribed emails can be wrong. The flow takes an email, sends it a one-time code via Ping's connector, and confirms the address is real and owned.
+Tim's call: instead of a side-feature widget demo, the Orchestration SDK powers the actual login. The Ping login journey renders **natively inside our sign-in page** (our design system, no redirect), driven by a DaVinci flow. Email OTP stays untouched as the primary/backup path — the whole Ping surface remains env-flag removable, because the trial tenant is disposable (interview demo; may revert to Better Auth-only later).
 
-Canvas shape: HTML form node (collect/confirm email) → PingOne email OTP connector (send code) → code entry form → branch: valid → success node returning `{ verified: true, email }`; invalid → retry loop (max 3) → failure node.
+**Flow (DaVinci canvas): connectyall sign-on.** Identifier → password (or passwordless) → passkey MFA with enrollment → registration branch for new users. Published behind a DaVinci application + flow policy attached to the PingOne OIDC app.
 
-**In-app surface:** new page `src/app/app/connections/[contactId]/verify/page.tsx` (+ client component), reached from a small `VERIFY` mono-chip next to the email row on the connection detail page. The page:
+**Session bridge (the load-bearing decision, unchanged from Part 1):** the DaVinci login flow terminates by issuing a standard OIDC authorization code. That code lands on the existing Better Auth `genericOAuth` callback (`/api/auth/oauth2/callback/pingone`), which validates, links by email, and mints the session. The SDK changes where the journey RENDERS, not who owns sessions. No hand-rolled token verification, ever.
 
-1. Server-side, calls a new route `POST /api/ping/davinci-token` which exchanges the DaVinci API key for a short-lived SDK access token (key never reaches the browser). Admin/auth-gated to the signed-in user.
-2. Client-side, loads the DaVinci widget JS and calls `davinci.skRenderScreen(container, { config: { method: 'runFlow', accessToken, companyId, policyId }, useModal: false })`, prefilled with the contact's email where the widget supports flow input parameters.
-3. Listens for the flow-complete event; on `{ verified: true }`, POSTs to a new endpoint that stamps the contact — new nullable column `contacts.email_verified_at timestamptz` (hand-written migration + journal entry, next free number at build time) — and the detail page shows a small `● VERIFIED` mono label next to the email.
+**In-app surface:** the sign-in page's Ping path upgrades from `signIn.oauth2` redirect to an embedded journey: Ping's JS Orchestration SDK (`davinci-client` / JS SDK DaVinci module) starts the flow, we render each returned step (identifier form, password, OTP/passkey step, registration) as connectyall-styled components, post responses back, and on completion hand the authorization code to the Better Auth callback. The redirect path stays in code as a fallback behind the same flag family.
 
-Widget page follows the design system (APP_CONTAINER, headline banner, mono labels); the widget itself renders Ping-styled forms inside a white card — the visual seam is acceptable and is itself a demo talking point (DaVinci form theming exists in their console; out of scope).
+**Known risks to friction-log:** step-type coverage (every node type the flow emits needs a renderer), WebAuthn/passkey inside an embedded flow may need our domain registered with Ping (RP ID config), trial licensing surface for DaVinci, and SDK docs quality — all primary research for the DX PM interview.
 
-**Env vars:** `PING_DAVINCI_COMPANY_ID`, `PING_DAVINCI_API_KEY`, `PING_DAVINCI_POLICY_ID`.
+**Env vars:** TBD by SDK docs at build time (expect company/environment ID + flow policy ID; client-side-safe only — any API key stays server-side).
 
 ## Error handling
 
