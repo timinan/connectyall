@@ -60,6 +60,11 @@ export async function PUT(req: Request) {
   const social = SocialSchema.safeParse(body);
   if (social.success) {
     const { action, social: kind } = social.data;
+    // The email channel is seeded from the account email at creation and
+    // stays locked — the sign-in username is tied to it.
+    if (kind === 'email') {
+      return NextResponse.json({ error: 'email is tied to your sign-in and cannot be changed' }, { status: 400 });
+    }
     if (action === 'clear') {
       if (kind === 'telegram') {
         await db().update(users).set({ telegramUsername: null }).where(eq(users.id, session.user.id));
@@ -93,9 +98,8 @@ export async function PUT(req: Request) {
   if (parsed.data.tagline !== undefined) updates.tagline = parsed.data.tagline;
   if (parsed.data.shortBlurb !== undefined) updates.shortBlurb = parsed.data.shortBlurb;
   if (parsed.data.selfIntro !== undefined) updates.selfIntro = parsed.data.selfIntro;
-  // An empty partial is still meaningful: it stamps onboardedAt. OAuth
-  // sign-ups arrive with a name already set and may leave the profile
-  // untouched before continuing.
+  // An empty partial is still meaningful: it stamps onboardedAt for users
+  // who continue without editing anything.
   await db().update(users).set({ ...updates, onboardedAt: new Date() }).where(eq(users.id, session.user.id));
   const user = await getById(session.user.id);
   // Mirror the name onto the PingOne user with the same email. Ping is a

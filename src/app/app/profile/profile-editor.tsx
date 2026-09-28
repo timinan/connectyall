@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { APP_CONTAINER } from '../_layout-constants';
-import { LuCamera, LuX, LuCheck, LuPencil, LuStar } from 'react-icons/lu';
+import { LuCamera, LuX, LuCheck, LuPencil, LuStar, LuLock } from 'react-icons/lu';
 import { ChannelIcon, type ChannelKind } from '../cards/[id]/channel-icons';
 import { PageHeader } from '@/components/page-header';
 import { BottomNav } from '@/components/bottom-nav';
@@ -260,15 +260,21 @@ export function ProfileEditor({ initialProfile }: { initialProfile: Profile }) {
           {profile && PROFILE_CHANNELS.filter((k) => {
             const v = readChannel(profile, k);
             return v !== null && v !== '';
-          }).map((kind) => (
-            <ChannelRow
-              key={`${kind}-${readChannel(profile, kind)}`}
-              kind={kind}
-              initialValue={readChannel(profile, kind) ?? ''}
-              onSave={(v) => saveChannel(kind, v)}
-              onClear={() => clearChannel(kind)}
-            />
-          ))}
+          }).map((kind) =>
+            kind === 'email' ? (
+              // Email is seeded from the account email and locked — the
+              // sign-in username is tied to it.
+              <LockedChannelRow key="email" kind="email" value={readChannel(profile, 'email') ?? ''} />
+            ) : (
+              <ChannelRow
+                key={`${kind}-${readChannel(profile, kind)}`}
+                kind={kind}
+                initialValue={readChannel(profile, kind) ?? ''}
+                onSave={(v) => saveChannel(kind, v)}
+                onClear={() => clearChannel(kind)}
+              />
+            ),
+          )}
           {profile && (
             <AddChannel
               existing={PROFILE_CHANNELS.filter((k) => {
@@ -519,6 +525,20 @@ function EditableBlurb({
   );
 }
 
+function LockedChannelRow({ kind, value }: { kind: ProfileChannel; value: string }) {
+  return (
+    <div className="flex items-center gap-2" title="Tied to your sign-in">
+      <span className="flex items-center justify-center flex-shrink-0">
+        <ChannelIcon kind={kind as ChannelKind} size={18} />
+      </span>
+      <span className="flex-1 px-3 py-2 rounded-lg bg-cream/60 border border-line text-sm text-neutral-500 truncate">
+        {value}
+      </span>
+      <LuLock size={13} className="text-neutral-400 flex-shrink-0" aria-label="Tied to your sign-in" />
+    </div>
+  );
+}
+
 function ChannelRow({
   kind,
   initialValue,
@@ -563,7 +583,8 @@ function AddChannel({
   existing: ProfileChannel[];
   onAdd: (kind: ProfileChannel, value: string) => Promise<void>;
 }) {
-  const available = PROFILE_CHANNELS.filter((c) => !existing.includes(c));
+  // Email is excluded — it's seeded from the account email and locked.
+  const available = PROFILE_CHANNELS.filter((c) => c !== 'email' && !existing.includes(c));
   const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState<ProfileChannel | ''>('');
   const [value, setValue] = useState('');
