@@ -20,9 +20,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3
         version: 3.1068.0
-      '@forgerock/davinci-client':
-        specifier: ^2.2.0
-        version: 2.2.0(react@19.2.4)
+      '@forgerock/oidc-client':
+        specifier: 2.1.1
+        version: 2.1.1(react@19.2.4)
       '@neondatabase/serverless':
         specifier: ^0.10
         version: 0.10.4
@@ -1044,26 +1044,29 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@forgerock/davinci-client@2.2.0':
-    resolution: {integrity: sha512-8w0YfHD2iN93iFIN5AeT6pbkVkY0AMGNZ5Sj/kfUtPzNp86bL3YBrfsfPJW0ZEgZq3Wds218VdcOxglWAls9lA==}
+  '@forgerock/iframe-manager@2.1.1':
+    resolution: {integrity: sha512-Ig3ulte4KBqi4OdHM32ZG1s65OjilDuD7mbxlXfnIfOLLYrzFXLclevh5zpwYJh7o+UCsSKKIUHbNv7DzEs2hA==}
 
-  '@forgerock/sdk-logger@2.2.0':
-    resolution: {integrity: sha512-Y0YPMA1PD1YyUTkPqUa9zZl3wqMvY/aq0mMYFJWYDePFIfr6bqhSetD48MEoyhbgq4atx1TO146Y0RVz8wUY9A==}
+  '@forgerock/oidc-client@2.1.1':
+    resolution: {integrity: sha512-i88KRAGOwwbUorGF9gvAiZYYC23dQKN2zUSDa38o6uH541DQeQtYRZq1nGlSBDy+3Y3qKbgrEUf4+OOzr5KBUw==}
 
-  '@forgerock/sdk-oidc@2.2.0':
-    resolution: {integrity: sha512-qRod8iApFeLX/g9iN0/Mt+mZC/txzrPEgVqp+FNBL28Y+DSTihE10M3jRFYkcGLqW4Ozk/cmUt4NC4XZIvPKiw==}
+  '@forgerock/sdk-logger@2.1.1':
+    resolution: {integrity: sha512-V9r9eyUR+/3rWg/tznKFHyxQ7GGwWiezBSVmE8TN9vZ9oX4AYBlVzyp/3HOEmg4OI4Vja38J9W1+673IdnGTQQ==}
 
-  '@forgerock/sdk-request-middleware@2.2.0':
-    resolution: {integrity: sha512-VG/jzXy0SEjCdap0MPPOJbV7+RwNhv+pFFs5WSWQM7Yf0BRgyiS4/jwgk+gIaM3WNhgJ0hw3vhYSR0gy4KYhQw==}
+  '@forgerock/sdk-oidc@2.1.1':
+    resolution: {integrity: sha512-IXtcxXI4AGafaGfVtbqTyGIpR/gqAVtYNZXhZir5bpYgy83NbnVsLEA2d82gF064GiqEPVlDs8IRNv0ZVU8FLQ==}
 
-  '@forgerock/sdk-types@2.2.0':
-    resolution: {integrity: sha512-fByh1R0PzSnDK1P7iV1SXzKU0MXbQqOUUQPKHT7SKkOnZs1g9shAaKtk9AvsCX9FlgCmGXZt/WtYnVYd6LJ8uw==}
+  '@forgerock/sdk-request-middleware@2.1.1':
+    resolution: {integrity: sha512-emve+vtI1DkgoMiZCT8CgqfwLsJ3p3TWgMSnyOb3VafRTwne4beDtejn0yro/DwUOnMhjvcopSOrWJZmMCDMUg==}
 
-  '@forgerock/sdk-utilities@2.2.0':
-    resolution: {integrity: sha512-TxrvnBRGPjt5ZdwCQE0y6azKLV+WgW8sj6KfDrrFRmhu/cZ/8meK0Q5QwP079kdydCTHVJiE/RXI5G1FRptVIw==}
+  '@forgerock/sdk-types@2.1.1':
+    resolution: {integrity: sha512-OQCVap7e2P22lyuLPQawgmfJk7gpmubeF3hYqWEyrc4XhSJqnTvUxN9w1trmvyw7i7wnowwnU+wOfNzTRfzUww==}
 
-  '@forgerock/storage@2.2.0':
-    resolution: {integrity: sha512-xCF2+n6/916b1Jc0t/4rAxzNG1BSLmQLJQ8/cffwAjZiK49FC2po4uMy5XG22AOGFlgtOBIJEWSYEy/WyTzc7Q==}
+  '@forgerock/sdk-utilities@2.1.1':
+    resolution: {integrity: sha512-Pb/XWK6n7+BgWuYqBk+ZbW4tOUtYbzW3MmSDzvJXiZWMduNCdJJ9C/uAHoP/rXSYmMPAMEBUDGGwdE3yQFsKPw==}
+
+  '@forgerock/storage@2.1.1':
+    resolution: {integrity: sha512-nrUCiQoDJcu80v9PjBNRysFJmoBy9XggzsQVPD0+3M97hX2qyFPrhbppAOffqycNabbkg13UWCwb5L0ddfPcxQ==}
 
   '@grpc/grpc-js@1.14.4':
     resolution: {integrity: sha512-k9Dj3DV/itK9D06Y8f190Qgop7/Ui+D0njFV3LHMPwPT75DpXLQohE9Wmz0QElrJnzsjB7KPWiKJbOl7IPDArQ==}
@@ -3714,9 +3717,6 @@ packages:
     resolution: {integrity: sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg==}
     engines: {node: '>= 4'}
 
-  immer@10.2.0:
-    resolution: {integrity: sha512-d/+XTN3zfODyjr89gM3mPq1WNX2B8pYsu7eORitdwyA2sBubnTl3laYlBk4sXY5FUa5qTZGBDPJICVbvqzjlbw==}
-
   immer@11.1.18:
     resolution: {integrity: sha512-EQyQtLiYW029lyoczMl/Hh4Xu7cDecSc58JRYpHyL4tIAu3eqd1yJzQX04d2BZHDkzFFvm6qJEJWOtfDSWAXbQ==}
 
@@ -6199,47 +6199,50 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@forgerock/davinci-client@2.2.0(react@19.2.4)':
+  '@forgerock/iframe-manager@2.1.1': {}
+
+  '@forgerock/oidc-client@2.1.1(react@19.2.4)':
     dependencies:
-      '@forgerock/sdk-logger': 2.2.0
-      '@forgerock/sdk-oidc': 2.2.0
-      '@forgerock/sdk-request-middleware': 2.2.0(react@19.2.4)
-      '@forgerock/sdk-types': 2.2.0
-      '@forgerock/sdk-utilities': 2.2.0
-      '@forgerock/storage': 2.2.0
+      '@forgerock/iframe-manager': 2.1.1
+      '@forgerock/sdk-logger': 2.1.1
+      '@forgerock/sdk-oidc': 2.1.1
+      '@forgerock/sdk-request-middleware': 2.1.1(react@19.2.4)
+      '@forgerock/sdk-types': 2.1.1
+      '@forgerock/sdk-utilities': 2.1.1
+      '@forgerock/storage': 2.1.1
       '@reduxjs/toolkit': 2.12.0(react@19.2.4)
       effect: 3.22.2
-      immer: 10.2.0
+      jose: 6.2.3
     transitivePeerDependencies:
       - react
       - react-redux
 
-  '@forgerock/sdk-logger@2.2.0':
+  '@forgerock/sdk-logger@2.1.1':
     dependencies:
-      '@forgerock/sdk-types': 2.2.0
+      '@forgerock/sdk-types': 2.1.1
 
-  '@forgerock/sdk-oidc@2.2.0':
+  '@forgerock/sdk-oidc@2.1.1':
     dependencies:
-      '@forgerock/sdk-types': 2.2.0
-      '@forgerock/sdk-utilities': 2.2.0
+      '@forgerock/sdk-types': 2.1.1
+      '@forgerock/sdk-utilities': 2.1.1
 
-  '@forgerock/sdk-request-middleware@2.2.0(react@19.2.4)':
+  '@forgerock/sdk-request-middleware@2.1.1(react@19.2.4)':
     dependencies:
       '@reduxjs/toolkit': 2.12.0(react@19.2.4)
     transitivePeerDependencies:
       - react
       - react-redux
 
-  '@forgerock/sdk-types@2.2.0': {}
+  '@forgerock/sdk-types@2.1.1': {}
 
-  '@forgerock/sdk-utilities@2.2.0':
+  '@forgerock/sdk-utilities@2.1.1':
     dependencies:
-      '@forgerock/sdk-types': 2.2.0
+      '@forgerock/sdk-types': 2.1.1
       effect: 3.22.2
 
-  '@forgerock/storage@2.2.0':
+  '@forgerock/storage@2.1.1':
     dependencies:
-      '@forgerock/sdk-types': 2.2.0
+      '@forgerock/sdk-types': 2.1.1
 
   '@grpc/grpc-js@1.14.4':
     dependencies:
@@ -8981,8 +8984,6 @@ snapshots:
   ignore@5.3.2: {}
 
   ignore@7.0.5: {}
-
-  immer@10.2.0: {}
 
   immer@11.1.18: {}
 

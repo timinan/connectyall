@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { signIn, authClient } from '@/lib/auth/client';
 import { PageHeader } from '@/components/page-header';
 import { LANDING_CONTAINER_FLEX } from '../_layout-constants';
-import { PingJourney } from './ping-journey';
-import { pingNativeEnabled } from '@/lib/ping/config';
+import { pingEnabled } from '@/lib/ping/config';
+import { pingOidcClient, pingDisplayName, type PingUserInfo } from '@/lib/ping/oidc';
 
-type Step = 'email' | 'code' | 'ping';
-type Status = 'idle' | 'sending' | 'verifying';
+type Step = 'email' | 'code' | 'ping-user';
+type Status = 'idle' | 'sending' | 'verifying' | 'ping-redirect' | 'ping-exchange';
 
 export default function SignInPage() {
   const [step, setStep] = useState<Step>('email');
@@ -16,25 +16,78 @@ export default function SignInPage() {
   const [otp, setOtp] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [pingUser, setPingUser] = useState<PingUserInfo | null>(null);
 
-  const pingEnabled = process.env.NEXT_PUBLIC_PING_ENABLED === '1';
+  const showPing = pingEnabled();
 
+  // The sign-in page doubles as the OAuth redirect URI. On return from the
+  // PingOne hosted experience the URL carries ?code&state — exchange them for
+  // tokens, fetch the user via the userinfo endpoint, and show the result.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const state = params.get('state');
     if (params.get('error')) {
-      setErrorMsg('Ping sign-in didn\'t complete. Try again, or use the email code instead.');
+      // Provider-denied callback (user cancelled, policy failure, ...).
+      setErrorMsg("Ping sign-in didn't complete. Try again, or use the email code instead.");
       window.history.replaceState(null, '', '/app/sign-in');
+      return;
     }
+    if (!code || !state) return;
+    window.history.replaceState(null, '', '/app/sign-in');
+    setStatus('ping-exchange');
+    (async () => {
+      try {
+        const client = await pingOidcClient();
+        const tokens = await client.token.exchange(code, state);
+        if (tokens && typeof tokens === 'object' && 'error' in tokens) {
+          throw new Error(String((tokens as { error: unknown }).error));
+        }
+        const info = await client.user.info();
+        if (info && typeof info === 'object' && 'error' in info) {
+          throw new Error(String((info as { error: unknown }).error));
+        }
+        setPingUser(info as PingUserInfo);
+        setStep('ping-user');
+      } catch {
+        setErrorMsg("Ping sign-in didn't complete. Try again, or use the email code instead.");
+      } finally {
+        setStatus('idle');
+      }
+    })();
   }, []);
 
   async function signInWithPing() {
     setErrorMsg(null);
-    const { error } = await signIn.oauth2({
-      providerId: 'pingone',
-      callbackURL: '/app',
-      errorCallbackURL: '/app/sign-in?error=ping',
-    });
-    if (error) setErrorMsg(error.message ?? 'Ping sign-in failed');
+    setStatus('ping-redirect');
+    try {
+      const client = await pingOidcClient();
+      const authorizeUrl = await client.authorize.url();
+      if (typeof authorizeUrl !== 'string') {
+        throw new Error('authorize.url failed');
+      }
+      window.location.assign(authorizeUrl);
+    } catch {
+      setStatus('idle');
+      setErrorMsg('Could not reach Ping. Try again, or use the email code instead.');
+    }
+  }
+
+  async function signOutOfPing() {
+    setErrorMsg(null);
+    try {
+      const client = await pingOidcClient();
+      // Two distinct things happen here, deliberately:
+      // 1. revoke(): invalidates the access/refresh tokens server-side AND
+      //    deletes the SDK's local copies.
+      // 2. logout(): ends the user's session at the authorization server, so
+      //    the next authorize call shows the login page again instead of SSO.
+      await client.token.revoke();
+      await client.user.logout();
+    } finally {
+      setPingUser(null);
+      setStep('email');
+    }
   }
 
   async function sendCode(e: React.FormEvent) {
@@ -71,7 +124,7 @@ export default function SignInPage() {
 
   const status_label =
     step === 'email' ? <><span className="text-brand">●</span> SIGN IN</> :
-    step === 'ping' ? <><span className="text-brand">●</span> PING IDENTITY</> :
+    step === 'ping-user' ? <><span className="text-brand">●</span> PING IDENTITY</> :
     <><span className="text-brand">●</span> ENTER CODE</>;
 
   return (
@@ -86,12 +139,12 @@ export default function SignInPage() {
             sub="Drop your email and we'll send a 6-digit code. No password, no magic link."
           />
         )}
-        {step === 'ping' && (
+        {step === 'ping-user' && (
           <Top
             label="PING IDENTITY"
-            headlineFirst="Sign in"
+            headlineFirst="Signed in"
             headlineAccent="with Ping."
-            sub="A few quick steps and you're in. We'll hand you back the moment you're verified."
+            sub="Verified by PingOne over OpenID Connect. This is you, straight from the userinfo endpoint."
           />
         )}
         {step === 'code' && (
@@ -129,9 +182,20 @@ export default function SignInPage() {
                 </button>
               </form>
             )}
-            {step === 'ping' && (
+            {step === 'ping-user' && pingUser && (
               <div className="relative z-10 w-full max-w-[320px] flex flex-col gap-3">
-                <PingJourney onBackToOtp={() => setStep('email')} />
+                <div className="bg-surface border border-line rounded-3xl px-5 py-5 shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)] flex flex-col gap-3">
+                  <UserRow label="NAME" value={pingDisplayName(pingUser)} />
+                  <UserRow label="USERNAME" value={pingUser.preferred_username} />
+                  <UserRow label="EMAIL" value={pingUser.email} />
+                </div>
+                <button
+                  type="button"
+                  onClick={signOutOfPing}
+                  className="w-full h-16 px-5 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase hover:bg-brand/90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
+                >
+                  Sign out
+                </button>
               </div>
             )}
             {step === 'code' && (
@@ -164,17 +228,20 @@ export default function SignInPage() {
               </form>
             )}
           </div>
-          {step === 'email' && pingEnabled && (
+          {step === 'email' && showPing && (
             <div className="relative z-10 w-full max-w-[320px] flex flex-col gap-3">
               <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium text-center">
                 <span className="text-brand mr-1">●</span> OR
               </div>
               <button
                 type="button"
-                onClick={() => (pingNativeEnabled() ? setStep('ping') : signInWithPing())}
-                className="w-full h-16 px-5 rounded-full bg-surface border border-line text-neutral-950 font-mono text-[13px] tracking-[0.18em] font-bold uppercase hover:border-brand transition shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)]"
+                onClick={signInWithPing}
+                disabled={status === 'ping-redirect' || status === 'ping-exchange'}
+                className="w-full h-16 px-5 rounded-full bg-surface border border-line text-neutral-950 font-mono text-[13px] tracking-[0.18em] font-bold uppercase disabled:opacity-50 hover:border-brand transition shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)]"
               >
-                Sign in with Ping
+                {status === 'ping-redirect' ? 'Heading to Ping…' :
+                 status === 'ping-exchange' ? 'Verifying…' :
+                 'Sign in with Ping'}
               </button>
             </div>
           )}
@@ -195,6 +262,17 @@ export default function SignInPage() {
           {errorMsg && <p className="text-red-600 text-sm text-center max-w-[320px]">{errorMsg}</p>}
         </div>
       </div>
+    </div>
+  );
+}
+
+function UserRow({ label, value }: { label: string; value?: string }) {
+  return (
+    <div>
+      <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium">
+        <span className="text-brand mr-1">●</span> {label}
+      </div>
+      <div className="text-[17px] font-bold text-neutral-950 break-all">{value ?? '—'}</div>
     </div>
   );
 }
