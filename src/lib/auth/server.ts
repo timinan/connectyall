@@ -69,6 +69,11 @@ export function auth() {
         // Safe only while PingOne verifies emails at registration — a user
         // with an unverified Ping email must never link to an OTP account.
         trustedProviders: ['pingone'],
+        // Users this bridge itself created carry email_verified=false
+        // (PingOne userinfo has no email_verified claim), and PingOne subs
+        // churn when the environment is recreated. Without this, re-linking
+        // any such user dead-ends at account_not_linked.
+        requireLocalEmailVerified: false,
       },
     },
     plugins: [
@@ -103,7 +108,10 @@ export function auth() {
                       (profile.name as string | undefined) ??
                       ([first, last].filter(Boolean).join(' ') ||
                         (profile.email as string | undefined)?.split('@')[0]);
-                    return { name };
+                    // PingOne omits email_verified from userinfo, but our
+                    // flow guarantees it: registration pairs the email as an
+                    // MFA device and sign-in delivers an OTP to that inbox.
+                    return { name, emailVerified: true };
                   },
                 },
               ],
