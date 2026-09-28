@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { signIn, authClient } from '@/lib/auth/client';
 import { PageHeader } from '@/components/page-header';
 import { LANDING_CONTAINER_FLEX } from '../_layout-constants';
-import { pingEnabled } from '@/lib/ping/config';
+import { pingEnabled, PING_AUTH_BASE } from '@/lib/ping/config';
 import { pingOidcClient, pingDisplayName, type PingUserInfo } from '@/lib/ping/oidc';
 
 type Step = 'email' | 'code' | 'ping-user';
@@ -90,12 +90,32 @@ export default function SignInPage() {
     setErrorMsg(null);
     try {
       const client = await pingOidcClient();
+      // Grab the id_token before revoke() wipes the local token store — the
+      // signoff redirect below needs it as id_token_hint.
+      const tokens = await client.token.get();
+      const idToken =
+        tokens && typeof tokens === 'object' && 'idToken' in tokens
+          ? (tokens as { idToken: string }).idToken
+          : null;
       // Two distinct things happen here, deliberately:
       // 1. revoke(): invalidates the access/refresh tokens server-side AND
       //    deletes the SDK's local copies.
-      // 2. logout(): ends the user's session at the authorization server, so
-      //    the next authorize call shows the login page again instead of SSO.
+      // 2. A top-level redirect to /as/signoff ends the PingOne session. The
+      //    SDK's user.logout() calls the endpoint in the background, which
+      //    does NOT kill the session cookie — the next authorize would SSO
+      //    straight back in (verified live). Only a browser navigation works.
       await client.token.revoke();
+      if (idToken) {
+        const signoff = new URL(`${PING_AUTH_BASE}/signoff`);
+        signoff.searchParams.set('id_token_hint', idToken);
+        signoff.searchParams.set(
+          'post_logout_redirect_uri',
+          `${window.location.origin}/app/sign-in`,
+        );
+        window.location.assign(signoff.toString());
+        return;
+      }
+      // No id_token to hand the signoff endpoint — best effort only.
       await client.user.logout();
     } finally {
       setPingUser(null);
