@@ -8,7 +8,7 @@ import { pingEnabled, PING_AUTH_BASE } from '@/lib/ping/config';
 import { pingOidcClient, pingDisplayName, type PingUserInfo } from '@/lib/ping/oidc';
 
 type Step = 'email' | 'code' | 'ping-user';
-type Status = 'idle' | 'sending' | 'verifying' | 'ping-redirect' | 'ping-exchange';
+type Status = 'idle' | 'sending' | 'verifying' | 'ping-redirect' | 'ping-exchange' | 'ping-bridge';
 
 export default function SignInPage() {
   const [step, setStep] = useState<Step>('email');
@@ -49,9 +49,28 @@ export default function SignInPage() {
         }
         setPingUser(info as PingUserInfo);
         setStep('ping-user');
+        // Normal product flow: bridge straight into an app session — new
+        // users land on /app/profile (onboarding gate) with their email
+        // populated. The exercise's userinfo card stays reachable by
+        // starting sign-in from /app/sign-in?demo=1.
+        if (sessionStorage.getItem('ping:demo') !== '1') {
+          setStatus('ping-bridge');
+          const { error } = await signIn.oauth2({
+            providerId: 'pingone',
+            callbackURL: '/app',
+            errorCallbackURL: '/app/sign-in?error=ping',
+          });
+          // Success navigates away; only an error falls through to the card,
+          // where CONTINUE TO APP offers a manual retry.
+          if (error) {
+            setErrorMsg(error.message ?? 'Could not start an app session');
+            setStatus('idle');
+          }
+          return;
+        }
+        setStatus('idle');
       } catch {
         setErrorMsg("Ping sign-in didn't complete. Try again, or use the email code instead.");
-      } finally {
         setStatus('idle');
       }
     })();
@@ -60,6 +79,15 @@ export default function SignInPage() {
   async function signInWithPing() {
     setErrorMsg(null);
     setStatus('ping-redirect');
+    // Exercise walkthrough mode: /app/sign-in?demo=1 parks on the userinfo
+    // card after the redirect instead of bridging into the app. The flag
+    // rides sessionStorage because the registered redirect URI is an exact
+    // match and can't carry query params.
+    if (new URLSearchParams(window.location.search).get('demo') === '1') {
+      sessionStorage.setItem('ping:demo', '1');
+    } else {
+      sessionStorage.removeItem('ping:demo');
+    }
     try {
       const client = await pingOidcClient();
       const authorizeUrl = await client.authorize.url();
@@ -215,7 +243,14 @@ export default function SignInPage() {
                 </button>
               </form>
             )}
-            {step === 'ping-user' && pingUser && (
+            {step === 'ping-user' && status === 'ping-bridge' && (
+              <div className="relative z-10 w-full max-w-[320px]">
+                <div className="w-full h-16 px-5 rounded-full bg-surface border border-line text-muted font-mono text-[13px] tracking-[0.18em] font-bold uppercase flex items-center justify-center shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)]">
+                  Heading into the app…
+                </div>
+              </div>
+            )}
+            {step === 'ping-user' && status !== 'ping-bridge' && pingUser && (
               <div className="relative z-10 w-full max-w-[320px] flex flex-col gap-3">
                 <div className="bg-surface border border-line rounded-3xl px-5 py-5 shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)] flex flex-col gap-3">
                   <UserRow label="NAME" value={pingDisplayName(pingUser)} />
