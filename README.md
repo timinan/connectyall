@@ -4,8 +4,6 @@ A phone-first PWA that turns the voice memo you record right after meeting someo
 
 **Live:** https://connectyall.vercel.app
 
-**Ping Identity SDK PM exercise:** the submission, docs, and run instructions are in [docs/ping-exercise/](docs/ping-exercise/README.md).
-
 ## What it does
 
 You meet someone. Walking away, you tap a button and just talk: "Met Sarah at the AI breakfast. She's hiring backend engineers. Telegram is @sarahc, email sarah@acme.com. Send her the deck I told her about." A few seconds later you have a real contact, a recap of what you talked about, and a single share link that gives Sarah a clean page with your photo, your details, and an option to save you to her phone.
