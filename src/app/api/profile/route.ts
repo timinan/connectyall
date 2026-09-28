@@ -7,6 +7,7 @@ import { db } from '@/lib/db/client';
 import { contacts, interactions, users } from '@/lib/db/schema';
 import { linkedinHandle, xHandle, telegramHandle, instagramHandle, messengerHandle } from '@/lib/social-urls';
 import { deleteObject, listObjects } from '@/lib/r2/client';
+import { syncDisplayNameToPing } from '@/lib/ping/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -97,6 +98,15 @@ export async function PUT(req: Request) {
   // untouched before continuing.
   await db().update(users).set({ ...updates, onboardedAt: new Date() }).where(eq(users.id, session.user.id));
   const user = await getById(session.user.id);
+  // Mirror the name onto the PingOne user with the same email. Ping is a
+  // mirror, not the source of truth — a sync failure never fails the save.
+  if (parsed.data.displayName !== undefined && session.user.email) {
+    try {
+      await syncDisplayNameToPing(session.user.email, parsed.data.displayName);
+    } catch (err) {
+      console.error('[ping-sync] display name sync failed', err);
+    }
+  }
   return NextResponse.json({ user });
 }
 

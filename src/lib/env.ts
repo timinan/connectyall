@@ -22,6 +22,12 @@ const schema = z
     RESEND_FROM_EMAIL: z.string().min(1),
     BETTER_AUTH_SECRET: z.string().min(16),
     BETTER_AUTH_URL: z.string().url(),
+    // PingOne session bridge (public client, PKCE — no secret by design)
+    PING_ENV_ID: z.string().optional(),
+    PING_CLIENT_ID: z.string().optional(),
+    // PingOne worker app for profile write-back (client credentials)
+    PING_WORKER_CLIENT_ID: z.string().optional(),
+    PING_WORKER_CLIENT_SECRET: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.LLM_PROVIDER === 'anthropic' && !data.ANTHROPIC_API_KEY) {
@@ -48,6 +54,14 @@ const schema = z
   });
 
 export type Env = z.infer<typeof schema>;
+
+export function pingBridgeEnabled(e: Env): boolean {
+  return Boolean(e.PING_ENV_ID && e.PING_CLIENT_ID);
+}
+
+export function pingSyncEnabled(e: Env): boolean {
+  return Boolean(e.PING_ENV_ID && e.PING_WORKER_CLIENT_ID && e.PING_WORKER_CLIENT_SECRET);
+}
 
 // On a Vercel preview deployment, BETTER_AUTH_URL must equal the preview's own
 // hostname — otherwise magic-link emails generated here will redirect back to

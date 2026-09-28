@@ -73,6 +73,19 @@ export default function SignInPage() {
     }
   }
 
+  async function continueToApp() {
+    setErrorMsg(null);
+    // Bridge the PingOne session into an app session: better-auth's oauth2
+    // flow redirects to PingOne, which SSO's silently off the session the SDK
+    // flow just established, then the callback mints the Better Auth session.
+    const { error } = await signIn.oauth2({
+      providerId: 'pingone',
+      callbackURL: '/app',
+      errorCallbackURL: '/app/sign-in?error=ping',
+    });
+    if (error) setErrorMsg(error.message ?? 'Could not start an app session');
+  }
+
   async function signOutOfPing() {
     setErrorMsg(null);
     try {
@@ -191,8 +204,15 @@ export default function SignInPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={signOutOfPing}
+                  onClick={continueToApp}
                   className="w-full h-16 px-5 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase hover:bg-brand/90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
+                >
+                  Continue to app
+                </button>
+                <button
+                  type="button"
+                  onClick={signOutOfPing}
+                  className="w-full h-16 px-5 rounded-full bg-surface border border-line text-neutral-950 font-mono text-[13px] tracking-[0.18em] font-bold uppercase hover:border-brand transition shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)]"
                 >
                   Sign out
                 </button>

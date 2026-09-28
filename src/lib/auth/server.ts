@@ -1,10 +1,10 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { emailOTP } from 'better-auth/plugins';
+import { emailOTP, genericOAuth } from 'better-auth/plugins';
 import { randomUUID } from 'node:crypto';
 import { db } from '../db/client';
 import * as schema from '../db/schema';
-import { env } from '../env';
+import { env, pingBridgeEnabled } from '../env';
 import { sendOTPEmail } from '../email/resend';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,6 +63,14 @@ export function auth() {
         },
       },
     },
+    account: {
+      accountLinking: {
+        enabled: true,
+        // Safe only while PingOne verifies emails at registration — a user
+        // with an unverified Ping email must never link to an OTP account.
+        trustedProviders: ['pingone'],
+      },
+    },
     plugins: [
       emailOTP({
         sendVerificationOTP: async ({ email, otp }) => {
@@ -71,6 +79,37 @@ export function auth() {
         otpLength: 6,
         expiresIn: 60 * 10, // 10 minutes
       }),
+      ...(pingBridgeEnabled(env())
+        ? [
+            genericOAuth({
+              config: [
+                {
+                  // Session bridge only: the interactive auth happens through
+                  // the @forgerock/oidc-client flow on the sign-in page; this
+                  // provider rides the resulting PingOne session silently to
+                  // mint the app session. Public client + PKCE, no secret.
+                  providerId: 'pingone',
+                  discoveryUrl: `https://auth.pingone.ca/${env().PING_ENV_ID}/as/.well-known/openid-configuration`,
+                  clientId: env().PING_CLIENT_ID!,
+                  scopes: ['openid', 'profile', 'email'],
+                  pkce: true,
+                  // PingOne's userinfo/ID token may omit `name`, which
+                  // better-auth requires. Fall back to given+family name,
+                  // then the email prefix (same rule as the OTP create hook).
+                  mapProfileToUser: (profile) => {
+                    const first = profile.given_name as string | undefined;
+                    const last = profile.family_name as string | undefined;
+                    const name =
+                      (profile.name as string | undefined) ??
+                      ([first, last].filter(Boolean).join(' ') ||
+                        (profile.email as string | undefined)?.split('@')[0]);
+                    return { name };
+                  },
+                },
+              ],
+            }),
+          ]
+        : []),
     ],
   });
   return cached;
