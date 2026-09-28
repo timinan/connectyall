@@ -8,7 +8,3 @@ export const PING_WELLKNOWN = `${PING_AUTH_BASE}/.well-known/openid-configuratio
 export function pingEnabled(): boolean {
   return process.env.NEXT_PUBLIC_PING_ENABLED === '1' && Boolean(PING_ENV_ID && PING_CLIENT_ID);
 }
-
-export function pingNativeEnabled(): boolean {
-  return pingEnabled() && process.env.NEXT_PUBLIC_PING_NATIVE === '1';
-}

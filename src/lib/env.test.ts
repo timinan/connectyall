@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loadEnv, pingEnabled } from './env';
+import { loadEnv } from './env';
 
 describe('loadEnv', () => {
   it('parses required fields', () => {
@@ -32,35 +32,5 @@ describe('loadEnv', () => {
     expect(() =>
       loadEnv({ ...process.env, ANTHROPIC_API_KEY: undefined })
     ).toThrow(/ANTHROPIC_API_KEY/);
-  });
-});
-
-describe('ping env', () => {
-  it('loads fine with no ping vars and reports disabled', () => {
-    const e = loadEnv({
-      ...process.env,
-      PING_ENV_ID: undefined,
-      PING_CLIENT_ID: undefined,
-      PING_CLIENT_SECRET: undefined,
-    });
-    expect(pingEnabled(e)).toBe(false);
-  });
-
-  it('reports enabled only when all three are set', () => {
-    const e = loadEnv({
-      ...process.env,
-      PING_ENV_ID: 'env',
-      PING_CLIENT_ID: 'id',
-      PING_CLIENT_SECRET: 's',
-    });
-    expect(pingEnabled(e)).toBe(true);
-
-    const partial = loadEnv({
-      ...process.env,
-      PING_ENV_ID: 'env',
-      PING_CLIENT_ID: undefined,
-      PING_CLIENT_SECRET: undefined,
-    });
-    expect(pingEnabled(partial)).toBe(false);
   });
 });
