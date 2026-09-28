@@ -1,116 +1,115 @@
-# Parts 2–8 — Application, SDK, sign-in/out, architecture, DX
+# Parts 2 to 8. Application, SDK, sign-in and sign-out, architecture, DX
 
-Working log for the SDK PM technical exercise, continuing from `pingone-configuration.md` (Part 1). Same convention: decision + reasoning per item, ✅ once verified. Branch: `feature/ping-sdk-exercise` in the connectyall repo.
+Continues from `pingone-configuration.md`. Branch `feature/ping-sdk-exercise` in the connectyall repo.
 
-## Part 2 — Create the application ✅ (live run verified 2026-09-28)
+## Part 2. The application
 
-**Platform:** JavaScript. Rather than a throwaway sample app, the integration lives inside **connectyall**, a real production Next.js 16 PWA — the Ping SDK flow replaces the app's previous "SIGN IN WITH PING" implementation on the existing sign-in page (`/app/sign-in`). Email OTP (the app's own passwordless flow) stays primary; Ping is the "or" option below it.
+Platform is JavaScript. Instead of a throwaway sample I built the integration into connectyall, my production Next.js 16 PWA. The Ping SDK flow replaced the app's previous Ping sign-in on the existing `/app/sign-in` page. Email OTP, the app's own passwordless flow, stays primary and Ping is the "or" option under it.
 
-**What came out (from-scratch requirement):** the entire previous Ping integration —
-- `@forgerock/davinci-client` (embedded DaVinci orchestration) and its renderer/hook (`ping-journey.tsx`, `use-davinci-flow.ts`)
-- Better Auth `genericOAuth` server-side OIDC (confidential client with client secret) and its `trustedProviders` account linking
-- server env vars `PING_ENV_ID` / `PING_CLIENT_ID` / `PING_CLIENT_SECRET`
+To honor the from-scratch requirement I removed the entire previous integration first. That was the DaVinci client and its renderer, the Better Auth genericOAuth server-side OIDC which was a confidential client with a secret, and the server env vars that held Ping credentials. In their place is `@forgerock/oidc-client` 2.1.1, the guide's package, doing OIDC entirely in the browser as a public client.
 
-**What went in:** `@forgerock/oidc-client@2.1.1` (the guide's package), doing OIDC entirely in the browser as a public client. Three UI states on the sign-in page: **Sign In** (button below the email form) → **Authenticated user info** (name / username / email card) → **Sign Out**.
+The three states the exercise asks for map to the page like this. Sign In is the SIGN IN WITH PING button. Authenticated user info is a card with name, username, and email rendered after the redirect back. Sign Out is a button on that card.
 
-The user experience the exercise asks for maps to:
-- Sign In → `SIGN IN WITH PING` button
-- Authenticated user info → the card rendered from the userinfo endpoint after redirect-back
-- Sign Out → `SIGN OUT` button on that card
+One scope decision I made. The SDK flow keeps its own tokens and does not by itself create a connectyall session. I added that bridge later as a separate follow-on, see the epilogue, but for the exercise the sign-in, user info, and sign-out loop is self contained on the page. Verified live on 2026-09-28.
 
-**Scope decision:** the SDK flow is self-contained — it does NOT mint a connectyall (Better Auth) session. Entering the app proper still uses email OTP. Bridging Ping tokens into an app session is deliberately out of scope for the exercise; it's the natural "productionize" follow-on.
+## Part 3. SDK configuration
 
-## Part 3 — Configure the SDK ✅
-
-`src/lib/ping/config.ts` (client-safe values) + `src/lib/ping/oidc.ts` (client factory):
+Config lives in `src/lib/ping/config.ts` and the client factory in `src/lib/ping/oidc.ts`.
 
 ```ts
 oidc({
   config: {
-    clientId: NEXT_PUBLIC_PING_CLIENT_ID,            // c93fe4f5-…
+    clientId: NEXT_PUBLIC_PING_CLIENT_ID,
     redirectUri: `${window.location.origin}/app/sign-in`,
     scope: 'openid profile email phone',
-    serverConfig: {
-      wellknown: `https://auth.pingone.ca/<ENV_ID>/as/.well-known/openid-configuration`,
-    },
+    serverConfig: { wellknown: 'https://auth.pingone.ca/<ENV_ID>/as/.well-known/openid-configuration' },
   },
 })
 ```
 
-- **Client ID / env ID** ship to the browser via `NEXT_PUBLIC_*` — by design, they appear in every authorize URL anyway. There is **no client secret anywhere**: public client + PKCE.
-- **Redirect URI** is the sign-in page itself, matching the console registration exactly.
-- **Discovery** (`wellknown`) is the only hardcoded endpoint; authorize/token/userinfo/signoff/revoke are all discovered.
-- The factory returns an error-or-client union; we narrow once in `pingOidcClient()` so the page code gets a guaranteed client (and a failed init isn't cached, so retry works).
-- Platform note (browser vs mobile): no custom scheme or app link needed — the redirect is a plain same-origin navigation back to the page, which reads `?code&state` off the URL.
+The client ID and environment ID ship to the browser as NEXT_PUBLIC vars on purpose, they appear in every authorize URL anyway. There is no client secret anywhere, public client plus PKCE. The redirect URI is the sign-in page itself and must exactly match the console registration. The wellknown URL is the only endpoint I hardcode, authorize, token, userinfo, signoff, and revoke are all discovered.
 
-## Part 4 — Implement sign-in ✅ (live run verified 2026-09-28)
+One implementation note. The `oidc()` factory resolves to a union of an error object or the client, with every client member optional. I narrow it once in `pingOidcClient()` so page code gets a guaranteed client, and I don't cache a failed init so the next call retries.
 
-Flow, mapped to the exercise's eight steps:
+## Part 4. Sign-in flow
 
-1. `SIGN IN WITH PING` → `client.authorize.url()` builds the authorize URL (PKCE verifier generated + stashed by the SDK, state stored per-tab in sessionStorage).
-2. `window.location.assign(url)` → PingOne-hosted sign-on (the `Multi_Factor` policy assigned to the app).
-3. User authenticates with username + password.
-4. MFA step: PingOne emails an OTP to the user's directory email (no device paired), user enters it.
-5. PingOne 302s back to `http://localhost:3000/app/sign-in?code=…&state=…`.
-6. On mount, the page detects `code`+`state`, scrubs them from the URL (`history.replaceState`), and calls
-7. `client.token.exchange(code, state)` — the SDK verifies state, sends the code + PKCE verifier to the token endpoint, stores the returned tokens.
-8. `client.user.info()` → userinfo endpoint with the access token → the page renders name / preferred_username / email.
+What happens when you press the button, mapped to the exercise's eight steps.
 
-Error paths: `?error=` on the callback (user cancelled / policy failure) and a failed exchange both land on the same friendly message with email-OTP as the fallback.
+1. The button calls `client.authorize.url()`. The SDK generates the PKCE verifier and state and builds the authorize URL.
+2. `window.location.assign(url)` sends the browser to the PingOne hosted sign-on, which runs the Multi_Factor policy assigned to my app.
+3. The user enters username and password.
+4. PingOne emails an OTP to the user's paired email device and the user enters it.
+5. PingOne redirects back to `http://localhost:3000/app/sign-in?code=...&state=...`.
+6. On mount my page sees code and state, scrubs them from the URL with history.replaceState, and
+7. calls `client.token.exchange(code, state)`. The SDK checks state, posts the code plus PKCE verifier to the token endpoint, and stores the tokens.
+8. `client.user.info()` hits the userinfo endpoint with the access token and I render the result.
 
-## Part 5 — Display the authenticated user ✅ (live run verified 2026-09-28)
+If the callback carries an error param, for example the user cancelled, or if the exchange fails, I show one friendly message and point at email OTP as the fallback.
 
-Nothing hard-coded: the card renders whatever the **userinfo endpoint** returns (`name`, `preferred_username`, `email`), fetched by the SDK with the access token it holds. Claims come out of the `openid profile email phone` scopes granted to the app.
+## Part 5. Displaying the user
 
-**Live-run observation:** username and email rendered; NAME came back empty — PingOne does **not synthesize a `name` claim** from given/family name (the same gap the earlier Better Auth integration had to patch with `mapProfileToUser`). Follow-up: fall back to `given_name + family_name` in the card.
+Nothing is hard coded. The card shows whatever userinfo returns for name, preferred_username, and email, which come from the openid profile email phone scopes.
 
-## Part 6 — Implement sign-out ✅ (live run 2026-09-28, with a finding)
+Live run observation. Username and email rendered, name came back empty. PingOne does not synthesize a `name` claim from given and family name. I added a fallback that joins given_name and family_name, the same rule my earlier integration needed.
 
-`SIGN OUT` runs two deliberate, distinct calls:
+## Part 6. Sign-out
 
-1. `client.token.revoke()` — revokes the tokens **at the server** (revocation endpoint) and deletes the local copies.
-2. `client.user.logout()` — ends the **PingOne session** (signoff endpoint), so the next authorize shows the login page instead of silently SSO-ing back in.
+My sign out button runs two calls on purpose.
 
-The three concepts the exercise asks us to distinguish:
-- **Removing tokens locally** — the app forgets its keys; the tokens remain valid if leaked, and the IdP session survives.
-- **Revoking tokens** — the authorization server invalidates them; nobody can use them again, but the IdP session still survives (next authorize = instant re-login without credentials).
-- **Ending the AS session** — the IdP forgets the user; the next authorize requires full authentication again.
-Only doing all of (2) and (3) gives users what they mean by "sign out."
+1. `client.token.revoke()` invalidates the tokens at the server and deletes the local copies.
+2. `client.user.logout()` is supposed to end the PingOne session.
 
-**Live-run finding — the theory demonstrated itself:** after SIGN OUT (revoke + logout), clicking SIGN IN WITH PING again signed the user **straight back in with no prompt**. The app's tokens were gone (local state cleared, revoke succeeded), but the **PingOne session survived** — the SDK's `user.logout()` background call evidently doesn't end the AS session the way a top-level redirect to `/as/signoff?id_token_hint=…` does. This is the textbook "I signed out but it logged me right back in" gap, reproduced on the first try. Fix direction: perform logout as a browser redirect to the discovered `signoff` endpoint with `id_token_hint` (and `post_logout_redirect_uri` back to the sign-in page).
+The three concepts the exercise asks about. Removing tokens locally means the app forgets its keys but the tokens stay valid and the IdP session survives. Revoking means the server invalidates the tokens but the IdP session still survives, so the next authorize silently signs you back in. Ending the authorization server session means the IdP forgets you and the next sign-in asks for credentials again.
 
-## Part 7 — Architecture (interview prep)
+Live run finding, and my favorite moment of the exercise. After sign out I clicked SIGN IN WITH PING again and got signed straight back in with no prompt. The tokens were gone but the PingOne session survived, meaning the SDK's `user.logout()` background call did not end the session the way a top level redirect to `/as/signoff` with an id_token_hint would. That is the textbook "I signed out but it logged me right back in" gap, reproduced on the first try. My fix direction is to do logout as a browser redirect to the discovered signoff endpoint.
 
-- **Application (Next.js page):** owns UX state, kicks off the flow, renders the result. Never sees credentials, never talks to the password/OTP steps.
-- **Ping SDK (`@forgerock/oidc-client`):** protocol mechanics — discovery, PKCE generation, state management, code exchange, token storage, userinfo, revoke/signoff. The app calls five methods and stays out of the OAuth weeds.
-- **PingOne:** the authorization server + IdP — hosts the sign-on UI, runs the authentication policy (password → email OTP), issues the code and tokens, answers userinfo.
-- **Browser redirect:** authentication happens ON PingOne, not in the app, so credentials never transit app code, the IdP can enforce arbitrary policy (MFA, risk, passkeys) without app changes, and the IdP session enables SSO across apps.
-- **Authorization code:** a short-lived, single-use receipt delivered via the browser redirect; it's useless without the PKCE verifier, and the SDK immediately trades it for tokens over a direct HTTPS call.
-- **PKCE:** the verifier/challenge pair proves the token request comes from the same party that started the authorize request. For a public client (no secret possible in a browser) it's the defense against a stolen code being replayed — which is why the env enforces `S256_REQUIRED`.
-- **Tokens:** **access token** (call APIs — here, userinfo), **ID token** (JWT of identity claims for the app itself), **refresh token** (renew access without re-authentication; opaque, 30d/180d rolling per app config).
-- **User info:** userinfo endpoint, authorized by the access token (Part 5).
-- **Sessions:** the app's authenticated state (its tokens/UI) and the PingOne session cookie are independent; that's exactly why sign-out is a two-step (Part 6), and why revoking tokens without signoff produces the "I signed out but it logged me straight back in" surprise.
+## Part 7. Architecture notes for the walkthrough
 
-## Part 8 — Developer experience (running; finalize after the live run)
+The application owns UX state, starts the flow, and renders the result. It never sees credentials.
 
-Friction log lives in `pingone-configuration.md`. Code-side additions:
+The SDK owns protocol mechanics. Discovery, PKCE, state, code exchange, token storage, userinfo, revoke and logout. I call five methods and stay out of the OAuth weeds.
 
-- **Guide accuracy (positive):** the JavaScript centralized-login guide's API surface matched the shipped package exactly — every call worked as documented on the first try (typecheck-level).
-- **Union-typed factory:** `oidc()` resolves to `{ error } | client` with all client members `?:` optional — TypeScript forces a narrowing dance (`client.token is possibly undefined`) that every consumer must hand-roll. A throwing factory or a discriminated union with a type guard would remove boilerplate from 100% of integrations.
-- **Naming/versioning confusion:** the product is "Ping SDK," the docs URL says `orchsdks`, the exercise says "orchestration SDK," and the npm package is scoped `@forgerock/oidc-client`. A developer searching npm for "pingone oidc" won't find it.
-- **Package split is clean (positive):** OIDC-only client is ~small, no DaVinci/journey baggage — right-sized for the redirect use case.
-- **No console path to pair an MFA device.** The MFA sign-on step authenticates against paired devices but doesn't enroll them, the admin console has no "add device" for a user, and the trial's hosted login doesn't offer email enrollment mid-flow. We had to route the test user through the **MyAccount self-service portal** (which itself only worked because the *default* policy is password-only) to pair their email. Three products had to line up for one OTP to send — the single biggest DX wall of the exercise.
-- **"User has no usable devices" is shown to the end user** — admin-grade jargon at the worst moment, with a "View Details" that doesn't help the person locked out.
-- **Passcode/OTP and flow lifetimes are demo-hostile.** One-time admin passwords expire fast and are consumed by *failed* flows; the authorize flow itself times out ("The request has expired or is invalid") if the user dawdles at the OTP email; each retry restarts from the app.
-- **`user.logout()` doesn't end the PingOne session** (see Part 6) — the API's naming implies more than it delivers, and the resulting silent SSO-back-in will confuse every first-time integrator.
+PingOne is the authorization server and IdP. It hosts the sign-on UI, runs the authentication policy including the email OTP step, issues codes and tokens, and answers userinfo.
 
-## Prioritized improvement (Part 8 — the pick)
+Why the browser redirect. Authentication happens on PingOne, not in my app, so credentials never transit my code, the IdP can add or change policy like MFA without app changes, and the IdP session enables SSO across apps.
 
-**Problem:** first-time MFA setup dead-ends ("User has no usable devices") because nothing in the sign-on flow can enroll a device.
-**Who:** every developer doing exactly what the getting-started guide says (create user → require MFA → sign in), and ultimately their end users.
-**Why it matters:** it's a hard block at the exercise's core moment — the first MFA sign-in — and diagnosing it requires knowledge that spans three surfaces (auth policy step config, MFA device policy, self-service portal).
-**Why first:** the other findings (jargon errors, logout semantics, scope sorting) degrade the experience; this one terminates it.
-**Proposed change:** offer inline enrollment in the hosted sign-on MFA step — if the user has no usable device and the device policy enables Email/SMS with pairing, prompt to verify the directory email and pair it right there (opt-in per policy: "Allow enrollment during sign-on"). Console side: an "add device" action on the user's Methods panel for admins/demo setups.
-**Success measure:** drop in NO_USABLE_DEVICES flow failures per new environment; time-to-first-successful-MFA-sign-in in trial telemetry; support-ticket volume mentioning the error string.
+The authorization code is a short lived single use receipt delivered through the browser. It is useless without the PKCE verifier and gets traded for tokens over a direct HTTPS call.
 
-**Deliverables status:** README 🔲 · PingOne config summary ✅ (`pingone-configuration.md`) · assumptions/problems captured inline · DX prioritization 🔲 (after live run).
+PKCE exists because a browser app cannot keep a secret. The verifier proves the token request comes from the same party that started the authorize request, which is why I set the environment to S256_REQUIRED.
+
+Tokens. The access token calls APIs, here userinfo. The ID token is a JWT of identity claims for the app itself. The refresh token renews access without re-authentication, opaque, 30 days with 180 day rolling in my config.
+
+Sessions. The app's authenticated state and the PingOne session cookie are independent. That is exactly why sign out is two operations and why my live run signed itself back in when the second one quietly failed.
+
+## Part 8. Developer experience
+
+The console friction log is in `pingone-configuration.md`. SDK and docs findings from the build.
+
+What worked well. The centralized login guide's API surface matched the shipped package exactly, every call worked as documented on the first try. The OIDC-only package is small and has no orchestration baggage, right-sized for this use case. The discovery-first design means one URL configures everything.
+
+What could be improved.
+
+- The `oidc()` factory returns an error-or-client union with all client members optional, so every consumer hand rolls the same narrowing dance. A throwing factory or a type guard would remove that boilerplate from every integration.
+- Naming. The product is the Ping SDK, the docs URL says orchsdks, the exercise says orchestration SDK, and the npm package is `@forgerock/oidc-client`. Searching npm for "pingone oidc" does not find it.
+- `user.logout()` does not end the PingOne session, see Part 6. The name promises more than it delivers and the resulting silent SSO will confuse every first time integrator.
+- First time MFA setup dead ends with "user has no usable devices" because nothing in the sign-on flow can enroll a device. Full detail in the Part 1 log.
+
+## The improvement I would ship first
+
+Problem. First MFA sign-in dead ends with "User has no usable devices" because the hosted sign-on flow cannot enroll a device, the console has no pair-a-device action, and the escape hatch is a separate self service portal.
+
+Who hits it. Every developer doing exactly what the getting-started path suggests, create a user, require MFA, sign in. And ultimately their end users.
+
+Why it matters and why first. The other findings degrade the experience, this one terminates it, at the exact moment a trial developer is deciding whether the product works. Diagnosing it took me three surfaces, the auth policy step, the MFA device policy, and MyAccount.
+
+What I would build. Inline enrollment in the hosted sign-on MFA step. If the user has no usable device and the device policy enables email or SMS with pairing allowed, prompt them to verify their directory email right there and pair it, gated by a per-policy "allow enrollment during sign-on" setting. On the console side, an add-device action on the user's Methods panel for admin and demo setups.
+
+How I would measure it. NO_USABLE_DEVICES failures per new environment, time to first successful MFA sign-in in trial telemetry, and support ticket volume mentioning the error string.
+
+## Epilogue. Hooking it into the real app
+
+After the exercise loop worked I connected it to the product properly. Two rules I set. The username is always the email and the email is not editable in the app. The display name is editable and propagates back to the PingOne user.
+
+Session bridge. After the SDK flow completes, a Continue to app button runs Better Auth's oauth2 flow against the same PingOne app as a public client with PKCE. PingOne SSO's silently off the session the SDK just established, the callback verifies the identity server side, and Better Auth mints the app session, linking by verified email. The silent SSO behavior that surprised me in Part 6 is exactly what makes this bridge seamless.
+
+Name write-back. A worker application in the environment gives my server client-credentials access to the management API. When a signed-in user edits their display name, the profile endpoint splits it into given and family and patches the matching PingOne user by email. Ping is a mirror here, not the source of truth, so a failed sync logs and never fails the save.

@@ -1,147 +1,90 @@
-# Part 1 — PingOne environment configuration
+# Part 1. PingOne environment configuration
 
-Working log for the SDK PM technical exercise. Each item below records the decision, the reasoning, and (once done in the console) what we actually configured. Status legend: ✅ done · 🔲 planned, not yet done in the console.
+My working log for Part 1 of the SDK PM exercise. For each item I wrote down what I decided, why, and what I actually configured. I followed the [JavaScript centralized login guide](https://developer.pingidentity.com/orchsdks/oidc/usage/javascript-centralized-login.html) with `@forgerock/oidc-client`.
 
-Guide we're following: [JavaScript centralized login](https://developer.pingidentity.com/orchsdks/oidc/usage/javascript-centralized-login.html) with `@forgerock/oidc-client`.
+Screen recordings of the console work are in my submission folder, one per step. They cover creating the environment, creating the test user, registering the OIDC app, and setting up MFA and policies.
 
-**Screen recordings** (in `~/Downloads`, replayable step-by-step):
-- `ping-exercise-01-create-environment.gif` — item 1
-- `ping-exercise-02-create-test-user.gif` — item 2 (password set off-camera by Tim)
-- `ping-exercise-03-register-oidc-app.gif` — items 3–7
-- `ping-exercise-04-mfa-and-policies.gif` — items 9–10
+## 1. Create or identify a PingOne environment
 
-## 1. Create or identify a PingOne environment for testing ✅
+I already had a PingOne trial from an earlier integration, so instead of registering a new trial I created a fresh environment inside it. That gave me a clean slate with its own environment ID and discovery endpoint while leaving my other environment alone.
 
-**Plan:** Reuse the existing PingOne account (Canada region, `auth.pingone.ca`) but create a **new environment** inside it dedicated to this exercise — Environments → Add Environment. That keeps the existing connectyall production environment (`b78444d2-…`) untouched while still doing every configuration step from scratch: new environment, new user, new application, new policies. A new environment gets its own environment ID, and therefore its own discovery endpoint, so nothing bleeds over from the earlier integration.
+What I set up on 2026-09-28. Environment name SDK Exercise, type Sandbox, use case Customer. Environment ID `28c0e2b4-22df-4092-be2d-5f493b57b528`, Canada region so everything lives on `auth.pingone.ca`. Services enabled are PingOne SSO and PingOne MFA. I left sample users and DaVinci flows off because I wanted plain authentication policies, not orchestration. The trial license expires 2026-10-14 so the demo has to happen before then.
 
-When adding the environment, pick the option that includes PingOne SSO + MFA services (needed for items 9–10).
+One thing I learned the hard way. I deleted and recreated this environment once to record the steps, and the new environment got a new ID. Every downstream reference, including the discovery URL, had to be updated.
 
-**Done (2026-09-28):**
-- Environment name: **SDK Exercise** (type Sandbox, use case Customer)
-- Environment ID: `28c0e2b4-22df-4092-be2d-5f493b57b528`
-- Region: Canada (`auth.pingone.ca`), Organization `2ab285d5-e470-4294-b387-8140bb1c88a4`
-- Services enabled: PingOne SSO + PingOne MFA; sample users **off**, DaVinci flows **off** (we want plain authentication policies, not orchestration, for this exercise)
-- License: TRIAL, expires **2026-10-14** — demo must happen before then
-- Clean-slate note: the old integration's app client (`9fb3669e-…`) and the "Connectyall Sign-On" DaVinci experience were deleted from the original `Connectyall` env (`b78444d2-…`); prod's SIGN IN WITH PING is intentionally dead until the new integration ships.
+## 2. Create a test user
 
-## 2. Create a test user ✅
+Directory, Users, Create User. I made `demo` with a real email I can open, because the OTP second factor is email based and I need to read those codes during the demo.
 
-**Plan:** Directory → Users → Add User in the sandbox environment. Username `demo` (matching the guide), with a real reachable email address — this matters because the OTP second factor (item 10) is email-based, so the inbox must be one we can open during the demo. Set a password at creation and mark it as not requiring change, so first sign-in doesn't detour through a password-reset flow.
+The Add User form has no password field. The password gets set afterward through the user's menu, Reset Password, then Create or generate password. PingOne treats an admin-set password as one time use, which bit me more than once, see the friction log. The user card also showed MFA Disabled at creation, which item 10 has to fix.
 
-Also confirm the user is in a population covered by the sign-on policy we configure in item 9 (trial default population is fine).
+## 3. Register an OIDC application
 
-**Done (2026-09-28):** Directory → Users → + → Create User. `Demo User`, username `demo`, email `timmy.nan@gmail.com` (real inbox for the email OTP), population Default. The Add User form has **no password field** — password is set afterwards via the user's ⋮ menu → Reset Password → "Create or generate password" (Tim set it; PingOne treats an admin-set password as **one-time**, so the first sign-on forces a change — we'll burn that step before the demo). User card shows `MFA: Disabled` at creation — item 10 has to flip that.
+Platform is JavaScript. The integration lives inside connectyall, my production Next.js app, replacing the previous Ping sign-in on `/app/sign-in`. From PingOne's point of view it is just a browser based OIDC relying party.
 
-## 3. Register an OIDC application for our selected platform ✅
+I created `connectyall-ping-demo`, type OIDC Web App, and enabled it. Client ID `c93fe4f5-5e54-4ee0-819f-bc6a7aeb3d48`. The console still shows a client secret on the app even though a public client never uses one, which I found confusing.
 
-**Platform:** JavaScript (web). The integration replaces connectyall's existing SIGN IN WITH PING path (Better Auth `genericOAuth` + DaVinci client) with the `@forgerock/oidc-client` SDK on the existing `/app/sign-in` page, pointed at the new trial tenant. From PingOne's perspective it's a browser-based OIDC relying party.
+## 4. Application and client type
 
-**Plan:** Applications → Applications → + → name `connectyall-ping-demo`, type **OIDC Web App** (see item 4), then enable it. Grab the Client ID from the Configuration tab — public client, so there is no secret to manage.
+I went with OIDC Web App configured as a public client, token endpoint auth method None, with PKCE.
 
-**Done (2026-09-28):** app `connectyall-ping-demo` created and **enabled**. Client ID `c93fe4f5-5e54-4ee0-819f-bc6a7aeb3d48`. Console still shows a Client Secret on the app even with Token Auth = None (unused for a public client — mild DX confusion, logged below).
+My reasoning. The SDK runs entirely in the browser, and a secret embedded in browser JavaScript is public by definition. So the right shape is a public client using authorization code plus PKCE, where the PKCE verifier replaces the client secret as proof that the token request comes from whoever started the flow.
 
+The console offers both a Single Page App template and an OIDC Web App template, and you can configure either into the same thing. The guide uses OIDC Web App so I followed it. I had to manually change token auth from the default Client Secret Basic to None.
 
-## 4. Determine the appropriate application/client type ✅
+## 5. OAuth grant types
 
-**Decision: OIDC Web App configured as a public client (Token Endpoint Auth Method = None) with PKCE.** 
+Authorization Code plus Refresh Token, response type Code only.
 
-Reasoning: the code runs entirely in the browser — Next.js serves the page, but the SDK does the authorization redirect, code exchange, and token storage client-side. A confidential client would need a secret, and a secret embedded in browser JavaScript is public by definition. So the correct shape is a public client using Authorization Code + PKCE, where the PKCE code verifier replaces the client secret as proof that the token request comes from the same party that started the flow.
+Authorization code is the only sensible grant for interactive user sign-in. Implicit is deprecated because tokens leak through URL fragments. I set PKCE enforcement to S256_REQUIRED so the environment rejects any non PKCE attempt. Refresh token lets the SDK renew access without bouncing the user through the redirect again. I kept the refresh token defaults, opaque format, 30 days, 180 day rolling.
 
-PingOne's console offers both a "Single-Page App" template and "OIDC Web App"; the guide we're following uses **OIDC Web App** with token auth set to None, which produces the same effective public-client behavior while leaving grant/response types fully editable. We follow the guide and note the template ambiguity as a DX finding (two templates that can be configured into the same thing, with no guidance on which to pick).
+## 6. Redirect URIs
 
-**Done (2026-09-28):** Token Endpoint Auth Method changed from the default Client Secret Basic to **None** on the Configuration edit panel.
+I registered exactly two. `http://localhost:3000/app/sign-in` for local dev and `https://connectyall.timnan.xyz/app/sign-in` for production.
 
-## 5. Configure the required OAuth grant types ✅
+The redirect URI is the security boundary of the code flow, PingOne only delivers codes to an exact match. My sign-in page doubles as the callback, after PingOne redirects back with code and state the SDK on that page does the token exchange. From my earlier Ping work I knew Vercel preview URLs churn on every deploy and each new host needs registering, so I demo on localhost and the stable prod domain only.
 
-**Decision: Authorization Code (with PKCE enforced) + Refresh Token.**
+## 7. Scopes
 
-- **Authorization Code** — the only grant appropriate for an interactive user sign-in in 2026. Implicit is deprecated (tokens in URL fragments leak via history/referrer); Client Credentials is for machines, not users.
-- **PKCE** — set "PKCE Enforcement" to `S256_REQUIRED` so the environment rejects any non-PKCE authorization attempt.
-- **Refresh Token** — lets the SDK renew access tokens without bouncing the user through the redirect again; the guide's config includes it.
+`openid profile email phone`, the guide's set. openid makes it an OIDC request at all. profile and email feed the user info screen. phone is in the guide's config so I kept it, the test user has no phone number and the claim just comes back absent.
 
-Response type: Code only (no token/id_token response types — that would re-open the implicit door).
+Scopes have to be enabled on the app's Resources tab and requested by the SDK. A mismatch fails quietly, so I checked both sides.
 
-**Done (2026-09-28):** Authorization Code + Refresh Token (opaque format, 30-day / 180-day-rolling defaults kept), PKCE `S256_REQUIRED`, response type Code.
+## 8. OIDC discovery endpoint
 
-## 6. Configure the redirect URI for your application ✅
+`https://auth.pingone.ca/28c0e2b4-22df-4092-be2d-5f493b57b528/as/.well-known/openid-configuration`
 
-**Plan:** register exactly:
+It returns 200 the moment the environment exists, before any app is registered, which made it a nice smoke test. Everything the SDK needs is discovered from this one URL. Worth noting PingOne's end session endpoint is called `signoff`, another reason to never hand build endpoint URLs.
 
-- `http://localhost:3000/app/sign-in` — local development (`npm run dev`)
-- `https://connectyall.timnan.xyz/app/sign-in` — production, if we ship the new integration for the interview demo
+## 9. Authentication experience
 
-Reasoning: the redirect URI is the security boundary of the authorization code flow — PingOne will only deliver codes to an exact-match registered URI. The sign-in page doubles as the callback: after PingOne redirects back with `?code&state`, the SDK on that page performs the token exchange. Lesson learned from the earlier connectyall Ping work: Vercel preview URLs churn on every deploy, and each new preview host needs to be added in the console or the flow dies with a redirect_uri mismatch. We avoid that by demoing on localhost (and optionally the stable prod domain).
+With DaVinci off, the environment provisions two plain authentication policies, Single_Factor which is the default, and Multi_Factor which is Login then MFA. I assigned Multi_Factor to my app on its Policies tab, which overrides the environment default for this app only.
 
-## 7. Configure the scopes required by your application ✅
+## 10. OTP as an additional step
 
-**Decision: `openid profile email phone`** (the guide's set).
+I chose email OTP. No enrollment friction in a trial, nothing to re-pair before a demo, no SMS credits.
 
-- `openid` — mandatory; makes it an OIDC request at all and yields the ID token.
-- `profile` — name/given_name/family_name for the "display the authenticated user" requirement.
-- `email` — the user's email for the same screen.
-- `phone` — included because the guide's client config requests it; the trial user may have no phone number, in which case the claim simply comes back absent. Worth a DX note: requesting a scope the directory can't fulfill fails silently rather than loudly.
+What it actually took.
 
-These must be enabled on the application's Resources/Scopes tab AND requested by the SDK config — a mismatch (SDK asks for a scope the app wasn't granted) is a classic silent-failure spot to watch for.
+1. I created an MFA device policy, SDK Exercise MFA, with Email enabled and pairing allowed. Creating it did nothing by itself, the Multi_Factor policy's MFA step was still pointed at Use Default Policy, so I had to edit the step to reference my policy.
+2. I enabled MFA on the demo user, the toggle under the user's Services tab.
+3. The user still got blocked with "User has no usable devices." It turns out the hosted sign-on flow authenticates against paired devices but does not enroll them, and the admin console has no way to pair a device either. I ended up signing the demo user into the MyAccount self service portal, which only worked because the default policy is password only, and pairing the email there.
 
-**Done (2026-09-28):** Resources → Edit: `email`, `phone`, `profile` checked (`openid` always granted). Allowed scopes now: openid, email, phone, profile.
+After that the flow worked, password, then an emailed passcode, then back to my app.
 
-## 8. Find the OIDC discovery endpoint for your PingOne environment ✅
+## Friction log
 
-**Pattern:** `https://auth.pingone.<tld>/<ENV_ID>/as/.well-known/openid-configuration`
+Running list of developer experience issues I hit. These feed Part 8.
 
-where `<tld>` is region-dependent (`com` NA, `ca` Canada, `eu` Europe, `asia` APAC) and `<ENV_ID>` is the environment UUID from Settings → Environment Properties. The console also shows the full URL on the application's Configuration tab under "URLs".
-
-Everything the SDK needs (authorization, token, userinfo, end-session, revocation, JWKS endpoints) is discovered from this one URL — it's the only endpoint we hardcode.
-
-**Done (2026-09-28):** `https://auth.pingone.ca/28c0e2b4-22df-4092-be2d-5f493b57b528/as/.well-known/openid-configuration` — curl returns 200 the moment the environment exists, before any application is registered. Key endpoints it advertises:
-
-- authorize: `…/as/authorize`
-- token: `…/as/token`
-- userinfo: `…/as/userinfo`
-- end session: `…/as/signoff` (PingOne names it `signoff`, not the more common `end_session_endpoint` path — the discovery doc maps it correctly, another reason to never hand-build endpoint URLs)
-- revocation: `…/as/revoke`
-
-## 9. Configure the authentication experience required for the test user ✅
-
-**Plan:** the trial ships with default sign-on policies/experiences. We need the flow to be: **username + password → email OTP**. Two ways PingOne can express this:
-
-- **Authentication policies** (PingOne SSO): a policy with Step 1 = Login (password), Step 2 = MFA. Assign the policy to our application (or leave as environment default).
-- **DaVinci flows / experiences**: trials increasingly route through DaVinci orchestration. If the trial defaults to a DaVinci experience, we either edit that experience or point the application at a plain authentication policy instead.
-
-Decision deferred until we see what the fresh trial provisions (September's tenant used DaVinci experiences; this is itself a DX observation — the "which of the three auth-config surfaces am I supposed to use?" problem). Either way, the requirement is that our `demo` user can complete password → OTP without an admin in the loop.
-
-**Done (2026-09-28):** with DaVinci flows off, the env provisions two plain authentication policies: `Single_Factor` (Login, the default) and `Multi_Factor` (Login → Multi-factor Authentication). We assigned **Multi_Factor** to the `connectyall-ping-demo` application (app → Policies → Add Policies), which overrides the environment default for this app only. Policy ID `e9638200-9a0a-4eaa-905e-29b…`.
-
-## 10. Configure OTP as an additional authentication step ✅
-
-**Plan:** email OTP as the second factor.
-
-1. Ensure PingOne MFA is enabled for the environment (trials include it).
-2. Enable **Email OTP** as an allowed MFA method (Authentication → MFA settings / device policy).
-3. Enable MFA for the `demo` user — either "MFA Enabled" on the user directly or auto-enable at sign-on in the policy.
-4. In the item-9 policy/experience, require MFA after password. With no other device enrolled, PingOne falls back to emailing an OTP to the user's directory email — which is exactly the behavior we want, and why the test user's email must be a real inbox.
-
-Chose email over TOTP/SMS: zero enrollment friction in a trial, nothing to re-pair before the interview demo, no SMS credits required.
-
-**Done (2026-09-28):**
-- MFA device policies live under Authentication → MFA. The env had a `Default MFA Policy`; we also created **`SDK Exercise MFA`** (ID `2e9d4574-dd3c-46b9-b6ce-5e1df2c3623a`, method selection "User selected default", kept "Block authentication when user's MFA is disabled").
-- **MFA enabled on the `demo` user** (user → Services → Authentication → toggle → confirm). User has **no paired methods**, so at the Multi_Factor policy's MFA step PingOne falls back to emailing an OTP to the directory email — exactly the behavior we want for the demo.
-- To verify live at first sign-in: password (one-time, forced change) → email OTP to timmy.nan@gmail.com.
-
----
-
-## Friction log (running)
-
-DX observations captured as we execute; feeds Part 8.
-
-- (from prior connectyall integration, to re-verify on the fresh trial) OIDC Web App vs Single-Page App template ambiguity; token auth method mismatch defaults (`basic` vs `post`) produce bare `invalid_client`; per-preview-host redirect URI churn; three overlapping auth-config surfaces (policies, experiences, DaVinci flows).
-- **Console entry requires the env ID.** `console.pingone.ca` with no query string errors with "Invalid Sign-on URL" instead of routing a signed-in admin to their org — you must know `?env=<id>` or come in via a bookmark. First-session dead end for a new admin.
-- **Add Environment interrupts with a "Guide Me / Do It Myself" modal** mid-wizard. Nice for first-timers, but there's no "don't ask again," and "Guide Me" isn't described — you can't tell what you're opting into.
-- **Environment creation is fast and the summary screen is good** — name, type, capabilities, DaVinci on/off all confirmed in one place before Save. (Positive.)
-- **Discovery endpoint is live instantly** at env creation, before any app exists — great for smoke-testing config. (Positive.)
-- **The Edit Configuration panel doesn't scroll with the mouse wheel** (macOS Chrome) — fields below the fold (Refresh Token grant, Redirect URIs, Token Endpoint Auth Method) are unreachable until you Tab through form controls or collapse sections. Easily the worst papercut of the app setup; a first-time integrator could believe the redirect URI field doesn't exist.
-- **Scope list sorts OIDC standard scopes and p1:* API scopes together alphabetically** — `phone` and `profile` end up buried BELOW ~20 PingOne API scopes (`p1` < `ph` in ASCII), and the scope search box returned no results for "profile" while the list clearly contains it.
-- **OIDC Web App template defaults to Token Auth = Client Secret Basic** even though the guide's flow needs None — the exact default that produced our September `invalid_client`. The "OIDC Web App" template is really a confidential-client template you manually convert to public.
-- **The app is created disabled** (toggle off) with no banner saying so — easy to configure everything and then wonder why the authorize call 404s.
-- **First live sign-in blocked: "User has no usable devices."** Password step passed, then the Multi_Factor policy's MFA step rejected the user. Root cause: the MFA step was set to **"Use Default Policy"** — the auto-created `Default MFA Policy`, not our `SDK Exercise MFA` — and the step's "none or incompatible methods" behavior is **Block**. Creating a device policy does nothing until something references it; the console never hints that a brand-new policy is unreachable. Fix: edited `Multi_Factor` → MFA step → MFA Policy = `SDK Exercise MFA` (whose Email method is enabled with Allow Pairing, so an unpaired user gets an email OTP enrollment at sign-on). Kept Block — it's the right posture once email is actually available. Also: the error surface is admin-grade jargon shown to an end user, and the one-time password had **already been consumed** by the blocked attempt, forcing another admin reset. Expired/consumed OTPs on admin-set passwords are a demo-killer loop.
-- **Environment recreation churns the environment ID** — deleting and recreating an env with identical settings yields a new ID, new discovery URL, and every downstream config reference must be updated. Obvious in hindsight, but worth stating for demo-reset workflows.
+- The console needs an environment ID in the URL. `console.pingone.ca` with nothing else errors with Invalid Sign-on URL instead of routing a signed-in admin home.
+- The Add Environment wizard interrupts with a Guide Me or Do It Myself modal, with no explanation of what Guide Me does and no don't ask again.
+- Environment creation itself is fast and the summary screen before save is good.
+- The discovery endpoint is live the instant the environment exists. Great for smoke testing.
+- The Edit Configuration panel does not scroll with the mouse wheel on macOS Chrome. Fields below the fold, redirect URIs, token auth method, the refresh token grant, are unreachable until you tab through form controls. A first-time integrator could reasonably conclude the redirect URI field does not exist.
+- The scope picker sorts OIDC standard scopes and p1 API scopes together alphabetically, so profile and phone end up buried below twenty p1 scopes. The scope search box returned nothing for "profile" even though it is in the list.
+- The OIDC Web App template defaults to token auth Client Secret Basic, the exact default that caused an invalid_client failure in my earlier integration.
+- Apps are created disabled with no banner saying so.
+- "User has no usable devices" is admin jargon shown to an end user at the worst possible moment, and the View Details link does not help them.
+- Admin-set passwords are one time use and get consumed even by a sign-on attempt that later fails at the MFA step. I had to reset the demo password three times before completing one sign-in.
+- The whole authorize flow times out if you are slow reading the OTP email, with a generic "request has expired" page, and you have to restart from the app.
+- There is no admin path to pair an MFA device for a user. Enrollment needs the self service portal or the management API.
