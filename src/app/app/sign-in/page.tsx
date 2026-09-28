@@ -263,6 +263,12 @@ export default function SignInPage() {
                  status === 'ping-exchange' ? 'Verifying…' :
                  'Sign in with Ping'}
               </button>
+              <a
+                href="/app/sign-up"
+                className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted hover:text-neutral-950 font-medium text-center transition"
+              >
+                <span className="text-brand mr-1">●</span> NEW HERE? CREATE A PING ACCOUNT
+              </a>
             </div>
           )}
           {step === 'email' && (

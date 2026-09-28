@@ -45,6 +45,78 @@ async function findUserIdByEmail(email: string, token: string, fetchFn: typeof f
   return json._embedded?.users?.[0]?.id ?? null;
 }
 
+async function defaultPopulationId(token: string, fetchFn: typeof fetch): Promise<string> {
+  const res = await fetchFn(`${API_BASE()}/populations`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`ping population lookup failed: ${res.status}`);
+  const json = (await res.json()) as { _embedded?: { populations?: Array<{ id: string; default?: boolean }> } };
+  const pops = json._embedded?.populations ?? [];
+  const pop = pops.find((p) => p.default) ?? pops[0];
+  if (!pop) throw new Error('ping environment has no populations');
+  return pop.id;
+}
+
+export type PingRegisterResult = 'created' | 'exists';
+
+/**
+ * Create a PingOne user for self-registration. Design decision: the username
+ * IS the email — enforced here, at account creation, rather than hoping users
+ * follow a convention on a form. We also pair the email as an MFA device
+ * immediately, so the first sign-in's email OTP works instead of dead-ending
+ * on "user has no usable devices" (the hosted flow cannot enroll devices).
+ * Ownership of the inbox is proven at first sign-in by that same OTP.
+ */
+export async function createPingUser(
+  email: string,
+  password: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<PingRegisterResult> {
+  if (!pingSyncEnabled(env())) throw new Error('ping registration not configured');
+  const token = await workerToken(fetchFn);
+  const populationId = await defaultPopulationId(token, fetchFn);
+
+  const createRes = await fetchFn(`${API_BASE()}/users`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      username: email,
+      email,
+      population: { id: populationId },
+    }),
+  });
+  if (createRes.status === 409) return 'exists';
+  if (!createRes.ok) throw new Error(`ping user create failed: ${createRes.status}`);
+  const created = (await createRes.json()) as { id: string };
+
+  const pwRes = await fetchFn(`${API_BASE()}/users/${created.id}/password`, {
+    method: 'PUT',
+    headers: {
+      authorization: `Bearer ${token}`,
+      // PingOne selects the "set password" operation via this content type.
+      'content-type': 'application/vnd.pingidentity.password.set+json',
+    },
+    body: JSON.stringify({ value: password, forceChange: false }),
+  });
+  if (!pwRes.ok) throw new Error(`ping password set failed: ${pwRes.status}`);
+
+  const mfaRes = await fetchFn(`${API_BASE()}/users/${created.id}/mfaEnabled`, {
+    method: 'PUT',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ mfaEnabled: true }),
+  });
+  if (!mfaRes.ok) throw new Error(`ping mfa enable failed: ${mfaRes.status}`);
+
+  const deviceRes = await fetchFn(`${API_BASE()}/users/${created.id}/devices`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ type: 'EMAIL', email }),
+  });
+  if (!deviceRes.ok) throw new Error(`ping email device pairing failed: ${deviceRes.status}`);
+
+  return 'created';
+}
+
 /**
  * Mirror a connectyall display-name change onto the PingOne user with the
  * same email. No-op when the worker app isn't configured or no Ping user

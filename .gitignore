@@ -33,3 +33,4 @@ coverage
 next-env.d.ts
 preview-card.png
 .superpowers
+.ping-test-credentials
