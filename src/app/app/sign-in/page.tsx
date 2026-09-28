@@ -19,6 +19,13 @@ export default function SignInPage() {
   const [pingUser, setPingUser] = useState<PingUserInfo | null>(null);
 
   const showPing = pingEnabled();
+  // Ping is the front door; the email-OTP form stays reachable at
+  // /app/sign-in?otp=1 for accounts that predate Ping sign-in.
+  const [otpParam, setOtpParam] = useState(false);
+  useEffect(() => {
+    setOtpParam(new URLSearchParams(window.location.search).get('otp') === '1');
+  }, []);
+  const showOtp = !showPing || otpParam;
 
   // The sign-in page doubles as the OAuth redirect URI. On return from the
   // PingOne hosted experience the URL carries ?code&state — exchange them for
@@ -194,10 +201,14 @@ export default function SignInPage() {
       <div className="flex-1 flex flex-col pt-3 gap-8">
         {step === 'email' && (
           <Top
-            label="NO PASSWORD NEEDED"
+            label={showOtp ? 'NO PASSWORD NEEDED' : 'POWERED BY PING IDENTITY'}
             headlineFirst="Welcome."
             headlineAccent="Sign in to start."
-            sub="Drop your email and we'll send a 6-digit code. No password, no magic link."
+            sub={
+              showOtp
+                ? "Drop your email and we'll send a 6-digit code. No password, no magic link."
+                : 'Sign in with your Ping account. New here? Creating one takes a minute.'
+            }
           />
         )}
         {step === 'ping-user' && (
@@ -219,7 +230,27 @@ export default function SignInPage() {
         <div className="flex-1 flex flex-col items-center justify-center gap-5">
           <div className="relative flex items-center justify-center w-full">
             <GlowRings />
-            {step === 'email' && (
+            {step === 'email' && !showOtp && (
+              <div className="relative z-10 w-full max-w-[320px] flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={signInWithPing}
+                  disabled={status === 'ping-redirect' || status === 'ping-exchange'}
+                  className="w-full h-16 px-5 rounded-full bg-brand text-white font-mono text-[13px] tracking-[0.18em] font-bold uppercase disabled:opacity-50 hover:bg-brand/90 transition shadow-[0_16px_36px_rgba(124,92,255,0.42),0_2px_6px_rgba(124,92,255,0.20)]"
+                >
+                  {status === 'ping-redirect' ? 'Heading to Ping…' :
+                   status === 'ping-exchange' ? 'Verifying…' :
+                   'Sign in with Ping'}
+                </button>
+                <a
+                  href="/app/sign-up"
+                  className="w-full h-16 px-5 rounded-full bg-surface border border-line text-neutral-950 font-mono text-[13px] tracking-[0.18em] font-bold uppercase hover:border-brand transition shadow-[0_6px_20px_rgba(124,92,255,0.10),0_2px_4px_rgba(0,0,0,0.04)] flex items-center justify-center"
+                >
+                  Create a Ping account
+                </a>
+              </div>
+            )}
+            {step === 'email' && showOtp && (
               <form
                 onSubmit={sendCode}
                 className="relative z-10 w-full max-w-[320px] flex flex-col gap-3"
@@ -303,7 +334,7 @@ export default function SignInPage() {
               </form>
             )}
           </div>
-          {step === 'email' && showPing && (
+          {step === 'email' && showPing && showOtp && (
             <div className="relative z-10 w-full max-w-[320px] flex flex-col gap-3">
               <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium text-center">
                 <span className="text-brand mr-1">●</span> OR
@@ -326,9 +357,14 @@ export default function SignInPage() {
               </a>
             </div>
           )}
-          {step === 'email' && (
+          {step === 'email' && showOtp && (
             <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium text-center">
               <span className="text-brand mr-1">●</span> CODE ARRIVES IN 2 SECONDS
+            </div>
+          )}
+          {step === 'email' && !showOtp && (
+            <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium text-center">
+              <span className="text-brand mr-1">●</span> PASSWORD + EMAIL CODE, HOSTED BY PINGONE
             </div>
           )}
           {step === 'code' && (
