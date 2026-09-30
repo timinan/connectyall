@@ -1,0 +1,191 @@
+{
+  "result": {
+    "results": {
+      "channels": [
+        {
+          "alternatives": [
+            {
+              "confidence": 0.9995117,
+              "transcript": "So great meeting you. What was the best way to reach you? I'm on Telegram. It's Bella underscore n v Bella, b e l l a, and my number is (604) 555-1234. Got it. Thanks, Bella. I'm Tim, by the way. Tim at dot ab.",
+              "words": [
+                {
+                  "confidence": 1,
+                  "end": 0.32,
+                  "punctuated_word": "So",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 0,
+                  "word": "so"
+                },
+                {
+                  "confidence": 0.99902344,
+                  "end": 0.56,
+                  "punctuated_word": "great",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 0.32,
+                  "word": "great"
+                },
+                {
+                  "confidence": 1,
+                  "end": 0.88,
+                  "punctuated_word": "meeting",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 0.56,
+                  "word": "meeting"
+                },
+                {
+                  "confidence": 0.9980469,
+                  "end": 1.4399999,
+                  "punctuated_word": "you.",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 0.88,
+                  "word": "you"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "utterances": [
+        {
+          "channel": 0,
+          "confidence": 0.99743927,
+          "end": 4.48,
+          "id": "0fe21c72-eadc-4c0d-9f0b-2ed79f0f0585",
+          "speaker": 0,
+          "start": 0,
+          "transcript": "So great meeting you. What was the best way to reach you? I'm on Telegram.",
+          "words": [
+            {
+              "confidence": 1,
+              "end": 0.32,
+              "punctuated_word": "So",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 0,
+              "word": "so"
+            },
+            {
+              "confidence": 0.99902344,
+              "end": 0.56,
+              "punctuated_word": "great",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 0.32,
+              "word": "great"
+            }
+          ]
+        },
+        {
+          "channel": 0,
+          "confidence": 0.95526123,
+          "end": 9.679999,
+          "id": "f9c3dc5c-15d7-498d-96d8-ff79a8ac683e",
+          "speaker": 1,
+          "start": 4.56,
+          "transcript": "It's Bella underscore n v Bella, b e l l a, and my number is (604)",
+          "words": [
+            {
+              "confidence": 0.9980469,
+              "end": 4.7999997,
+              "punctuated_word": "It's",
+              "speaker": 1,
+              "speaker_confidence": 0.4385085,
+              "start": 4.56,
+              "word": "it's"
+            },
+            {
+              "confidence": 0.55810547,
+              "end": 5.12,
+              "punctuated_word": "Bella",
+              "speaker": 1,
+              "speaker_confidence": 0.4385085,
+              "start": 4.7999997,
+              "word": "bella"
+            }
+          ]
+        },
+        {
+          "channel": 0,
+          "confidence": 0.9993722,
+          "end": 12.32,
+          "id": "ee9d24c0-be5d-4af7-a736-262c1390242a",
+          "speaker": 1,
+          "start": 9.679999,
+          "transcript": "555-1234.",
+          "words": [
+            {
+              "confidence": 0.9993722,
+              "end": 12.32,
+              "punctuated_word": "555-1234.",
+              "speaker": 1,
+              "speaker_confidence": 0.45446566,
+              "start": 9.679999,
+              "word": "555-1234"
+            }
+          ]
+        },
+        {
+          "channel": 0,
+          "confidence": 0.93271893,
+          "end": 16.526,
+          "id": "74325694-91be-4456-b40f-2ed00161597d",
+          "speaker": 0,
+          "start": 12.32,
+          "transcript": "Got it. Thanks, Bella. I'm Tim, by the way. Tim at dot",
+          "words": [
+            {
+              "confidence": 1,
+              "end": 12.559999,
+              "punctuated_word": "Got",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 12.32,
+              "word": "got"
+            },
+            {
+              "confidence": 1,
+              "end": 12.719999,
+              "punctuated_word": "it.",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 12.559999,
+              "word": "it"
+            }
+          ]
+        },
+        {
+          "channel": 0,
+          "confidence": 0.6279297,
+          "end": 16.846,
+          "id": "9c26ceff-ff52-4e82-8508-908c8de14624",
+          "speaker": 0,
+          "start": 16.526,
+          "transcript": "ab.",
+          "words": [
+            {
+              "confidence": 0.6279297,
+              "end": 16.846,
+              "punctuated_word": "ab.",
+              "speaker": 0,
+              "speaker_confidence": 0.5801657,
+              "start": 16.526,
+              "word": "ab"
+            }
+          ]
+        }
+      ]
+    },
+    "usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    }
+  },
+  "success": true,
+  "errors": [],
+  "messages": []
+}

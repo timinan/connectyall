@@ -9,6 +9,8 @@ import { BottomNav } from '@/components/bottom-nav';
 import { getGreetingLabel } from '@/lib/greeting';
 import { APP_CONTAINER_FLEX } from '../_layout-constants';
 
+const MAX_RECORDING_MS = 120_000;
+
 type State = 'idle' | 'recording' | 'uploading';
 
 type RecError = { title: string; body: string };
@@ -125,6 +127,7 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
   const timerRef = useRef<number | null>(null);
+  const autoStopRef = useRef<number | null>(null);
 
   // Stop everything still running and reset visual state — called both when
   // bailing on an error AND when the user taps Try again.
@@ -133,8 +136,10 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
     streamRef.current = null;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
+    if (autoStopRef.current) clearTimeout(autoStopRef.current);
     rafRef.current = null;
     timerRef.current = null;
+    autoStopRef.current = null;
     recorderRef.current = null;
     chunksRef.current = [];
     setLevels(Array(15).fill(0));
@@ -152,6 +157,7 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
+      if (autoStopRef.current) clearTimeout(autoStopRef.current);
     };
   }, []);
 
@@ -187,6 +193,10 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
 
     timerRef.current = window.setInterval(() => setElapsed((e) => e + 1), 1000);
 
+    autoStopRef.current = window.setTimeout(() => {
+      if (recorderRef.current?.state === 'recording') void stop();
+    }, MAX_RECORDING_MS);
+
     const ctx = new AudioContext();
     const source = ctx.createMediaStreamSource(stream);
     const analyser = ctx.createAnalyser();
@@ -208,6 +218,8 @@ export function RecordClient({ displayName }: { displayName: string | null }) {
   async function stop() {
     const rec = recorderRef.current;
     if (!rec) return;
+    if (autoStopRef.current) clearTimeout(autoStopRef.current);
+    autoStopRef.current = null;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
 
@@ -469,7 +481,7 @@ function Caption({ state }: { state: State }) {
   }
   return (
     <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted font-medium">
-      <span className="text-brand mr-1">●</span> TAP TO RECORD <span className="text-neutral-400">·</span> UP TO 60S
+      <span className="text-brand mr-1">●</span> TAP TO RECORD <span className="text-neutral-400">·</span> UP TO 2 MIN
     </div>
   );
 }

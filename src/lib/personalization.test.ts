@@ -3,6 +3,7 @@ import {
   normalizeVocabulary,
   buildWhisperInitialPrompt,
   buildExtractionPersonalizationBlock,
+  keytermsFromVocabulary,
 } from './personalization';
 
 describe('normalizeVocabulary', () => {
@@ -119,5 +120,20 @@ describe('buildExtractionPersonalizationBlock', () => {
     expect(out).toContain('t2');
     expect(out).not.toContain('t3');
     expect(out).not.toContain('t4');
+  });
+});
+
+describe('keytermsFromVocabulary', () => {
+  it('splits on commas and newlines, trims, drops empties', () => {
+    expect(keytermsFromVocabulary('Sarah Lee, Pinto Money\n@timnan,  ,Connectyall'))
+      .toEqual(['Sarah Lee', 'Pinto Money', '@timnan', 'Connectyall']);
+  });
+  it('caps at 50 terms', () => {
+    const vocab = Array.from({ length: 60 }, (_, i) => `term${i}`).join(',');
+    expect(keytermsFromVocabulary(vocab)).toHaveLength(50);
+  });
+  it('returns [] for null/empty', () => {
+    expect(keytermsFromVocabulary(null)).toEqual([]);
+    expect(keytermsFromVocabulary('  ')).toEqual([]);
   });
 });

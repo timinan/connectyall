@@ -1,0 +1,957 @@
+{
+  "result": {
+    "results": {
+      "channels": [
+        {
+          "alternatives": [
+            {
+              "confidence": 0.9995117,
+              "paragraphs": {
+                "paragraphs": [
+                  {
+                    "end": 12.719999,
+                    "num_words": 34,
+                    "sentences": [
+                      {
+                        "end": 1.4399999,
+                        "start": 0,
+                        "text": "So great meeting you."
+                      },
+                      {
+                        "end": 3.1999998,
+                        "start": 1.4399999,
+                        "text": "What was the best way to reach you?"
+                      },
+                      {
+                        "end": 4.48,
+                        "start": 3.1999998,
+                        "text": "I'm on Telegram."
+                      },
+                      {
+                        "end": 12.32,
+                        "start": 4.56,
+                        "text": "It's Bella underscore n v Bella, b e l l a, and my number is (604) 555-1234."
+                      },
+                      {
+                        "end": 12.719999,
+                        "start": 12.32,
+                        "text": "Got it."
+                      }
+                    ],
+                    "speaker": 0,
+                    "start": 0
+                  },
+                  {
+                    "end": 16.846,
+                    "num_words": 11,
+                    "sentences": [
+                      {
+                        "end": 13.886,
+                        "start": 12.846,
+                        "text": "Thanks, Bella."
+                      },
+                      {
+                        "end": 15.165999,
+                        "start": 13.886,
+                        "text": "I'm Tim, by the way."
+                      },
+                      {
+                        "end": 16.846,
+                        "start": 15.245999,
+                        "text": "Tim at dot ab."
+                      }
+                    ],
+                    "speaker": 0,
+                    "start": 12.846
+                  }
+                ],
+                "transcript": "\nSpeaker 0: So great meeting you. What was the best way to reach you? I'm on Telegram. It's Bella underscore n v Bella, b e l l a, and my number is (604) 555-1234. Got it.\n\nThanks, Bella. I'm Tim, by the way. Tim at dot ab."
+              },
+              "transcript": "So great meeting you. What was the best way to reach you? I'm on Telegram. It's Bella underscore n v Bella, b e l l a, and my number is (604) 555-1234. Got it. Thanks, Bella. I'm Tim, by the way. Tim at dot ab.",
+              "words": [
+                {
+                  "confidence": 1,
+                  "end": 0.32,
+                  "punctuated_word": "So",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 0,
+                  "word": "so"
+                },
+                {
+                  "confidence": 0.99902344,
+                  "end": 0.56,
+                  "punctuated_word": "great",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 0.32,
+                  "word": "great"
+                },
+                {
+                  "confidence": 1,
+                  "end": 0.88,
+                  "punctuated_word": "meeting",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 0.56,
+                  "word": "meeting"
+                },
+                {
+                  "confidence": 0.9980469,
+                  "end": 1.4399999,
+                  "punctuated_word": "you.",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 0.88,
+                  "word": "you"
+                },
+                {
+                  "confidence": 1,
+                  "end": 1.68,
+                  "punctuated_word": "What",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 1.4399999,
+                  "word": "what"
+                },
+                {
+                  "confidence": 1,
+                  "end": 1.8399999,
+                  "punctuated_word": "was",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 1.68,
+                  "word": "was"
+                },
+                {
+                  "confidence": 1,
+                  "end": 2,
+                  "punctuated_word": "the",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 1.8399999,
+                  "word": "the"
+                },
+                {
+                  "confidence": 1,
+                  "end": 2.24,
+                  "punctuated_word": "best",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 2,
+                  "word": "best"
+                },
+                {
+                  "confidence": 1,
+                  "end": 2.48,
+                  "punctuated_word": "way",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 2.24,
+                  "word": "way"
+                },
+                {
+                  "confidence": 1,
+                  "end": 2.6399999,
+                  "punctuated_word": "to",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 2.48,
+                  "word": "to"
+                },
+                {
+                  "confidence": 1,
+                  "end": 2.8799999,
+                  "punctuated_word": "reach",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 2.6399999,
+                  "word": "reach"
+                },
+                {
+                  "confidence": 0.9995117,
+                  "end": 3.1999998,
+                  "punctuated_word": "you?",
+                  "speaker": 0,
+                  "speaker_confidence": 0.604283,
+                  "start": 2.8799999,
+                  "word": "you"
+                },
+                {
+                  "confidence": 0.9995117,
+                  "end": 3.52,
+                  "punctuated_word": "I'm",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 3.1999998,
+                  "word": "i'm"
+                },
+                {
+                  "confidence": 1,
+                  "end": 3.6799998,
+                  "punctuated_word": "on",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 3.52,
+                  "word": "on"
+                },
+                {
+                  "confidence": 0.9654948,
+                  "end": 4.48,
+                  "punctuated_word": "Telegram.",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 3.6799998,
+                  "word": "telegram"
+                },
+                {
+                  "confidence": 0.9980469,
+                  "end": 4.7999997,
+                  "punctuated_word": "It's",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 4.56,
+                  "word": "it's"
+                },
+                {
+                  "confidence": 0.55810547,
+                  "end": 5.12,
+                  "punctuated_word": "Bella",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 4.7999997,
+                  "word": "bella"
+                },
+                {
+                  "confidence": 0.9863281,
+                  "end": 5.68,
+                  "punctuated_word": "underscore",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 5.12,
+                  "word": "underscore"
+                },
+                {
+                  "confidence": 0.93847656,
+                  "end": 5.92,
+                  "punctuated_word": "n",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 5.68,
+                  "word": "n"
+                },
+                {
+                  "confidence": 0.9550781,
+                  "end": 6.08,
+                  "punctuated_word": "v",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 5.92,
+                  "word": "v"
+                },
+                {
+                  "confidence": 0.9194336,
+                  "end": 6.72,
+                  "punctuated_word": "Bella,",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 6.08,
+                  "word": "bella"
+                },
+                {
+                  "confidence": 1,
+                  "end": 6.8799996,
+                  "punctuated_word": "b",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 6.72,
+                  "word": "b"
+                },
+                {
+                  "confidence": 0.99902344,
+                  "end": 7.04,
+                  "punctuated_word": "e",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 6.8799996,
+                  "word": "e"
+                },
+                {
+                  "confidence": 1,
+                  "end": 7.2,
+                  "punctuated_word": "l",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 7.04,
+                  "word": "l"
+                },
+                {
+                  "confidence": 0.99902344,
+                  "end": 7.3599997,
+                  "punctuated_word": "l",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 7.2,
+                  "word": "l"
+                },
+                {
+                  "confidence": 0.9316406,
+                  "end": 7.6,
+                  "punctuated_word": "a,",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4385085,
+                  "start": 7.3599997,
+                  "word": "a"
+                },
+                {
+                  "confidence": 1,
+                  "end": 7.68,
+                  "punctuated_word": "and",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4544657,
+                  "start": 7.6,
+                  "word": "and"
+                },
+                {
+                  "confidence": 1,
+                  "end": 7.9199996,
+                  "punctuated_word": "my",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4544657,
+                  "start": 7.68,
+                  "word": "my"
+                },
+                {
+                  "confidence": 1,
+                  "end": 8.16,
+                  "punctuated_word": "number",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4544657,
+                  "start": 7.9199996,
+                  "word": "number"
+                },
+                {
+                  "confidence": 0.99902344,
+                  "end": 8.32,
+                  "punctuated_word": "is",
+                  "speaker": 0,
+                  "speaker_confidence": 0.4544657,
+                  "start": 8.16,
+                  "word": "is"
+                },
+                {
+                  "confidence": 1,
+                  "end": 9.679999,
+                  "punctuated_word": "(604)",
+                  "speaker": 0,
+                  "speaker_confidence": 0.45446572,
+                  "start": 8.32,
+                  "word": "(604)"
+                },
+                {
+                  "confidence": 0.9993722,
+                  "end": 12.32,
+                  "punctuated_word": "555-1234.",
+                  "speaker": 0,
+                  "speaker_confidence": 0.45446566,
+                  "start": 9.679999,
+                  "word": "555-1234"
+                },
+                {
+                  "confidence": 1,
+                  "end": 12.559999,
+                  "punctuated_word": "Got",
+                  "speaker": 0,
+                  "speaker_confidence": 0.6113663,
+                  "start": 12.32,
+                  "word": "got"
+                },
+                {
+                  "confidence": 1,
+                  "end": 12.719999,
+                  "punctuated_word": "it.",
+                  "speaker": 0,
+                  "speaker_confidence": 0.6113663,
+                  "start": 12.559999,
+                  "word": "it"
+                },
+                {
+                  "confidence": 0.99194336,
+                  "end": 13.406,
+                  "punctuated_word": "Thanks,",
+                  "speaker": 0,
+                  "speaker_confidence": 0.6113663,
+                  "start": 12.846,
+                  "word": "thanks"
+                },
+                {
+                  "confidence": 0.9970703,
+                  "end": 13.886,
+                  "punctuated_word": "Bella.",
+                  "speaker": 0,
+                  "speaker_confidence": 0.6113663,
+                  "start": 13.406,
+                  "word": "bella"
+                },
+                {
+                  "confidence": 1,
+                  "end": 14.125999,
+                  "punctuated_word": "I'm",
+                  "speaker": 0,
+                  "speaker_confidence": 0.6113663,
+                  "start": 13.886,
+                  "word": "i'm"
+                },
+                {
+                  "confidence": 0.86157227,
+                  "end": 14.445999,
+                  "punctuated_word": "Tim,",
+                  "speaker": 0,
+                  "speaker_confidence": 0.6113663,
+                  "start": 14.125999,
+                  "word": "tim"
+                },
+                {
+                  "confidence": 1,
+                  "end": 14.606,
+                  "punctuated_word": "by",
+                  "speaker": 0,
+                  "speaker_confidence": 0.6113663,
+                  "start": 14.445999,
+                  "word": "by"
+                },
+                {
+                  "confidence": 1,
+                  "end": 14.686,
+                  "punctuated_word": "the",
+                  "speaker": 0,
+                  "speaker_confidence": 0.6113663,
+                  "start": 14.606,
+                  "word": "the"
+                },
+                {
+                  "confidence": 0.873291,
+                  "end": 15.165999,
+                  "punctuated_word": "way.",
+                  "speaker": 0,
+                  "speaker_confidence": 0.6113663,
+                  "start": 14.686,
+                  "word": "way"
+                },
+                {
+                  "confidence": 0.8676758,
+                  "end": 15.486,
+                  "punctuated_word": "Tim",
+                  "speaker": 0,
+                  "speaker_confidence": 0.6113663,
+                  "start": 15.245999,
+                  "word": "tim"
+                },
+                {
+                  "confidence": 0.83251953,
+                  "end": 15.646,
+                  "punctuated_word": "at",
+                  "speaker": 0,
+                  "speaker_confidence": 0.6113663,
+                  "start": 15.486,
+                  "word": "at"
+                },
+                {
+                  "confidence": 0.7685547,
+                  "end": 16.526,
+                  "punctuated_word": "dot",
+                  "speaker": 0,
+                  "speaker_confidence": 0.5801657,
+                  "start": 15.646,
+                  "word": "dot"
+                },
+                {
+                  "confidence": 0.6279297,
+                  "end": 16.846,
+                  "punctuated_word": "ab.",
+                  "speaker": 0,
+                  "speaker_confidence": 0.5801657,
+                  "start": 16.526,
+                  "word": "ab"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "utterances": [
+        {
+          "channel": 0,
+          "confidence": 0.99743927,
+          "end": 4.48,
+          "id": "0fe21c72-eadc-4c0d-9f0b-2ed79f0f0585",
+          "speaker": 0,
+          "start": 0,
+          "transcript": "So great meeting you. What was the best way to reach you? I'm on Telegram.",
+          "words": [
+            {
+              "confidence": 1,
+              "end": 0.32,
+              "punctuated_word": "So",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 0,
+              "word": "so"
+            },
+            {
+              "confidence": 0.99902344,
+              "end": 0.56,
+              "punctuated_word": "great",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 0.32,
+              "word": "great"
+            },
+            {
+              "confidence": 1,
+              "end": 0.88,
+              "punctuated_word": "meeting",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 0.56,
+              "word": "meeting"
+            },
+            {
+              "confidence": 0.9980469,
+              "end": 1.4399999,
+              "punctuated_word": "you.",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 0.88,
+              "word": "you"
+            },
+            {
+              "confidence": 1,
+              "end": 1.68,
+              "punctuated_word": "What",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 1.4399999,
+              "word": "what"
+            },
+            {
+              "confidence": 1,
+              "end": 1.8399999,
+              "punctuated_word": "was",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 1.68,
+              "word": "was"
+            },
+            {
+              "confidence": 1,
+              "end": 2,
+              "punctuated_word": "the",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 1.8399999,
+              "word": "the"
+            },
+            {
+              "confidence": 1,
+              "end": 2.24,
+              "punctuated_word": "best",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 2,
+              "word": "best"
+            },
+            {
+              "confidence": 1,
+              "end": 2.48,
+              "punctuated_word": "way",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 2.24,
+              "word": "way"
+            },
+            {
+              "confidence": 1,
+              "end": 2.6399999,
+              "punctuated_word": "to",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 2.48,
+              "word": "to"
+            },
+            {
+              "confidence": 1,
+              "end": 2.8799999,
+              "punctuated_word": "reach",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 2.6399999,
+              "word": "reach"
+            },
+            {
+              "confidence": 0.9995117,
+              "end": 3.1999998,
+              "punctuated_word": "you?",
+              "speaker": 0,
+              "speaker_confidence": 0.604283,
+              "start": 2.8799999,
+              "word": "you"
+            },
+            {
+              "confidence": 0.9995117,
+              "end": 3.52,
+              "punctuated_word": "I'm",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 3.1999998,
+              "word": "i'm"
+            },
+            {
+              "confidence": 1,
+              "end": 3.6799998,
+              "punctuated_word": "on",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 3.52,
+              "word": "on"
+            },
+            {
+              "confidence": 0.9654948,
+              "end": 4.48,
+              "punctuated_word": "Telegram.",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 3.6799998,
+              "word": "telegram"
+            }
+          ]
+        },
+        {
+          "channel": 0,
+          "confidence": 0.95526123,
+          "end": 9.679999,
+          "id": "f9c3dc5c-15d7-498d-96d8-ff79a8ac683e",
+          "speaker": 0,
+          "start": 4.56,
+          "transcript": "It's Bella underscore n v Bella, b e l l a, and my number is (604)",
+          "words": [
+            {
+              "confidence": 0.9980469,
+              "end": 4.7999997,
+              "punctuated_word": "It's",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 4.56,
+              "word": "it's"
+            },
+            {
+              "confidence": 0.55810547,
+              "end": 5.12,
+              "punctuated_word": "Bella",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 4.7999997,
+              "word": "bella"
+            },
+            {
+              "confidence": 0.9863281,
+              "end": 5.68,
+              "punctuated_word": "underscore",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 5.12,
+              "word": "underscore"
+            },
+            {
+              "confidence": 0.93847656,
+              "end": 5.92,
+              "punctuated_word": "n",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 5.68,
+              "word": "n"
+            },
+            {
+              "confidence": 0.9550781,
+              "end": 6.08,
+              "punctuated_word": "v",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 5.92,
+              "word": "v"
+            },
+            {
+              "confidence": 0.9194336,
+              "end": 6.72,
+              "punctuated_word": "Bella,",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 6.08,
+              "word": "bella"
+            },
+            {
+              "confidence": 1,
+              "end": 6.8799996,
+              "punctuated_word": "b",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 6.72,
+              "word": "b"
+            },
+            {
+              "confidence": 0.99902344,
+              "end": 7.04,
+              "punctuated_word": "e",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 6.8799996,
+              "word": "e"
+            },
+            {
+              "confidence": 1,
+              "end": 7.2,
+              "punctuated_word": "l",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 7.04,
+              "word": "l"
+            },
+            {
+              "confidence": 0.99902344,
+              "end": 7.3599997,
+              "punctuated_word": "l",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 7.2,
+              "word": "l"
+            },
+            {
+              "confidence": 0.9316406,
+              "end": 7.6,
+              "punctuated_word": "a,",
+              "speaker": 0,
+              "speaker_confidence": 0.4385085,
+              "start": 7.3599997,
+              "word": "a"
+            },
+            {
+              "confidence": 1,
+              "end": 7.68,
+              "punctuated_word": "and",
+              "speaker": 0,
+              "speaker_confidence": 0.4544657,
+              "start": 7.6,
+              "word": "and"
+            },
+            {
+              "confidence": 1,
+              "end": 7.9199996,
+              "punctuated_word": "my",
+              "speaker": 0,
+              "speaker_confidence": 0.4544657,
+              "start": 7.68,
+              "word": "my"
+            },
+            {
+              "confidence": 1,
+              "end": 8.16,
+              "punctuated_word": "number",
+              "speaker": 0,
+              "speaker_confidence": 0.4544657,
+              "start": 7.9199996,
+              "word": "number"
+            },
+            {
+              "confidence": 0.99902344,
+              "end": 8.32,
+              "punctuated_word": "is",
+              "speaker": 0,
+              "speaker_confidence": 0.4544657,
+              "start": 8.16,
+              "word": "is"
+            },
+            {
+              "confidence": 1,
+              "end": 9.679999,
+              "punctuated_word": "(604)",
+              "speaker": 0,
+              "speaker_confidence": 0.45446572,
+              "start": 8.32,
+              "word": "(604)"
+            }
+          ]
+        },
+        {
+          "channel": 0,
+          "confidence": 0.9993722,
+          "end": 12.32,
+          "id": "ee9d24c0-be5d-4af7-a736-262c1390242a",
+          "speaker": 0,
+          "start": 9.679999,
+          "transcript": "555-1234.",
+          "words": [
+            {
+              "confidence": 0.9993722,
+              "end": 12.32,
+              "punctuated_word": "555-1234.",
+              "speaker": 0,
+              "speaker_confidence": 0.45446566,
+              "start": 9.679999,
+              "word": "555-1234"
+            }
+          ]
+        },
+        {
+          "channel": 0,
+          "confidence": 0.93271893,
+          "end": 16.526,
+          "id": "74325694-91be-4456-b40f-2ed00161597d",
+          "speaker": 0,
+          "start": 12.32,
+          "transcript": "Got it. Thanks, Bella. I'm Tim, by the way. Tim at dot",
+          "words": [
+            {
+              "confidence": 1,
+              "end": 12.559999,
+              "punctuated_word": "Got",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 12.32,
+              "word": "got"
+            },
+            {
+              "confidence": 1,
+              "end": 12.719999,
+              "punctuated_word": "it.",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 12.559999,
+              "word": "it"
+            },
+            {
+              "confidence": 0.99194336,
+              "end": 13.406,
+              "punctuated_word": "Thanks,",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 12.846,
+              "word": "thanks"
+            },
+            {
+              "confidence": 0.9970703,
+              "end": 13.886,
+              "punctuated_word": "Bella.",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 13.406,
+              "word": "bella"
+            },
+            {
+              "confidence": 1,
+              "end": 14.125999,
+              "punctuated_word": "I'm",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 13.886,
+              "word": "i'm"
+            },
+            {
+              "confidence": 0.86157227,
+              "end": 14.445999,
+              "punctuated_word": "Tim,",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 14.125999,
+              "word": "tim"
+            },
+            {
+              "confidence": 1,
+              "end": 14.606,
+              "punctuated_word": "by",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 14.445999,
+              "word": "by"
+            },
+            {
+              "confidence": 1,
+              "end": 14.686,
+              "punctuated_word": "the",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 14.606,
+              "word": "the"
+            },
+            {
+              "confidence": 0.873291,
+              "end": 15.165999,
+              "punctuated_word": "way.",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 14.686,
+              "word": "way"
+            },
+            {
+              "confidence": 0.8676758,
+              "end": 15.486,
+              "punctuated_word": "Tim",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 15.245999,
+              "word": "tim"
+            },
+            {
+              "confidence": 0.83251953,
+              "end": 15.646,
+              "punctuated_word": "at",
+              "speaker": 0,
+              "speaker_confidence": 0.6113663,
+              "start": 15.486,
+              "word": "at"
+            },
+            {
+              "confidence": 0.7685547,
+              "end": 16.526,
+              "punctuated_word": "dot",
+              "speaker": 0,
+              "speaker_confidence": 0.5801657,
+              "start": 15.646,
+              "word": "dot"
+            }
+          ]
+        },
+        {
+          "channel": 0,
+          "confidence": 0.6279297,
+          "end": 16.846,
+          "id": "9c26ceff-ff52-4e82-8508-908c8de14624",
+          "speaker": 0,
+          "start": 16.526,
+          "transcript": "ab.",
+          "words": [
+            {
+              "confidence": 0.6279297,
+              "end": 16.846,
+              "punctuated_word": "ab.",
+              "speaker": 0,
+              "speaker_confidence": 0.5801657,
+              "start": 16.526,
+              "word": "ab"
+            }
+          ]
+        }
+      ]
+    },
+    "usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  "success": true,
+  "errors": [],
+  "messages": []
+}

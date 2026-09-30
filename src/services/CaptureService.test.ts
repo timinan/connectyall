@@ -114,7 +114,7 @@ describe('processCapture', () => {
       selfIntro: 's',
       socials: {},
     });
-    transcribeMock.mockResolvedValue('hi I met Sarah');
+    transcribeMock.mockResolvedValue({ text: 'hi I met Sarah', segments: null });
     extractMock.mockResolvedValue({
       contacts: [{
         name: 'Sarah', role: null, company: null, emails: [], phones: [], preferred_channel: null, links: {},
@@ -188,7 +188,7 @@ describe('processCapture', () => {
       telegramUsername: null, photoR2Url: null, socials: {}, selfIntro: null,
       timezone: 'America/Vancouver',
     });
-    transcribeMock.mockResolvedValueOnce('met sarah and need to follow up in 3 days');
+    transcribeMock.mockResolvedValueOnce({ text: 'met sarah and need to follow up in 3 days', segments: null });
     extractMock.mockResolvedValueOnce({
       contacts: [{
         name: 'Sarah Chen', role: null, company: null,

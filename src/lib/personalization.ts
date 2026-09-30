@@ -67,3 +67,12 @@ export function buildExtractionPersonalizationBlock(input: {
   if (parts.length === 0) return '';
   return `\n\n${parts.join('\n\n')}`;
 }
+
+export function keytermsFromVocabulary(vocabulary: string | null): string[] {
+  if (!vocabulary) return [];
+  return vocabulary
+    .split(/[,\n]/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .slice(0, 50);
+}
